@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MLB Pick'em League</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
@@ -573,6 +574,11 @@
       <span class="welcome-card-label">Survivor</span>
       <span class="welcome-card-desc">Monthly survivor game</span>
     </a>
+    <a href="profile.html" class="welcome-card">
+      <span class="welcome-card-icon">🔐</span>
+      <span class="welcome-card-label">My Profile</span>
+      <span class="welcome-card-desc">Change your PIN</span>
+    </a>
   </div>
 </div>
 
@@ -722,21 +728,17 @@
       const uid  = cred.user.uid;
       const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-      // Write member profile
+      // Write member profile — auto-approved for everyone when registration is open
       await set(ref(db, `adminConfig/members/${uid}`), {
         email,
         displayName: name,
-        approved: isAdmin,   // admin auto-approved
+        approved: true,
         joinedAt: new Date().toISOString(),
       });
 
       // If admin, write to admins node
       if (isAdmin) {
         await set(ref(db, `adminConfig/admins/${uid}`), true);
-      }
-
-      if (!isAdmin) {
-        showMsg('suMsg', 'Account created! Waiting for admin approval before you can play.', 'info');
       }
       // onAuthStateChanged handles the rest
     } catch (err) {
@@ -788,13 +790,10 @@
     if (adminUser) document.getElementById('adminLink').style.display = '';
     document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
 
-    if (member?.approved || adminUser) {
-      document.getElementById('welcomeHeading').textContent =
-        `Welcome back, ${member?.displayName?.split(' ')[0] || 'friend'}!`;
-      welcomeScreen.style.display = 'flex';
-    } else {
-      pendingScreen.style.display = 'flex';
-    }
+    document.getElementById('welcomeHeading').textContent =
+      `Welcome back, ${member?.displayName?.split(' ')[0] || 'friend'}!`;
+    welcomeScreen.style.display = 'flex';
+    pendingScreen.style.display = 'none';
   });
 </script>
 
