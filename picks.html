@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Picks · MLB Pick'em</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── Nav ─────────────────────────────────── */
+    .app-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 4px; }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-link:hover  { background: var(--cream); color: var(--ink); }
+    .nav-link.active { background: var(--navy); color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-user  { font-size: 13px; color: var(--ink-faint); }
+
+    .btn-signout {
+      padding: 6px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Page body ───────────────────────────── */
+    .page-body {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 82px 24px 48px;
+    }
+
+    /* ── Page header ─────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+    /* ── Date selector ───────────────────────── */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-btn {
+      width: 34px; height: 34px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 8px;
+      background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--ink-light);
+      transition: border-color .15s, color .15s;
+    }
+    .date-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+    .date-display {
+      padding: 7px 16px;
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      min-width: 140px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .date-display input[type="date"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    /* ── Summary bar ─────────────────────────── */
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .summary-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 13px;
+      color: var(--ink-light);
+    }
+
+    .summary-chip strong { color: var(--ink); }
+
+    /* ── Game cards ──────────────────────────── */
+    .games-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .game-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s;
+    }
+
+    .game-card:hover { box-shadow: var(--shadow-md); }
+
+    /* locked / final states */
+    .game-card.locked  { border-color: #D4CAB8; }
+    .game-card.correct { border-color: #A8D5B5; background: #F4FBF6; }
+    .game-card.wrong   { border-color: #F0C4C0; background: #FDF5F4; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--cream-dark);
+      background: var(--cream);
+    }
+
+    .game-time { font-size: 12px; font-weight: 600; color: var(--ink-light); text-transform: uppercase; letter-spacing: .04em; }
+
+    .game-status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .badge-upcoming { background: #EEF2F8; color: var(--navy); }
+    .badge-live     { background: #FDECEA; color: var(--red); }
+    .badge-final    { background: var(--cream-dark); color: var(--ink-faint); }
+
+    .card-body {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Team side */
+    .team-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .team-logo {
+      width: 56px; height: 56px;
+      object-fit: contain;
+    }
+
+    .team-logo-placeholder {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--cream-dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+
+    .team-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .team-record {
+      font-size: 12px;
+      color: var(--ink-faint);
+    }
+
+    .team-pitcher {
+      font-size: 11.5px;
+      color: var(--ink-light);
+      background: var(--cream);
+      border-radius: 100px;
+      padding: 3px 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 130px;
+    }
+
+    /* Middle VS / score */
+    .card-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .vs-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--ink-faint);
+    }
+
+    .score-display {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--ink);
+      letter-spacing: .04em;
+    }
+
+    .at-label {
+      font-size: 11px;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    /* Pick section */
+    .card-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--cream-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pick-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      white-space: nowrap;
+    }
+
+    .pick-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .pick-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 8px;
+      background: var(--white);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .pick-btn img {
+      width: 20px; height: 20px;
+      object-fit: contain;
+    }
+
+    .pick-btn:hover:not(:disabled) {
+      border-color: var(--navy);
+      color: var(--navy);
+      background: #EEF2F8;
+    }
+
+    .pick-btn.selected {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: var(--white);
+    }
+
+    .pick-btn:disabled {
+      cursor: not-allowed;
+      opacity: .6;
+    }
+
+    /* Result indicators */
+    .result-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .result-indicator.correct { color: var(--green); }
+    .result-indicator.wrong   { color: var(--red); }
+
+    .lock-msg {
+      font-size: 12px;
+      color: var(--ink-faint);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── States ──────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--ink-faint);
+    }
+
+    .state-box .icon { font-size: 48px; margin-bottom: 16px; }
+    .state-box h3    { font-size: 18px; color: var(--ink-light); margin-bottom: 8px; }
+    .state-box p     { font-size: 14px; line-height: 1.5; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--cream-dark);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile ──────────────────────────────── */
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .card-body {
+        grid-template-columns: 1fr auto 1fr;
+        gap: 8px;
+      }
+      .team-logo { width: 44px; height: 44px; }
+      .team-name { font-size: 13px; }
+      .pick-btn  { padding: 7px 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="app-nav">
+  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+  <div class="nav-links">
+    <a href="picks.html"     class="nav-link active">My Picks</a>
+    <a href="results.html"   class="nav-link">Results</a>
+    <a href="standings.html" class="nav-link">Standings</a>
+    <a href="survivor.html"  class="nav-link">Survivor</a>
+    <a href="admin.html"     class="nav-link" id="adminLink" style="display:none">Admin</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-signout" id="signOutBtn">Sign out</button>
+  </div>
+</nav>
+
+<div class="page-body">
+
+  <!-- Header + date nav -->
+  <div class="page-header">
+    <div>
+      <h1>My Picks</h1>
+      <p id="headerSubtitle">Pick a winner for each game before first pitch.</p>
+    </div>
+    <div class="date-nav">
+      <button class="date-btn" id="prevDay" title="Previous day">‹</button>
+      <div class="date-display" id="dateDisplay">
+        <span id="dateLabel">Today</span>
+        <input type="date" id="datePicker" />
+      </div>
+      <button class="date-btn" id="nextDay" title="Next day">›</button>
+    </div>
+  </div>
+
+  <!-- Summary bar -->
+  <div class="summary-bar" id="summaryBar" style="display:none">
+    <div class="summary-chip">Games: <strong id="sumGames">0</strong></div>
+    <div class="summary-chip">Picked: <strong id="sumPicked">0</strong></div>
+    <div class="summary-chip" id="sumCorrectChip" style="display:none">
+      Correct: <strong id="sumCorrect">0</strong>
+    </div>
+  </div>
+
+  <!-- Games container -->
+  <div id="gamesContainer">
+    <div class="state-box">
+      <div class="spinner"></div>
+      <p>Loading games…</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Firebase + App logic -->
+<script type="module">
+  import { initializeApp }                         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get, set, child }     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  // ── State ─────────────────────────────────────────────────────────────
+  let currentUser   = null;
+  let currentDate   = todayStr();       // 'YYYY-MM-DD'
+  let userPicks     = {};               // gameId → {teamId, lockedIn}
+  let gamesCache    = {};               // gameId → game object
+  let lockTimers    = {};               // gameId → setTimeout id
+
+  // ── Date helpers ──────────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function dateToESPN(dateStr) {
+    return dateStr.replace(/-/g, '');  // 'YYYYMMDD'
+  }
+
+  function formatDateLabel(dateStr) {
+    const today = todayStr();
+    const d = new Date(dateStr + 'T12:00:00');
+    if (dateStr === today) return 'Today';
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+    if (dateStr === yStr) return 'Yesterday';
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    const tStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
+    if (dateStr === tStr) return 'Tomorrow';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+  }
+
+  function shiftDate(dateStr, days) {
+    const d = new Date(dateStr + 'T12:00:00');
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  // ── ESPN helpers ──────────────────────────────────────────────────────
+  function espnLogoUrl(teamId) {
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${teamId}.png`;
+  }
+
+  function gameIsLocked(startTimeISO) {
+    return new Date() >= new Date(startTimeISO);
+  }
+
+  function formatGameTime(iso) {
+    return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+  }
+
+  // ── Parse ESPN scoreboard ─────────────────────────────────────────────
+  function parseESPN(data) {
+    const games = [];
+    const events = data?.events || [];
+
+    for (const event of events) {
+      const comp      = event.competitions?.[0];
+      if (!comp) continue;
+
+      const competitors = comp.competitors || [];
+      const home = competitors.find(c => c.homeAway === 'home');
+      const away = competitors.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+
+      const status     = event.status?.type;
+      const statusName = status?.name || 'STATUS_SCHEDULED';
+      const startTime  = event.date;
+
+      // Pitchers from comp.situation or odds/notes
+      const getPitcher = (side) => {
+        const prob = comp.probables?.find(p => p.homeAway === side);
+        return prob?.athlete?.shortName || null;
+      };
+
+      // Score
+      const homeScore = home.score ?? null;
+      const awayScore = away.score ?? null;
+
+      // Winner
+      let winnerId = null;
+      if (statusName === 'STATUS_FINAL') {
+        winnerId = home.winner ? home.team.id : away.winner ? away.team.id : null;
+      }
+
+      games.push({
+        id:          event.id,
+        startTime,
+        statusName,
+        statusShort: status?.shortDetail || '',
+        homeTeam:    { id: home.team.id, abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
+        awayTeam:    { id: away.team.id, abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
+        homePitcher: getPitcher('home'),
+        awayPitcher: getPitcher('away'),
+        homeScore,
+        awayScore,
+        winnerId,
+      });
+    }
+    return games;
+  }
+
+  // ── Load games ────────────────────────────────────────────────────────
+  async function loadGames(dateStr) {
+    const container = document.getElementById('gamesContainer');
+    const summaryBar = document.getElementById('summaryBar');
+    summaryBar.style.display = 'none';
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading games…</p></div>`;
+
+    // Clear old lock timers
+    Object.values(lockTimers).forEach(clearTimeout);
+    lockTimers = {};
+
+    // 1. Try Firebase cache
+    const dbSnap = await get(ref(db, `games/${dateStr}`));
+    let games = [];
+
+    if (dbSnap.exists()) {
+      const raw = dbSnap.val();
+      games = Object.values(raw);
+    } else {
+      // 2. Fetch from ESPN
+      try {
+        const espnDate = dateToESPN(dateStr);
+        const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+        games = parseESPN(data);
+
+        // Cache in Firebase (admin writes; regular writes still helpful for reads)
+        const cacheObj = {};
+        for (const g of games) cacheObj[g.id] = g;
+        if (games.length > 0) {
+          await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
+        }
+      } catch (err) {
+        console.error('ESPN fetch failed:', err);
+        container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
+        return;
+      }
+    }
+
+    // For live/in-progress games, always re-fetch scores (don't use stale cache)
+    const hasLive = games.some(g => g.statusName === 'STATUS_IN_PROGRESS');
+    if (hasLive || games.some(g => g.statusName !== 'STATUS_FINAL')) {
+      try {
+        const espnDate = dateToESPN(dateStr);
+        const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`);
+        const data = await res.json();
+        const fresh = parseESPN(data);
+        if (fresh.length > 0) {
+          games = fresh;
+          const cacheObj = {};
+          for (const g of games) cacheObj[g.id] = g;
+          await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
+        }
+      } catch (_) {}
+    }
+
+    gamesCache = {};
+    for (const g of games) gamesCache[g.id] = g;
+
+    if (games.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><h3>No games scheduled</h3><p>Enjoy the off day!</p></div>`;
+      return;
+    }
+
+    // Load user picks for this date
+    await loadUserPicks(dateStr);
+
+    renderGames(games, dateStr);
+    updateSummary(games);
+  }
+
+  // ── Load picks ────────────────────────────────────────────────────────
+  async function loadUserPicks(dateStr) {
+    if (!currentUser) return;
+    const snap = await get(ref(db, `picks/${currentUser.uid}/${dateStr}`));
+    userPicks = snap.exists() ? snap.val() : {};
+  }
+
+  // ── Save pick ─────────────────────────────────────────────────────────
+  async function savePick(dateStr, gameId, teamId) {
+    if (!currentUser) return;
+    const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${gameId}`);
+    await set(pickRef, { teamId, lockedIn: true, correct: null });
+    if (!userPicks[gameId]) userPicks[gameId] = {};
+    userPicks[gameId].teamId = teamId;
+    userPicks[gameId].lockedIn = true;
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  function renderGames(games, dateStr) {
+    const container = document.getElementById('gamesContainer');
+    container.innerHTML = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'games-grid';
+
+    for (const game of games) {
+      grid.appendChild(buildCard(game, dateStr));
+    }
+
+    container.appendChild(grid);
+  }
+
+  function buildCard(game, dateStr) {
+    const locked   = gameIsLocked(game.startTime);
+    const isFinal  = game.statusName === 'STATUS_FINAL';
+    const isLive   = game.statusName === 'STATUS_IN_PROGRESS';
+    const userPick = userPicks[game.id]?.teamId || null;
+
+    // Determine correct/wrong
+    let resultClass = '';
+    let correct = null;
+    if (isFinal && game.winnerId && userPick) {
+      correct = userPick === game.winnerId;
+      resultClass = correct ? 'correct' : 'wrong';
+    }
+
+    const card = document.createElement('div');
+    card.className = `game-card ${locked ? 'locked' : ''} ${resultClass}`;
+    card.dataset.gameId = game.id;
+
+    // Status badge
+    let badgeClass = 'badge-upcoming';
+    let badgeText  = formatGameTime(game.startTime);
+    if (isFinal) { badgeClass = 'badge-final'; badgeText = 'Final'; }
+    else if (isLive) { badgeClass = 'badge-live'; badgeText = game.statusShort || 'Live'; }
+
+    // Score or VS
+    const midContent = (isFinal || isLive)
+      ? `<div class="score-display">${game.awayScore ?? '–'} – ${game.homeScore ?? '–'}</div>`
+      : `<div class="vs-text">vs</div>`;
+
+    // Team logo helper
+    const logoHtml = (team) => `
+      <img class="team-logo"
+           src="${espnLogoUrl(team.abbrev.toLowerCase())}"
+           alt="${team.name}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+      <div class="team-logo-placeholder" style="display:none">⚾</div>`;
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="game-time">${badgeText}</span>
+        <span class="game-status-badge ${badgeClass}">${isFinal ? 'Final' : isLive ? '🔴 Live' : 'Upcoming'}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="team-side">
+          ${logoHtml(game.awayTeam)}
+          <div class="team-name">${game.awayTeam.name}</div>
+          <div class="team-record">${game.awayTeam.record}</div>
+          ${game.awayPitcher ? `<div class="team-pitcher">🎯 ${game.awayPitcher}</div>` : ''}
+        </div>
+
+        <div class="card-mid">
+          ${midContent}
+          <div class="at-label">@ ${game.homeTeam.abbrev}</div>
+        </div>
+
+        <div class="team-side">
+          ${logoHtml(game.homeTeam)}
+          <div class="team-name">${game.homeTeam.name}</div>
+          <div class="team-record">${game.homeTeam.record}</div>
+          ${game.homePitcher ? `<div class="team-pitcher">🎯 ${game.homePitcher}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="card-footer" id="footer-${game.id}">
+        ${buildFooter(game, locked, isFinal, userPick, correct)}
+      </div>
+    `;
+
+    // Pick button listeners (only if not locked)
+    if (!locked) {
+      card.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
+      card.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
+
+      // Schedule lock at game start
+      const msUntilLock = new Date(game.startTime) - new Date();
+      if (msUntilLock > 0 && msUntilLock < 86400000) {
+        lockTimers[game.id] = setTimeout(() => {
+          const footer = document.getElementById(`footer-${game.id}`);
+          if (footer) footer.innerHTML = buildFooter(game, true, false, userPicks[game.id]?.teamId || null, null);
+          card.classList.add('locked');
+        }, msUntilLock);
+      }
+    }
+
+    return card;
+  }
+
+  function buildFooter(game, locked, isFinal, userPick, correct) {
+    const awaySelected = userPick === game.awayTeam.id;
+    const homeSelected = userPick === game.homeTeam.id;
+
+    if (isFinal) {
+      if (!userPick) {
+        return `<span class="lock-msg">🔒 No pick made</span>`;
+      }
+      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
+      if (correct) {
+        return `<span class="result-indicator correct">✅ Correct — ${teamName}</span>`;
+      } else {
+        const winnerName = game.winnerId === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
+        return `<span class="result-indicator wrong">❌ Wrong — picked ${teamName}, winner was ${winnerName}</span>`;
+      }
+    }
+
+    if (locked) {
+      if (!userPick) {
+        return `<span class="lock-msg">🔒 Locked — no pick made</span>`;
+      }
+      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
+      return `<span class="lock-msg">🔒 Locked in: <strong>${teamName}</strong></span>`;
+    }
+
+    // Open for picks
+    return `
+      <span class="pick-label">Pick the winner:</span>
+      <div class="pick-controls">
+        <button class="pick-btn ${awaySelected ? 'selected' : ''}" id="pick-away-${game.id}">
+          <img src="${espnLogoUrl(game.awayTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
+          ${game.awayTeam.abbrev}
+        </button>
+        <button class="pick-btn ${homeSelected ? 'selected' : ''}" id="pick-home-${game.id}">
+          <img src="${espnLogoUrl(game.homeTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
+          ${game.homeTeam.abbrev}
+        </button>
+      </div>
+    `;
+  }
+
+  async function handlePick(game, teamId, dateStr) {
+    if (gameIsLocked(game.startTime)) return;
+
+    // Toggle off if same pick
+    const existing = userPicks[game.id]?.teamId;
+    const newTeamId = existing === teamId ? null : teamId;
+
+    userPicks[game.id] = newTeamId ? { teamId: newTeamId, lockedIn: true } : {};
+
+    // Update UI immediately
+    const footer = document.getElementById(`footer-${game.id}`);
+    if (footer) {
+      footer.innerHTML = buildFooter(game, false, false, newTeamId, null);
+      footer.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
+      footer.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
+    }
+
+    // Save to Firebase
+    if (newTeamId) {
+      await savePick(dateStr, game.id, newTeamId);
+    } else {
+      // Remove pick
+      const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`);
+      await set(pickRef, null).catch(() => {});
+    }
+
+    updateSummary(Object.values(gamesCache));
+  }
+
+  // ── Summary bar ────────────────────────────────────────────────────────
+  function updateSummary(games) {
+    const bar = document.getElementById('summaryBar');
+    bar.style.display = 'flex';
+
+    const total   = games.length;
+    const picked  = games.filter(g => userPicks[g.id]?.teamId).length;
+    const finals  = games.filter(g => g.statusName === 'STATUS_FINAL' && userPicks[g.id]?.teamId);
+    const correct = finals.filter(g => userPicks[g.id]?.teamId === g.winnerId).length;
+
+    document.getElementById('sumGames').textContent  = total;
+    document.getElementById('sumPicked').textContent = picked;
+
+    const correctChip = document.getElementById('sumCorrectChip');
+    if (finals.length > 0) {
+      correctChip.style.display = '';
+      document.getElementById('sumCorrect').textContent = `${correct} / ${finals.length}`;
+    } else {
+      correctChip.style.display = 'none';
+    }
+  }
+
+  // ── Date nav ──────────────────────────────────────────────────────────
+  function setDate(dateStr) {
+    currentDate = dateStr;
+    document.getElementById('dateLabel').textContent = formatDateLabel(dateStr);
+    document.getElementById('datePicker').value = dateStr;
+    loadGames(dateStr);
+  }
+
+  document.getElementById('prevDay').addEventListener('click', () => setDate(shiftDate(currentDate, -1)));
+  document.getElementById('nextDay').addEventListener('click', () => setDate(shiftDate(currentDate, +1)));
+  document.getElementById('datePicker').addEventListener('change', e => setDate(e.target.value));
+
+  // ── Auth gate ─────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    currentUser = user;
+
+    // Check approval
+    const snap = await get(child(ref(db), `adminConfig/members/${user.uid}`));
+    const member = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(child(ref(db), `adminConfig/admins/${user.uid}`));
+    const isAdmin = adminSnap.exists() && adminSnap.val() === true;
+
+    if (!member?.approved && !isAdmin) {
+      window.location.href = 'index.html'; return;
+    }
+
+    // Nav
+    document.getElementById('navUser').textContent = member?.displayName || user.email;
+    if (isAdmin) document.getElementById('adminLink').style.display = '';
+    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
+
+    // Load today's games
+    setDate(todayStr());
+  });
+</script>
+
+</body>
+</html>
