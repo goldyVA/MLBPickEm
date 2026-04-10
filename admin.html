@@ -688,7 +688,7 @@
     }
   </style>
   <script type="module">
-    import { initNav, NAV_STYLES } from "./nav.js";
+    import { initNav, NAV_STYLES } from "./nav.js?v=2";
     // inject nav styles
     const _ns = document.createElement("style");
     _ns.textContent = NAV_STYLES;
@@ -965,28 +965,35 @@
       return;
     }
 
-    // Sort: admins first, then alpha
     approved.sort((a, b) => {
       if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
       return (a.displayName || '').localeCompare(b.displayName || '');
     });
 
-    list.innerHTML = approved.map(m => `
-      <div class="member-row" id="member-${m.uid}">
-        <div class="member-avatar" style="${m.isAdmin ? 'background:var(--accent);color:var(--ink)' : ''}">${initials(m.displayName || m.email)}</div>
-        <div class="member-info">
-          <div class="member-name">${m.displayName || '—'}</div>
-          <div class="member-email">${m.email}</div>
-        </div>
-        <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
-        <span class="status-pill ${m.isAdmin ? 'pill-admin' : 'pill-approved'}">${m.isAdmin ? 'Admin' : 'Member'}</span>
-        <div class="row-actions">
-          ${m.uid !== currentUser.uid && !m.isAdmin ? `
-            <button class="btn-revoke" onclick="revokeMember('${m.uid}', '${(m.displayName||'').replace(/'/g,"\\'")}')">Revoke</button>
-          ` : '<span style="font-size:12px;color:var(--ink-faint)">—</span>'}
-        </div>
-      </div>
-    `).join('');
+    list.innerHTML = approved.map(m => {
+      const safeName = (m.displayName || '').replace(/"/g, '&quot;').replace(/'/g, "\'");
+      return `
+        <div class="member-row" id="member-${m.uid}">
+          <div class="member-avatar" style="${m.isAdmin ? 'background:var(--accent);color:var(--ink)' : ''}">${initials(m.displayName || m.email)}</div>
+          <div class="member-info">
+            <div class="member-name" id="name-display-${m.uid}">${m.displayName || '—'}</div>
+            <div class="inline-edit" id="name-edit-${m.uid}" style="display:none">
+              <input type="text" id="name-input-${m.uid}" value="${safeName}" />
+              <button class="btn-save-name" onclick="saveDisplayName('${m.uid}')">Save</button>
+              <button class="btn-cancel-name" onclick="cancelEditName('${m.uid}')">Cancel</button>
+            </div>
+            <div class="member-email">${m.email}</div>
+          </div>
+          <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
+          <span class="status-pill ${m.isAdmin ? 'pill-admin' : 'pill-approved'}">${m.isAdmin ? 'Admin' : 'Member'}</span>
+          <div class="row-actions">
+            <button class="btn-edit" onclick="startEditName('${m.uid}')">Rename</button>
+            ${m.uid !== currentUser.uid && !m.isAdmin
+              ? `<button class="btn-revoke" onclick="revokeMember('${m.uid}', '${safeName}')">Revoke</button>`
+              : ''}
+          </div>
+        </div>`;
+    }).join('');
   }
 
   // ── Approve member ────────────────────────────────────────────────────
