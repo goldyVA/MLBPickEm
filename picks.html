@@ -856,60 +856,52 @@
   }
 
   // ── Load games ────────────────────────────────────────────────────────
+  let pollInterval = null; // polling timer for live games
+
+  async function fetchGamesFromESPN(dateStr) {
+    const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateToESPN(dateStr)}`);
+    const data = await res.json();
+    const games = parseESPN(data).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+    // Write to Firebase cache
+    if (games.length > 0) {
+      const cacheObj = {};
+      for (const g of games) cacheObj[g.id] = g;
+      await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
+    }
+    return games;
+  }
+
   async function loadGames(dateStr) {
-    const container = document.getElementById('gamesContainer');
+    const container  = document.getElementById('gamesContainer');
     const summaryBar = document.getElementById('summaryBar');
     summaryBar.style.display = 'none';
     container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading games…</p></div>`;
 
-    // Clear old lock timers
+    // Clear timers
     Object.values(lockTimers).forEach(clearTimeout);
     lockTimers = {};
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
 
-    // 1. Try Firebase cache
-    const dbSnap = await get(ref(db, `games/${dateStr}`));
     let games = [];
+    const isToday = dateStr === todayStr();
 
-    if (dbSnap.exists()) {
-      const raw = dbSnap.val();
-      games = Object.values(raw);
-    } else {
-      // 2. Fetch from ESPN
-      try {
-        const espnDate = dateToESPN(dateStr);
-        const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`;
-        const res  = await fetch(url);
-        const data = await res.json();
-        games = parseESPN(data);
-
-        // Cache in Firebase (admin writes; regular writes still helpful for reads)
-        const cacheObj = {};
-        for (const g of games) cacheObj[g.id] = g;
-        if (games.length > 0) {
-          await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
+    try {
+      if (isToday) {
+        // Always fetch live from ESPN for today — never trust stale cache
+        games = await fetchGamesFromESPN(dateStr);
+      } else {
+        // Past/future dates: use Firebase cache, fall back to ESPN
+        const dbSnap = await get(ref(db, `games/${dateStr}`));
+        if (dbSnap.exists()) {
+          games = Object.values(dbSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+        } else {
+          games = await fetchGamesFromESPN(dateStr);
         }
-      } catch (err) {
-        console.error('ESPN fetch failed:', err);
-        container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
-        return;
       }
-    }
-
-    // For live/in-progress games, always re-fetch scores (don't use stale cache)
-    const hasLive = games.some(g => g.statusName === 'STATUS_IN_PROGRESS');
-    if (hasLive || games.some(g => g.statusName !== 'STATUS_FINAL')) {
-      try {
-        const espnDate = dateToESPN(dateStr);
-        const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`);
-        const data = await res.json();
-        const fresh = parseESPN(data);
-        if (fresh.length > 0) {
-          games = fresh;
-          const cacheObj = {};
-          for (const g of games) cacheObj[g.id] = g;
-          await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
-        }
-      } catch (_) {}
+    } catch (err) {
+      console.error('Failed to load games:', err);
+      container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
+      return;
     }
 
     gamesCache = {};
@@ -920,22 +912,44 @@
       return;
     }
 
-    // Load user picks for this date
+    // Load user picks
     await loadUserPicks(dateStr);
 
-    // Auto-pick away team for any locked games with no pick (today only)
-    if (dateStr === todayStr()) {
-      await autoPickMissedGames(games, dateStr);
-    }
+    // Auto-pick for today
+    if (isToday) await autoPickMissedGames(games, dateStr);
 
     renderGames(games, dateStr);
     updateSummary(games);
 
-    // Load survivor section (only on today's date)
-    if (dateStr === todayStr()) {
+    // Survivor section
+    if (isToday) {
       loadSurvivorSection(games);
     } else {
       document.getElementById('survivorSection').style.display = 'none';
+    }
+
+    // Poll every 5 minutes while any game is not final (today only)
+    if (isToday) {
+      const hasActive = games.some(g => g.statusName !== 'STATUS_FINAL');
+      if (hasActive) {
+        pollInterval = setInterval(async () => {
+          try {
+            const fresh = await fetchGamesFromESPN(dateStr);
+            if (!fresh.length) return;
+            for (const g of fresh) gamesCache[g.id] = g;
+            await loadUserPicks(dateStr);
+            await autoPickMissedGames(fresh, dateStr);
+            renderGames(fresh, dateStr);
+            updateSummary(fresh);
+            loadSurvivorSection(fresh);
+            // Stop polling once all games are final
+            if (fresh.every(g => g.statusName === 'STATUS_FINAL')) {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          } catch (e) { console.warn('Poll failed:', e); }
+        }, 5 * 60 * 1000); // every 5 minutes
+      }
     }
   }
 
