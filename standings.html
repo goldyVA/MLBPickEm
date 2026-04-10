@@ -517,8 +517,10 @@
   let allMembers   = [];
   let allGames     = {};   // { 'YYYY-MM-DD': { gameId: game } }
   let allPicks     = {};   // { uid: { 'YYYY-MM-DD': { gameId: pick } } }
-  let currentFilter = 'season';
-  let currentMonth  = null;
+  let currentFilter    = 'season';
+  let currentMonth     = null;
+  let monthlyStartDay  = 1;
+  let seasonStartDate  = null;
 
   const MEDALS = ['🥇','🥈','🥉'];
 
@@ -555,8 +557,8 @@
     // Load league settings
     const settingsSnap = await get(ref(db, 'adminConfig/settings'));
     const settings = settingsSnap.exists() ? settingsSnap.val() : {};
-    const monthlyStartDay  = settings.monthlyStartDay  || 1;
-    const seasonStartDate  = settings.seasonStartDate  || null;
+    monthlyStartDay  = settings.monthlyStartDay  || 1;
+    seasonStartDate  = settings.seasonStartDate  || null;
 
     // All games (cached in Firebase)
     const gamesSnap = await get(ref(db, 'games'));
