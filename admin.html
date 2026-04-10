@@ -467,6 +467,132 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+
+    /* ── Registration toggle ─────────────────── */
+    .reg-toggle-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .reg-toggle-card.open  { border-color: #A8D5B5; background: #F4FBF6; }
+    .reg-toggle-card.closed { border-color: #F0C4C0; background: #FDF5F4; }
+
+    .reg-toggle-info { display: flex; align-items: center; gap: 14px; }
+    .reg-toggle-icon { font-size: 28px; }
+    .reg-toggle-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .reg-toggle-sub   { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+    .toggle-switch {
+      position: relative;
+      width: 52px; height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--cream-dark);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 4px; top: 4px;
+      background: var(--white);
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+
+    input:checked + .toggle-slider { background: var(--green); }
+    input:checked + .toggle-slider::before { transform: translateX(24px); }
+
+    /* ── Add member form ─────────────────────── */
+    .add-member-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+
+    .add-member-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 14px;
+    }
+
+    .add-field { display: flex; flex-direction: column; gap: 5px; }
+
+    .add-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .add-field input {
+      padding: 9px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--cream);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .add-field input:focus { border-color: var(--navy); background: var(--white); }
+
+    .btn-add-member {
+      padding: 9px 20px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+      height: 40px;
+    }
+
+    .btn-add-member:hover    { background: #152e4a; }
+    .btn-add-member:disabled { opacity: .5; cursor: not-allowed; }
+
+    .add-member-msg {
+      margin-top: 10px;
+      padding: 9px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      display: none;
+    }
+    .add-member-msg.show  { display: block; }
+    .add-member-msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .add-member-msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+
     @media (max-width: 600px) {
       .nav-links  { display: none; }
       .member-row { flex-direction: column; align-items: flex-start; }
@@ -515,6 +641,48 @@
     <div class="stat-card">
       <div class="stat-value" id="statSurvivorAlive">—</div>
       <div class="stat-label">Survivor Alive</div>
+    </div>
+  </div>
+
+
+  <!-- ── Registration toggle ── -->
+  <div class="reg-toggle-card" id="regToggleCard">
+    <div class="reg-toggle-info">
+      <div class="reg-toggle-icon" id="regToggleIcon">🔒</div>
+      <div>
+        <div class="reg-toggle-title" id="regToggleTitle">Registration Closed</div>
+        <div class="reg-toggle-sub" id="regToggleSub">New users cannot sign up</div>
+      </div>
+    </div>
+    <label class="toggle-switch" title="Toggle registration open/closed">
+      <input type="checkbox" id="regToggleInput" />
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <!-- ── Add member manually ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Add Member Manually</span>
+    </div>
+    <div class="add-member-card">
+      <div style="font-size:13px;color:var(--ink-faint)">Create an account for a member directly — they can sign in with the PIN you set and change it via "Forgot PIN?" if needed.</div>
+      <div class="add-member-grid">
+        <div class="add-field">
+          <label>Display Name</label>
+          <input type="text" id="addName" placeholder="e.g. Jane Smith" />
+        </div>
+        <div class="add-field">
+          <label>Email</label>
+          <input type="email" id="addEmail" placeholder="jane@example.com" />
+        </div>
+        <div class="add-field">
+          <label>PIN (6–8 digits)</label>
+          <input type="text" id="addPin" placeholder="e.g. 123456" maxlength="8" inputmode="numeric" />
+        </div>
+        <button class="btn-add-member" id="addMemberBtn">Add Member</button>
+      </div>
+      <div class="add-member-msg" id="addMemberMsg"></div>
     </div>
   </div>
 
@@ -593,7 +761,7 @@
 
 <script type="module">
   import { initializeApp }                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut }    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -769,6 +937,88 @@
       toast('Failed to revoke access.', 'error');
     }
   };
+
+
+  // ── Registration toggle ───────────────────────────────────────────────
+  async function loadRegistrationState() {
+    const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
+    const isOpen = snap.exists() ? snap.val() : false;
+    setRegToggleUI(isOpen);
+    document.getElementById('regToggleInput').checked = isOpen;
+  }
+
+  function setRegToggleUI(isOpen) {
+    const card  = document.getElementById('regToggleCard');
+    const icon  = document.getElementById('regToggleIcon');
+    const title = document.getElementById('regToggleTitle');
+    const sub   = document.getElementById('regToggleSub');
+    card.className  = `reg-toggle-card ${isOpen ? 'open' : 'closed'}`;
+    icon.textContent  = isOpen ? '🟢' : '🔒';
+    title.textContent = isOpen ? 'Registration Open' : 'Registration Closed';
+    sub.textContent   = isOpen ? 'New users can sign up and request access' : 'New users cannot sign up';
+  }
+
+  document.getElementById('regToggleInput').addEventListener('change', async (e) => {
+    const isOpen = e.target.checked;
+    try {
+      await set(ref(db, 'adminConfig/settings/registrationOpen'), isOpen);
+      setRegToggleUI(isOpen);
+      toast(isOpen ? '✅ Registration opened' : '🔒 Registration closed');
+    } catch (err) {
+      toast('Failed to update registration setting.', 'error');
+      e.target.checked = !isOpen; // revert
+    }
+  });
+
+  // ── Add member manually ───────────────────────────────────────────────
+  document.getElementById('addMemberBtn').addEventListener('click', async () => {
+    const name  = document.getElementById('addName').value.trim();
+    const email = document.getElementById('addEmail').value.trim();
+    const pin   = document.getElementById('addPin').value.trim();
+    const msg   = document.getElementById('addMemberMsg');
+
+    const showMsg = (text, type) => {
+      msg.textContent = text;
+      msg.className = `add-member-msg ${type} show`;
+    };
+
+    if (!name)  { showMsg('Display name is required.', 'error'); return; }
+    if (!email) { showMsg('Email is required.', 'error'); return; }
+    if (!/^\d{6,8}$/.test(pin)) { showMsg('PIN must be 6–8 digits.', 'error'); return; }
+
+    const btn = document.getElementById('addMemberBtn');
+    btn.disabled = true; btn.textContent = 'Adding…';
+
+    try {
+      // Create Firebase Auth account
+      const cred = await createUserWithEmailAndPassword(auth, email, pin);
+      const uid  = cred.user.uid;
+
+      // Write member profile — auto-approved since admin is adding them
+      await set(ref(db, `adminConfig/members/${uid}`), {
+        email,
+        displayName: name,
+        approved: true,
+        joinedAt: new Date().toISOString(),
+        addedByAdmin: true,
+      });
+
+      showMsg(`✅ ${name} added and approved! They can sign in with their email and the PIN you set.`, 'info');
+      document.getElementById('addName').value  = '';
+      document.getElementById('addEmail').value = '';
+      document.getElementById('addPin').value   = '';
+      loadMembers();
+    } catch (err) {
+      const msgs = {
+        'auth/email-already-in-use': 'That email already has an account.',
+        'auth/invalid-email':        'Invalid email address.',
+        'auth/weak-password':        'PIN too short (min 6 digits).',
+      };
+      showMsg(msgs[err.code] || `Error: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Add Member';
+    }
+  });
 
   // ── Survivor stats ────────────────────────────────────────────────────
   async function loadSurvivorStats() {
@@ -1029,6 +1279,7 @@
     renderPending();
     renderMembers();
     loadSurvivorStats();
+    loadRegistrationState();
 
     // Set default dates
     document.getElementById('picksDate').value = todayStr();
