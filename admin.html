@@ -795,10 +795,21 @@
       <div class="settings-row">
         <div class="settings-row-info">
           <div class="settings-row-label">Reset Monthly Standings</div>
-          <div class="settings-row-sub">Wipes all picks for the current month from the standings calculation. Does <em>not</em> delete pick records — only resets the month start day to today.</div>
+          <div class="settings-row-sub">Only resets the standings start day to today — pick records are kept. Use this when new members join mid-month.</div>
         </div>
         <div class="settings-row-control">
-          <button class="btn-danger" id="resetMonthlyBtn">⚠️ Reset This Month</button>
+          <button class="btn-danger" id="resetMonthlyBtn">⚠️ Reset Standings</button>
+        </div>
+      </div>
+
+      <!-- Reset survivor -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Reset Survivor</div>
+          <div class="settings-row-sub">Clears all survivor picks and status for this month. Everyone becomes alive again with all 30 teams available. Also sets the survivor start day to today.</div>
+        </div>
+        <div class="settings-row-control">
+          <button class="btn-danger" id="resetSurvivorBtnTop">💀 Reset Survivor</button>
         </div>
       </div>
 
@@ -1336,6 +1347,22 @@
   }
 
   // ── Reset survivor ────────────────────────────────────────────────────
+  // ── Survivor reset (top-level settings) ──────────────────────────────
+  document.getElementById('resetSurvivorBtnTop').addEventListener('click', async () => {
+    const ym  = yearMonthStr();
+    const day = new Date().getDate();
+    if (!confirm(`💀 Reset ALL survivor data for ${ym}?\n\nEveryone will be alive again, all picks cleared, and the start day set to today (day ${day}).\n\nThis cannot be undone.`)) return;
+    try {
+      await remove(ref(db, `survivor/${ym}`));
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      document.getElementById('monthlyStartDay').value = day;
+      toast('💀 Survivor reset — everyone is alive again from today!', 'success');
+      loadSurvivorStats();
+    } catch (e) {
+      toast('Failed to reset survivor.', 'error');
+    }
+  });
+
   document.getElementById('resetSurvivorBtn').addEventListener('click', async () => {
     const ym  = yearMonthStr();
     const day = new Date().getDate();
