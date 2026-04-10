@@ -424,6 +424,207 @@
       .team-name { font-size: 13px; }
       .pick-btn  { padding: 7px 10px; font-size: 12px; }
     }
+
+    /* ── Survivor section ────────────────────── */
+    .survivor-section {
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 2px solid var(--cream-dark);
+    }
+
+    .survivor-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .survivor-section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--navy);
+    }
+
+    .survivor-section-sub {
+      font-size: 13px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+
+    .survivor-status-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .survivor-status-card.s-alive  { border-color: #A8D5B5; background: linear-gradient(135deg,#F0FBF4 0%,var(--white) 50%); }
+    .survivor-status-card.s-dead   { border-color: #F0C4C0; background: linear-gradient(135deg,#FDF0EF 0%,var(--white) 50%); }
+    .survivor-status-card.s-freepass { border-color: #F5DFA0; background: linear-gradient(135deg,#FEF9EE 0%,var(--white) 50%); }
+
+    .s-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .s-top-left { display: flex; align-items: center; gap: 14px; }
+    .s-icon { font-size: 36px; line-height: 1; }
+
+    .s-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s-sub {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+    }
+
+    .s-pick-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .s-pick-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-light);
+    }
+
+    .s-current-pick {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--cream);
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s-current-pick img { width: 26px; height: 26px; object-fit: contain; }
+
+    .s-result-win     { color: var(--green); font-size: 13px; font-weight: 700; }
+    .s-result-loss    { color: var(--red);   font-size: 13px; font-weight: 700; }
+    .s-result-pending { color: var(--ink-faint); font-size: 13px; }
+
+    .s-team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .s-team-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 10px 6px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s-team-tile img { width: 30px; height: 30px; object-fit: contain; }
+
+    .s-team-tile:hover:not(.s-used):not(.s-selected) {
+      border-color: var(--navy);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .s-team-tile.s-selected {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: var(--white);
+    }
+
+    .s-team-tile.s-used {
+      opacity: .38;
+      cursor: not-allowed;
+      background: var(--cream);
+    }
+
+    .s-used-dot {
+      position: absolute;
+      top: 3px; right: 3px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--ink-faint);
+    }
+
+    .s-confirm-btn {
+      margin-top: 14px;
+      padding: 10px 22px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .s-confirm-btn:hover  { background: #152e4a; }
+    .s-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .s-freepass-btn {
+      padding: 8px 16px;
+      border: 1.5px solid var(--accent);
+      border-radius: var(--radius-sm);
+      background: #FEF9EE;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: #7A5A10;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .s-freepass-btn:hover { background: var(--accent); color: var(--white); }
+    .s-freepass-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .s-msg {
+      margin-top: 10px;
+      padding: 9px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      display: none;
+    }
+    .s-msg.show  { display: block; }
+    .s-msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .s-msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+
+    .view-survivor-link {
+      font-size: 13px;
+      color: var(--navy);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .view-survivor-link:hover { text-decoration: underline; }
+
   </style>
 </head>
 <body>
@@ -479,13 +680,28 @@
     </div>
   </div>
 
+
+  <!-- Survivor Section -->
+  <div class="survivor-section" id="survivorSection" style="display:none">
+    <div class="survivor-section-header">
+      <div>
+        <div class="survivor-section-title">💀 Survivor</div>
+        <div class="survivor-section-sub" id="survivorSub">Pick one team today to stay alive.</div>
+      </div>
+      <a href="survivor.html" class="view-survivor-link">Full survivor page →</a>
+    </div>
+    <div class="survivor-status-card" id="survivorCard">
+      <div class="state-box"><div class="spinner"></div></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Firebase + App logic -->
 <script type="module">
   import { initializeApp }                         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-  import { getDatabase, ref, get, set, child }     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { getDatabase, ref, get, set, update, child } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
@@ -507,6 +723,28 @@
   let userPicks     = {};               // gameId → {teamId, lockedIn}
   let gamesCache    = {};               // gameId → game object
   let lockTimers    = {};               // gameId → setTimeout id
+
+  // ── Survivor state ────────────────────────────────────────────────────
+  const MLB_TEAMS = [
+    { abbrev:'LAA', name:'Angels' },    { abbrev:'HOU', name:'Astros' },
+    { abbrev:'OAK', name:'Athletics' }, { abbrev:'TOR', name:'Blue Jays' },
+    { abbrev:'ATL', name:'Braves' },    { abbrev:'MIL', name:'Brewers' },
+    { abbrev:'STL', name:'Cardinals' }, { abbrev:'DET', name:'Tigers' },
+    { abbrev:'CLE', name:'Guardians' }, { abbrev:'SF',  name:'Giants' },
+    { abbrev:'SD',  name:'Padres' },    { abbrev:'LAD', name:'Dodgers' },
+    { abbrev:'TB',  name:'Rays' },      { abbrev:'TEX', name:'Rangers' },
+    { abbrev:'MIN', name:'Twins' },     { abbrev:'NYY', name:'Yankees' },
+    { abbrev:'MIA', name:'Marlins' },   { abbrev:'NYM', name:'Mets' },
+    { abbrev:'PHI', name:'Phillies' },  { abbrev:'PIT', name:'Pirates' },
+    { abbrev:'ARI', name:'Diamondbacks'},{ abbrev:'COL', name:'Rockies' },
+    { abbrev:'KC',  name:'Royals' },    { abbrev:'BAL', name:'Orioles' },
+    { abbrev:'BOS', name:'Red Sox' },   { abbrev:'CIN', name:'Reds' },
+    { abbrev:'CHC', name:'Cubs' },      { abbrev:'CWS', name:'White Sox' },
+    { abbrev:'SEA', name:'Mariners' },  { abbrev:'WSH', name:'Nationals' },
+  ];
+
+  let survivorState    = null;
+  let survivorSelected = null;
 
   // ── Date helpers ──────────────────────────────────────────────────────
   function todayStr() {
@@ -671,6 +909,13 @@
 
     renderGames(games, dateStr);
     updateSummary(games);
+
+    // Load survivor section (only on today's date)
+    if (dateStr === todayStr()) {
+      loadSurvivorSection(games);
+    } else {
+      document.getElementById('survivorSection').style.display = 'none';
+    }
   }
 
   // ── Load picks ────────────────────────────────────────────────────────
@@ -898,6 +1143,206 @@
   document.getElementById('datePicker').addEventListener('change', e => setDate(e.target.value));
 
   // ── Auth gate ─────────────────────────────────────────────────────────
+
+  // ── Survivor helpers ──────────────────────────────────────────────────
+  function espnLogoSurv(abbrev) {
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png`;
+  }
+
+  function yearMonthStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  function teamsPlayingToday(games) {
+    const set = new Set();
+    for (const g of games) {
+      set.add(g.homeTeam.abbrev.toUpperCase());
+      set.add(g.awayTeam.abbrev.toUpperCase());
+    }
+    return set;
+  }
+
+  function getSurvivorPickResult(state, games) {
+    const today    = todayStr();
+    const todayPick = state.usedTeams?.[today];
+    if (!todayPick) return null;
+    for (const g of games) {
+      const inGame = g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ||
+                     g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+      if (!inGame) continue;
+      if (g.statusName === 'STATUS_FINAL') {
+        const won = g.winnerId === g.homeTeam.id
+          ? g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+          : g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+        return { abbrev: todayPick, result: won ? 'win' : 'loss' };
+      }
+      return { abbrev: todayPick, result: 'pending' };
+    }
+    return { abbrev: todayPick, result: 'pending' };
+  }
+
+  async function loadSurvivorSection(games) {
+    const section = document.getElementById('survivorSection');
+    const card    = document.getElementById('survivorCard');
+    const day     = new Date().getDate();
+
+    // Don't show on day 31
+    if (day === 31) { section.style.display = 'none'; return; }
+
+    section.style.display = '';
+
+    const ym   = yearMonthStr();
+    const snap = await get(ref(db, `survivor/${ym}/${currentUser.uid}`));
+    survivorState = snap.exists() ? snap.val() : {
+      alive: true, freePassUsed: false, freePassDay: null, usedTeams: {}
+    };
+
+    renderSurvivorCard(games);
+  }
+
+  function renderSurvivorCard(games) {
+    const card    = document.getElementById('survivorCard');
+    const today   = todayStr();
+    const state   = survivorState;
+    const todayPick = state.usedTeams?.[today];
+    const usedSet   = new Set(Object.values(state.usedTeams || {}));
+    const playing   = teamsPlayingToday(games);
+    const pickResult = getSurvivorPickResult(state, games);
+
+    // Card class
+    let cardClass = 's-alive';
+    let icon = '✅'; let title = 'Alive'; let sub = `Day ${new Date().getDate()} · pick a team below`;
+    if (!state.alive) { cardClass = 's-dead'; icon = '💀'; title = 'Eliminated'; sub = 'Better luck next month'; }
+    else if (state.freePassUsed) { cardClass = 's-freepass'; icon = '🎟️'; title = 'Alive — Free Pass Used'; sub = `Day ${new Date().getDate()}`; }
+
+    card.className = `survivor-status-card ${cardClass}`;
+
+    // Pick result display
+    let pickHTML = '';
+
+    if (todayPick) {
+      const team = MLB_TEAMS.find(t => t.abbrev === todayPick);
+      const resultLabel = pickResult ? { win:'✅ Win', loss:'❌ Loss', pending:'⏳ Pending' }[pickResult.result] : '⏳ Pending';
+      const resultClass = pickResult ? { win:'s-result-win', loss:'s-result-loss', pending:'s-result-pending' }[pickResult.result] : 's-result-pending';
+      pickHTML = `
+        <div class="s-pick-row">
+          <span class="s-pick-label">Today's survivor pick:</span>
+          <div class="s-current-pick">
+            <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
+            ${team?.name || todayPick}
+          </div>
+          <span class="${resultClass}">${resultLabel}</span>
+        </div>`;
+    } else if (!state.alive) {
+      const fpAvail = !state.freePassUsed;
+      pickHTML = `
+        <div class="s-pick-row">
+          <span style="font-size:13px;color:var(--ink-faint)">You've been eliminated.</span>
+          ${fpAvail ? `<button class="s-freepass-btn" id="sFreePassBtn">🎟️ Use Free Pass to Rejoin</button>` : ''}
+        </div>`;
+    } else {
+      // Build team grid
+      const tiles = MLB_TEAMS.map(team => {
+        const isUsed    = usedSet.has(team.abbrev);
+        const isPlaying = playing.has(team.abbrev.toUpperCase());
+        return `
+          <div class="s-team-tile ${isUsed ? 's-used' : ''}"
+               data-abbrev="${team.abbrev}"
+               ${isUsed ? 'title="Already used this month"' : ''}
+               style="${!isPlaying && !isUsed ? 'opacity:.5' : ''}">
+            ${isUsed ? '<div class="s-used-dot"></div>' : ''}
+            <img src="${espnLogoSurv(team.abbrev)}" alt="${team.abbrev}" onerror="this.style.display='none'" />
+            ${team.abbrev}
+          </div>`;
+      }).join('');
+
+      const fpAvail = state.alive && !state.freePassUsed;
+      pickHTML = `
+        <div class="s-pick-row" style="margin-bottom:4px">
+          <span class="s-pick-label">Pick today's survivor team:</span>
+          ${fpAvail ? `<button class="s-freepass-btn" id="sFreePassBtn">🎟️ Use Free Pass</button>` : '<span style="font-size:12px;color:var(--ink-faint)">🎟️ Free pass used</span>'}
+        </div>
+        <div class="s-team-grid" id="sTeamGrid">${tiles}</div>
+        <div class="s-msg" id="sMsg"></div>
+        <button class="s-confirm-btn" id="sConfirmBtn" disabled>Confirm Survivor Pick</button>`;
+    }
+
+    card.innerHTML = `
+      <div class="s-top">
+        <div class="s-top-left">
+          <div class="s-icon">${icon}</div>
+          <div>
+            <div class="s-title">${title}</div>
+            <div class="s-sub">${sub}</div>
+          </div>
+        </div>
+      </div>
+      ${pickHTML}`;
+
+    // Bind team grid
+    document.getElementById('sTeamGrid')?.addEventListener('click', e => {
+      const tile = e.target.closest('.s-team-tile');
+      if (!tile || tile.classList.contains('s-used')) return;
+      const abbrev = tile.dataset.abbrev;
+      document.querySelectorAll('.s-team-tile').forEach(t => t.classList.remove('s-selected'));
+      if (survivorSelected === abbrev) {
+        survivorSelected = null;
+        document.getElementById('sConfirmBtn').disabled = true;
+      } else {
+        survivorSelected = abbrev;
+        tile.classList.add('s-selected');
+        document.getElementById('sConfirmBtn').disabled = false;
+      }
+    });
+
+    document.getElementById('sConfirmBtn')?.addEventListener('click', confirmSurvivorPick);
+    document.getElementById('sFreePassBtn')?.addEventListener('click', useSurvivorFreePass);
+  }
+
+  async function confirmSurvivorPick() {
+    if (!survivorSelected) return;
+    const today = todayStr();
+    const ym    = yearMonthStr();
+    const btn   = document.getElementById('sConfirmBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      const updatedTeams = { ...(survivorState.usedTeams || {}), [today]: survivorSelected };
+      await update(ref(db), {
+        [`survivor/${ym}/${currentUser.uid}/usedTeams`]:    updatedTeams,
+        [`survivor/${ym}/${currentUser.uid}/alive`]:        survivorState.alive,
+        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: survivorState.freePassUsed,
+      });
+      survivorState.usedTeams = updatedTeams;
+      survivorSelected = null;
+      renderSurvivorCard(Object.values(gamesCache));
+    } catch (err) {
+      const msg = document.getElementById('sMsg');
+      if (msg) { msg.textContent = 'Failed to save. Try again.'; msg.className = 's-msg error show'; }
+      btn.disabled = false; btn.textContent = 'Confirm Survivor Pick';
+    }
+  }
+
+  async function useSurvivorFreePass() {
+    const ym = yearMonthStr();
+    const day = new Date().getDate();
+    if (!confirm('Use your free pass? This cannot be undone.')) return;
+    try {
+      await update(ref(db), {
+        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: true,
+        [`survivor/${ym}/${currentUser.uid}/freePassDay`]:  day,
+        [`survivor/${ym}/${currentUser.uid}/alive`]:        true,
+      });
+      survivorState.freePassUsed = true;
+      survivorState.freePassDay  = day;
+      survivorState.alive        = true;
+      renderSurvivorCard(Object.values(gamesCache));
+    } catch (err) {
+      alert('Failed to use free pass. Please try again.');
+    }
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
 
@@ -920,6 +1365,7 @@
 
     // Load today's games
     setDate(todayStr());
+
   });
 </script>
 
