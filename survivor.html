@@ -803,6 +803,17 @@
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
+  // ── Has a specific team's game started today? ────────────────────────
+  function teamGameStarted(abbrev) {
+    if (!abbrev) return false;
+    const game = todayGames.find(g =>
+      g.homeTeam.abbrev.toUpperCase() === abbrev.toUpperCase() ||
+      g.awayTeam.abbrev.toUpperCase() === abbrev.toUpperCase()
+    );
+    if (!game) return false;
+    return new Date() >= new Date(game.startTime);
+  }
+
   // ── Last game of day started? ─────────────────────────────────────────
   function survivorPicksLocked() {
     if (todayGames.length === 0) return false;
@@ -1051,9 +1062,16 @@
     }
 
     const usedAbbrevs = new Set(Object.values(usedTeams));
-    const canPick     = myState.alive && !todayPick && !locked;
+    const canPick     = canPickNew; // already computed above
 
     let pickHTML = '';
+
+    // Can they change their pick?
+    // Yes if: they have a pick AND that pick's game hasn't started AND they're alive
+    const currentPickLocked = todayPick ? teamGameStarted(todayPick) : false;
+    const canChange = myState.alive && todayPick && !currentPickLocked;
+    // canPick is already defined below, but we need canChange here first
+    const canPickNew = myState.alive && !todayPick && !locked;
 
     if (todayPick) {
       const resultLabel = pickResult
@@ -1062,15 +1080,58 @@
       const resultClass = pickResult
         ? { win:'result-win', loss:'result-loss', pending:'result-pending' }[pickResult]
         : 'result-pending';
-      pickHTML = `
-        <div class="pick-section">
-          <div class="pick-section-label">Today's Pick</div>
-          <div class="current-pick-display">
-            <img src="${espnLogo(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-            <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
-            <span class="current-pick-result ${resultClass}">${resultLabel}</span>
-          </div>
-        </div>`;
+
+      if (canChange) {
+        // Show current pick + a change option
+        // Build team grid showing only teams whose games haven't started yet (and not already used this month except today's pick)
+        const usedExceptToday = new Set(
+          Object.entries(usedTeams)
+            .filter(([date]) => date !== today)
+            .map(([, abbrev]) => abbrev)
+        );
+        const tilesHTML = MLB_TEAMS.map(team => {
+          const isUsed      = usedExceptToday.has(team.abbrev);
+          const gameStarted = teamGameStarted(team.abbrev);
+          const isCurrent   = team.abbrev === todayPick;
+          const isPlaying   = playing.has(team.abbrev.toUpperCase());
+          // Disable if: used this month (not today) OR their game has already started
+          const disabled = isUsed || gameStarted;
+          return `
+            <div class="team-tile ${disabled ? 'used' : ''} ${isCurrent ? 'selected' : ''}"
+                 data-abbrev="${team.abbrev}" data-name="${team.name}"
+                 title="${isUsed ? 'Already used this month' : gameStarted ? 'Game already started' : ''}"
+                 style="${!isPlaying && !disabled ? 'opacity:.5' : ''}">
+              ${isUsed ? '<span class="used-label">Used</span>' : ''}
+              ${gameStarted && !isUsed ? '<span class="used-label">Started</span>' : ''}
+              <img src="${espnLogo(team.abbrev)}" alt="${team.abbrev}" onerror="this.style.display='none'" />
+              <span class="team-abbrev">${team.abbrev}</span>
+            </div>`;
+        }).join('');
+
+        pickHTML = `
+          <div class="pick-section">
+            <div class="pick-section-label">Today's Pick — tap another team to change</div>
+            <div class="current-pick-display" style="margin-bottom:12px">
+              <img src="${espnLogo(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
+              <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
+              <span class="current-pick-result ${resultClass}">${resultLabel}</span>
+            </div>
+            <div class="team-grid" id="teamGrid">${tilesHTML}</div>
+            <div class="msg" id="pickMsg"></div>
+            <button class="btn-primary" id="confirmPickBtn" disabled>Change Pick</button>
+          </div>`;
+      } else {
+        // Pick is locked — just show it
+        pickHTML = `
+          <div class="pick-section">
+            <div class="pick-section-label">Today's Pick${currentPickLocked ? ' — 🔒 Locked' : ''}</div>
+            <div class="current-pick-display">
+              <img src="${espnLogo(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
+              <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
+              <span class="current-pick-result ${resultClass}">${resultLabel}</span>
+            </div>
+          </div>`;
+      }
     } else if (!myState.alive) {
       pickHTML = `
         <div class="pick-section">
@@ -1091,6 +1152,7 @@
     } else if (canPick) {
       const tilesHTML = MLB_TEAMS.map(team => {
         const isUsed    = usedAbbrevs.has(team.abbrev);
+        const gameStarted = teamGameStarted(team.abbrev);
         const isPlaying = playing.has(team.abbrev.toUpperCase());
         return `
           <div class="team-tile ${isUsed ? 'used' : ''}"
@@ -1138,31 +1200,50 @@
         ${pickHTML}
       </div>`;
 
-    if (canPick) {
+    if (canPick || canChange) {
+      // Pre-select current pick when changing
+      if (canChange) selectedTeam = todayPick;
+
       document.getElementById('teamGrid')?.addEventListener('click', e => {
         const tile = e.target.closest('.team-tile');
         if (!tile || tile.classList.contains('used')) return;
         const abbrev = tile.dataset.abbrev;
         document.querySelectorAll('.team-tile').forEach(t => t.classList.remove('selected'));
-        if (selectedTeam === abbrev) {
+        if (selectedTeam === abbrev && !canChange) {
+          // Toggle off only when making a fresh pick, not when changing
           selectedTeam = null;
           document.getElementById('confirmPickBtn').disabled = true;
         } else {
           selectedTeam = abbrev;
           tile.classList.add('selected');
-          document.getElementById('confirmPickBtn').disabled = false;
+          // Enable confirm only if selection differs from current pick
+          document.getElementById('confirmPickBtn').disabled = canChange && abbrev === todayPick;
         }
       });
       document.getElementById('confirmPickBtn')?.addEventListener('click', confirmPick);
     }
   }
 
-  // ── Confirm pick ──────────────────────────────────────────────────────
+  // ── Confirm pick (also handles changing) ─────────────────────────────
   async function confirmPick() {
-    if (!selectedTeam || survivorPicksLocked()) return;
-    const today = todayStr();
-    const ym    = yearMonthStr();
-    const btn   = document.getElementById('confirmPickBtn');
+    if (!selectedTeam) return;
+    const today      = todayStr();
+    const ym         = yearMonthStr();
+    const currentPick = myState.usedTeams?.[today];
+
+    // Safety checks
+    if (teamGameStarted(selectedTeam)) {
+      const msg = document.getElementById('pickMsg');
+      if (msg) { msg.textContent = 'That team\'s game has already started. Pick another.'; msg.className = 'msg error show'; }
+      return;
+    }
+    if (currentPick && teamGameStarted(currentPick)) {
+      const msg = document.getElementById('pickMsg');
+      if (msg) { msg.textContent = 'Your current pick\'s game has already started — it\'s locked in.'; msg.className = 'msg error show'; }
+      return;
+    }
+
+    const btn = document.getElementById('confirmPickBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     try {
       const updatedTeams = { ...(myState.usedTeams || {}), [today]: selectedTeam };
