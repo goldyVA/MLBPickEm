@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results · MLB Pick'em</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── Nav ─────────────────────────────────── */
+    .app-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 4px; }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-link:hover  { background: var(--cream); color: var(--ink); }
+    .nav-link.active { background: var(--navy); color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-user  { font-size: 13px; color: var(--ink-faint); }
+
+    .btn-signout {
+      padding: 6px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Page body ───────────────────────────── */
+    .page-body {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 82px 24px 48px;
+    }
+
+    /* ── Page header ─────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+    /* ── Date nav ────────────────────────────── */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-btn {
+      width: 34px; height: 34px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 8px;
+      background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--ink-light);
+      transition: border-color .15s, color .15s;
+    }
+    .date-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+    .date-display {
+      padding: 7px 16px;
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      min-width: 140px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .date-display input[type="date"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    /* ── Legend ──────────────────────────────── */
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-light);
+    }
+
+    .legend-swatch {
+      width: 20px; height: 20px;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+    }
+
+    .swatch-correct { background: #D4EDDA; }
+    .swatch-wrong   { background: #F8D7DA; }
+    .swatch-locked  { background: var(--cream-dark); }
+    .swatch-none    { background: var(--white); border: 1.5px solid var(--cream-dark); }
+
+    /* ── Results table wrapper ───────────────── */
+    .table-wrapper {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    /* ── Header row (games) ──────────────────── */
+    thead th {
+      padding: 0;
+      border-bottom: 2px solid var(--cream-dark);
+      vertical-align: bottom;
+      background: var(--cream);
+    }
+
+    thead th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background: var(--cream);
+      min-width: 140px;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      border-right: 2px solid var(--cream-dark);
+    }
+
+    .game-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 12px;
+      gap: 4px;
+      min-width: 90px;
+      border-right: 1px solid var(--cream-dark);
+      cursor: default;
+    }
+
+    .game-header:last-child { border-right: none; }
+
+    .game-header-logos {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .game-header-logo {
+      width: 22px; height: 22px;
+      object-fit: contain;
+    }
+
+    .game-header-vs {
+      font-size: 9px;
+      color: var(--ink-faint);
+      font-weight: 600;
+    }
+
+    .game-header-time {
+      font-size: 10px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .game-header-status {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 100px;
+    }
+
+    .status-upcoming { color: var(--navy); background: #EEF2F8; }
+    .status-live     { color: var(--red);  background: #FDECEA; }
+    .status-final    { color: var(--ink-faint); background: var(--cream-dark); }
+
+    /* Totals column */
+    .totals-th {
+      min-width: 70px;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-left: 2px solid var(--cream-dark);
+    }
+
+    /* ── Body rows (members) ─────────────────── */
+    tbody tr {
+      border-bottom: 1px solid var(--cream-dark);
+      transition: background .1s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #FAFAF8; }
+
+    /* Member name cell */
+    .member-cell {
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      background: var(--white);
+      border-right: 2px solid var(--cream-dark);
+      padding: 12px 16px;
+      min-width: 140px;
+    }
+
+    tbody tr:hover .member-cell { background: #FAFAF8; }
+
+    .member-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .member-you {
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-weight: 400;
+    }
+
+    /* Pick cells */
+    .pick-cell {
+      padding: 8px 6px;
+      text-align: center;
+      vertical-align: middle;
+      border-right: 1px solid var(--cream-dark);
+    }
+
+    .pick-cell:last-of-type { border-right: none; }
+
+    .pick-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .pick-chip img {
+      width: 16px; height: 16px;
+      object-fit: contain;
+    }
+
+    .chip-correct  { background: #D4EDDA; color: #155724; }
+    .chip-wrong    { background: #F8D7DA; color: #721C24; }
+    .chip-locked   { background: var(--cream-dark); color: var(--ink-faint); font-size: 14px; }
+    .chip-revealed { background: #EEF2F8; color: var(--navy); }
+    .chip-none     { color: var(--ink-faint); font-size: 12px; }
+
+    /* Totals cell */
+    .totals-cell {
+      padding: 8px 12px;
+      text-align: center;
+      border-left: 2px solid var(--cream-dark);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .totals-cell .correct-count { color: var(--green); }
+    .totals-cell .slash { color: var(--ink-faint); font-weight: 400; margin: 0 1px; }
+
+    /* ── Daily leaders banner ────────────────── */
+    .leaders-bar {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .leaders-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .leader-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FEF9EE;
+      border: 1.5px solid #F5DFA0;
+      border-radius: 100px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #7A5A10;
+    }
+
+    /* ── States ──────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--ink-faint);
+    }
+
+    .state-box .icon { font-size: 48px; margin-bottom: 16px; }
+    .state-box h3    { font-size: 18px; color: var(--ink-light); margin-bottom: 8px; }
+    .state-box p     { font-size: 14px; line-height: 1.5; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--cream-dark);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile ──────────────────────────────── */
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+  <div class="nav-links">
+    <a href="picks.html"     class="nav-link">My Picks</a>
+    <a href="results.html"   class="nav-link active">Results</a>
+    <a href="standings.html" class="nav-link">Standings</a>
+    <a href="survivor.html"  class="nav-link">Survivor</a>
+    <a href="admin.html"     class="nav-link" id="adminLink" style="display:none">Admin</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-signout" id="signOutBtn">Sign out</button>
+  </div>
+</nav>
+
+<div class="page-body">
+
+  <div class="page-header">
+    <div>
+      <h1>Group Results</h1>
+      <p>Picks are hidden 🔒 until game time, then revealed for all to see.</p>
+    </div>
+    <div class="date-nav">
+      <button class="date-btn" id="prevDay">‹</button>
+      <div class="date-display">
+        <span id="dateLabel">Today</span>
+        <input type="date" id="datePicker" />
+      </div>
+      <button class="date-btn" id="nextDay">›</button>
+    </div>
+  </div>
+
+  <!-- Leaders -->
+  <div class="leaders-bar" id="leadersBar" style="display:none">
+    <span class="leaders-label">🏆 Today's leader</span>
+    <div id="leaderChips"></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-swatch swatch-locked">🔒</div>
+      <span>Locked (hidden)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch swatch-correct">✓</div>
+      <span>Correct</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch swatch-wrong">✗</div>
+      <span>Wrong</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch swatch-none"></div>
+      <span>No pick</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div id="tableContainer">
+    <div class="state-box">
+      <div class="spinner"></div>
+      <p>Loading results…</p>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get }                from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser = null;
+  let currentDate = todayStr();
+
+  // ── Date helpers ──────────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function dateToESPN(dateStr) {
+    return dateStr.replace(/-/g, '');
+  }
+
+  function formatDateLabel(dateStr) {
+    const today = todayStr();
+    if (dateStr === today) return 'Today';
+    const d = new Date(dateStr + 'T12:00:00');
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+    if (dateStr === yStr) return 'Yesterday';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+  }
+
+  function shiftDate(dateStr, days) {
+    const d = new Date(dateStr + 'T12:00:00');
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function gameIsLocked(startTimeISO) {
+    return new Date() >= new Date(startTimeISO);
+  }
+
+  function formatGameTime(iso) {
+    return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function espnLogo(abbrev) {
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png`;
+  }
+
+  // ── Load everything for a date ────────────────────────────────────────
+  async function loadResults(dateStr) {
+    const container = document.getElementById('tableContainer');
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading results…</p></div>`;
+    document.getElementById('leadersBar').style.display = 'none';
+
+    // 1. Load games from Firebase cache, or ESPN
+    let games = [];
+    const gamesSnap = await get(ref(db, `games/${dateStr}`));
+
+    if (gamesSnap.exists()) {
+      games = Object.values(gamesSnap.val());
+    } else {
+      try {
+        const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateToESPN(dateStr)}`);
+        const data = await res.json();
+        games = parseESPN(data);
+      } catch (e) {
+        container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
+        return;
+      }
+    }
+
+    if (games.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><h3>No games scheduled</h3><p>Enjoy the off day!</p></div>`;
+      return;
+    }
+
+    // 2. Load all approved members
+    const membersSnap = await get(ref(db, 'adminConfig/members'));
+    if (!membersSnap.exists()) {
+      container.innerHTML = `<div class="state-box"><div class="icon">👥</div><h3>No members yet</h3></div>`;
+      return;
+    }
+
+    const members = [];
+    membersSnap.forEach(child => {
+      const m = child.val();
+      if (m.approved) {
+        members.push({ uid: child.key, ...m });
+      }
+    });
+
+    // Sort: current user first, then alphabetical
+    members.sort((a, b) => {
+      if (a.uid === currentUser.uid) return -1;
+      if (b.uid === currentUser.uid) return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+
+    // 3. Load all picks for this date for all members
+    const allPicks = {};
+    await Promise.all(members.map(async (m) => {
+      const snap = await get(ref(db, `picks/${m.uid}/${dateStr}`));
+      allPicks[m.uid] = snap.exists() ? snap.val() : {};
+    }));
+
+    // 4. Render
+    renderTable(games, members, allPicks, dateStr);
+  }
+
+  // ── Parse ESPN ────────────────────────────────────────────────────────
+  function parseESPN(data) {
+    const games = [];
+    for (const event of (data?.events || [])) {
+      const comp        = event.competitions?.[0];
+      if (!comp) continue;
+      const home        = comp.competitors?.find(c => c.homeAway === 'home');
+      const away        = comp.competitors?.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+      const statusName  = event.status?.type?.name || 'STATUS_SCHEDULED';
+      let winnerId = null;
+      if (statusName === 'STATUS_FINAL') {
+        winnerId = home.winner ? home.team.id : away.winner ? away.team.id : null;
+      }
+      games.push({
+        id:        event.id,
+        startTime: event.date,
+        statusName,
+        statusShort: event.status?.type?.shortDetail || '',
+        homeTeam:  { id: home.team.id, abbrev: home.team.abbreviation, name: home.team.displayName },
+        awayTeam:  { id: away.team.id, abbrev: away.team.abbreviation, name: away.team.displayName },
+        homeScore: home.score ?? null,
+        awayScore: away.score ?? null,
+        winnerId,
+      });
+    }
+    return games;
+  }
+
+  // ── Render table ──────────────────────────────────────────────────────
+  function renderTable(games, members, allPicks, dateStr) {
+    const container = document.getElementById('tableContainer');
+
+    // Calculate totals per member (only for final games)
+    const finalGames = games.filter(g => g.statusName === 'STATUS_FINAL' && g.winnerId);
+    const memberTotals = {};
+    for (const m of members) {
+      let correct = 0, total = 0;
+      for (const g of finalGames) {
+        const pick = allPicks[m.uid]?.[g.id]?.teamId;
+        if (pick) {
+          total++;
+          if (pick === g.winnerId) correct++;
+        }
+      }
+      memberTotals[m.uid] = { correct, total };
+    }
+
+    // Leaders (among members with at least one final pick)
+    if (finalGames.length > 0) {
+      const maxCorrect = Math.max(...members.map(m => memberTotals[m.uid].correct));
+      if (maxCorrect > 0) {
+        const leaders = members.filter(m => memberTotals[m.uid].correct === maxCorrect);
+        const bar     = document.getElementById('leadersBar');
+        const chips   = document.getElementById('leaderChips');
+        chips.innerHTML = leaders.map(l =>
+          `<span class="leader-chip">🏆 ${l.displayName} <span style="font-weight:400;color:#A07830">${maxCorrect} correct</span></span>`
+        ).join(' ');
+        bar.style.display = 'flex';
+      }
+    }
+
+    // Build table
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-wrapper';
+
+    const table = document.createElement('table');
+
+    // ── thead ──
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    // Member column header
+    const memberTh = document.createElement('th');
+    memberTh.textContent = 'Member';
+    headerRow.appendChild(memberTh);
+
+    // Game column headers
+    for (const game of games) {
+      const th = document.createElement('th');
+      const locked   = gameIsLocked(game.startTime);
+      const isFinal  = game.statusName === 'STATUS_FINAL';
+      const isLive   = game.statusName === 'STATUS_IN_PROGRESS';
+
+      let statusClass = 'status-upcoming';
+      let statusText  = formatGameTime(game.startTime);
+      if (isFinal) { statusClass = 'status-final'; statusText = 'Final'; }
+      else if (isLive) { statusClass = 'status-live'; statusText = game.statusShort || 'Live'; }
+
+      th.innerHTML = `
+        <div class="game-header">
+          <div class="game-header-logos">
+            <img class="game-header-logo" src="${espnLogo(game.awayTeam.abbrev)}" alt="${game.awayTeam.abbrev}"
+                 onerror="this.style.display='none'" />
+            <span class="game-header-vs">@</span>
+            <img class="game-header-logo" src="${espnLogo(game.homeTeam.abbrev)}" alt="${game.homeTeam.abbrev}"
+                 onerror="this.style.display='none'" />
+          </div>
+          <div class="game-header-time">${game.awayTeam.abbrev} @ ${game.homeTeam.abbrev}</div>
+          <span class="game-header-status ${statusClass}">${statusText}</span>
+        </div>
+      `;
+      headerRow.appendChild(th);
+    }
+
+    // Totals header
+    const totalsTh = document.createElement('th');
+    totalsTh.className = 'totals-th';
+    totalsTh.textContent = finalGames.length > 0 ? 'Score' : 'Picks';
+    headerRow.appendChild(totalsTh);
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // ── tbody ──
+    const tbody = document.createElement('tbody');
+
+    for (const member of members) {
+      const row = document.createElement('tr');
+
+      // Member name cell
+      const nameTd = document.createElement('td');
+      nameTd.className = 'member-cell';
+      nameTd.innerHTML = `
+        <div class="member-name">
+          ${member.displayName}
+          ${member.uid === currentUser.uid ? '<span class="member-you">(you)</span>' : ''}
+        </div>
+      `;
+      row.appendChild(nameTd);
+
+      // Pick cells
+      for (const game of games) {
+        const td       = document.createElement('td');
+        td.className   = 'pick-cell';
+        const locked   = gameIsLocked(game.startTime);
+        const isFinal  = game.statusName === 'STATUS_FINAL';
+        const pick     = allPicks[member.uid]?.[game.id]?.teamId || null;
+
+        if (!locked) {
+          // Game hasn't started — hide everyone's pick
+          td.innerHTML = pick
+            ? `<span class="pick-chip chip-locked" title="Pick hidden until game starts">🔒</span>`
+            : `<span class="chip-none">—</span>`;
+        } else if (!pick) {
+          // Started but no pick made
+          td.innerHTML = `<span class="chip-none">—</span>`;
+        } else if (isFinal && game.winnerId) {
+          // Final — show correct/wrong
+          const correct   = pick === game.winnerId;
+          const teamAbbrev = pick === game.homeTeam.id ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+          td.innerHTML = `
+            <span class="pick-chip ${correct ? 'chip-correct' : 'chip-wrong'}">
+              <img src="${espnLogo(teamAbbrev)}" alt="${teamAbbrev}" onerror="this.style.display='none'" />
+              ${teamAbbrev}
+            </span>`;
+        } else {
+          // Live or locked but not final — reveal pick
+          const teamAbbrev = pick === game.homeTeam.id ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+          td.innerHTML = `
+            <span class="pick-chip chip-revealed">
+              <img src="${espnLogo(teamAbbrev)}" alt="${teamAbbrev}" onerror="this.style.display='none'" />
+              ${teamAbbrev}
+            </span>`;
+        }
+
+        row.appendChild(td);
+      }
+
+      // Totals cell
+      const totalsTd = document.createElement('td');
+      totalsTd.className = 'totals-cell';
+      const { correct, total } = memberTotals[member.uid];
+      const pickedCount = games.filter(g => allPicks[member.uid]?.[g.id]?.teamId).length;
+
+      if (finalGames.length > 0) {
+        totalsTd.innerHTML = `<span class="correct-count">${correct}</span><span class="slash">/</span>${total}`;
+      } else {
+        totalsTd.innerHTML = `<span style="color:var(--ink-faint)">${pickedCount}</span>`;
+      }
+
+      row.appendChild(totalsTd);
+      tbody.appendChild(row);
+    }
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    container.innerHTML = '';
+    container.appendChild(wrapper);
+  }
+
+  // ── Date nav ──────────────────────────────────────────────────────────
+  function setDate(dateStr) {
+    currentDate = dateStr;
+    document.getElementById('dateLabel').textContent = formatDateLabel(dateStr);
+    document.getElementById('datePicker').value = dateStr;
+    loadResults(dateStr);
+  }
+
+  document.getElementById('prevDay').addEventListener('click', () => setDate(shiftDate(currentDate, -1)));
+  document.getElementById('nextDay').addEventListener('click', () => setDate(shiftDate(currentDate, +1)));
+  document.getElementById('datePicker').addEventListener('change', e => setDate(e.target.value));
+
+  // ── Auth gate ─────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    const snap      = await get(ref(db, `adminConfig/members/${user.uid}`));
+    const member    = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
+
+    if (!member?.approved && !isAdmin) { window.location.href = 'index.html'; return; }
+
+    document.getElementById('navUser').textContent = member?.displayName || user.email;
+    if (isAdmin) document.getElementById('adminLink').style.display = '';
+    document.getElementById('signOutBtn').addEventListener('click', () =>
+      signOut(auth).then(() => window.location.href = 'index.html'));
+
+    setDate(todayStr());
+  });
+</script>
+
+</body>
+</html>
