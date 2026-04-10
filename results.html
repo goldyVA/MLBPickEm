@@ -571,12 +571,12 @@
     const gamesSnap = await get(ref(db, `games/${dateStr}`));
 
     if (gamesSnap.exists()) {
-      games = Object.values(gamesSnap.val());
+      games = Object.values(gamesSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
     } else {
       try {
         const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateToESPN(dateStr)}`);
         const data = await res.json();
-        games = parseESPN(data);
+        games = parseESPN(data).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
       } catch (e) {
         container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
         return;
