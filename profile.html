@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile · MLB Pick'em</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── Nav ─────────────────────────────────── */
+    .app-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 4px; }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-link:hover  { background: var(--cream); color: var(--ink); }
+    .nav-link.active { background: var(--navy); color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-user  { font-size: 13px; color: var(--ink-faint); }
+
+    .btn-signout {
+      padding: 6px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Page ────────────────────────────────── */
+    .page-body {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 90px 24px 48px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+    /* ── Profile card ────────────────────────── */
+    .profile-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .profile-card-header {
+      padding: 16px 22px;
+      background: var(--cream);
+      border-bottom: 1px solid var(--cream-dark);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .profile-card-body { padding: 22px; }
+
+    /* Info row */
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--cream-dark);
+    }
+
+    .profile-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .profile-email {
+      font-size: 13px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+
+    .profile-joined {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+
+    /* Form fields */
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-light);
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--cream);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+
+    .field input:focus {
+      border-color: var(--navy);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(27,58,92,.10);
+    }
+
+    .field input::placeholder { color: var(--ink-faint); }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--ink-faint);
+    }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      margin-top: 4px;
+    }
+
+    .btn-primary:hover  { background: #152e4a; }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* Messages */
+    .msg {
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      line-height: 1.45;
+      display: none;
+      margin-top: 12px;
+    }
+    .msg.show  { display: block; }
+    .msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+
+    /* ── Season stats card ───────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--cream-dark);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .stat-cell {
+      background: var(--white);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--navy);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+  <div class="nav-links">
+    <a href="picks.html"     class="nav-link">My Picks</a>
+    <a href="results.html"   class="nav-link">Results</a>
+    <a href="standings.html" class="nav-link">Standings</a>
+    <a href="survivor.html"  class="nav-link">Survivor</a>
+    <a href="profile.html"   class="nav-link active">Profile</a>
+    <a href="admin.html"     class="nav-link" id="adminLink" style="display:none">Admin</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-signout" id="signOutBtn">Sign out</button>
+  </div>
+</nav>
+
+<div class="page-body">
+
+  <div class="page-header">
+    <h1>My Profile</h1>
+    <p>Manage your account settings.</p>
+  </div>
+
+  <!-- Account info -->
+  <div class="profile-card" id="profileCard" style="display:none">
+    <div class="profile-card-header">Account</div>
+    <div class="profile-card-body">
+      <div class="info-row">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div>
+          <div class="profile-name" id="profileName">—</div>
+          <div class="profile-email" id="profileEmail">—</div>
+          <div class="profile-joined" id="profileJoined">—</div>
+        </div>
+      </div>
+
+      <!-- Change display name -->
+      <div class="field">
+        <label for="newName">Display Name</label>
+        <input type="text" id="newName" placeholder="Your display name" />
+      </div>
+      <button class="btn-primary" id="saveNameBtn">Save Name</button>
+      <div class="msg" id="nameMsg"></div>
+    </div>
+  </div>
+
+  <!-- Season stats -->
+  <div class="profile-card" id="statsCard" style="display:none">
+    <div class="profile-card-header">Season Stats</div>
+    <div class="profile-card-body" style="padding:0">
+      <div class="stats-grid">
+        <div class="stat-cell">
+          <div class="stat-value" id="statPicks">—</div>
+          <div class="stat-label">Picks Made</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value" id="statCorrect">—</div>
+          <div class="stat-label">Correct</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value" id="statPct">—</div>
+          <div class="stat-label">Win %</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change PIN -->
+  <div class="profile-card">
+    <div class="profile-card-header">Change PIN</div>
+    <div class="profile-card-body">
+      <div class="field">
+        <label for="currentPin">Current PIN</label>
+        <input type="password" id="currentPin" placeholder="Your current PIN" inputmode="numeric" maxlength="8" />
+      </div>
+      <div class="field">
+        <label for="newPin">New PIN</label>
+        <input type="password" id="newPin" placeholder="6–8 digits" inputmode="numeric" maxlength="8" />
+        <span class="field-hint">Numbers only, 6–8 digits</span>
+      </div>
+      <div class="field">
+        <label for="newPinConfirm">Confirm New PIN</label>
+        <input type="password" id="newPinConfirm" placeholder="Re-enter new PIN" inputmode="numeric" maxlength="8" />
+      </div>
+      <div class="msg" id="pinMsg"></div>
+      <button class="btn-primary" id="changePinBtn">Change PIN</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp }                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut,
+           updatePassword, reauthenticateWithCredential,
+           EmailAuthProvider }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get, update }           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser = null;
+  let memberData  = null;
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = `msg ${type} show`;
+  }
+
+  function clearMsg(id) {
+    const el = document.getElementById(id);
+    el.className = 'msg';
+    el.textContent = '';
+  }
+
+  function initials(name) {
+    return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  function currentYear() { return new Date().getFullYear(); }
+
+  // ── Load profile ──────────────────────────────────────────────────────
+  async function loadProfile() {
+    const snap = await get(ref(db, `adminConfig/members/${currentUser.uid}`));
+    memberData = snap.exists() ? snap.val() : {};
+
+    // Profile card
+    document.getElementById('profileCard').style.display = '';
+    document.getElementById('profileAvatar').textContent = initials(memberData.displayName);
+    document.getElementById('profileName').textContent   = memberData.displayName || '—';
+    document.getElementById('profileEmail').textContent  = memberData.email || currentUser.email;
+    document.getElementById('profileJoined').textContent = memberData.joinedAt
+      ? `Joined ${new Date(memberData.joinedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+      : '';
+    document.getElementById('newName').value = memberData.displayName || '';
+
+    // Load season stats
+    loadSeasonStats();
+  }
+
+  // ── Season stats ──────────────────────────────────────────────────────
+  async function loadSeasonStats() {
+    const year     = currentYear();
+    const gamesSnap = await get(ref(db, 'games'));
+    const picksSnap = await get(ref(db, `picks/${currentUser.uid}`));
+
+    let totalPicks   = 0;
+    let totalCorrect = 0;
+
+    if (gamesSnap.exists() && picksSnap.exists()) {
+      const allGames = gamesSnap.val();
+      const allPicks = picksSnap.val();
+
+      for (const [date, games] of Object.entries(allGames)) {
+        if (!date.startsWith(String(year))) continue;
+        const dayPicks = allPicks[date] || {};
+        for (const [gameId, game] of Object.entries(games)) {
+          if (game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
+          const pick = dayPicks[gameId]?.teamId;
+          if (!pick) continue;
+          totalPicks++;
+          if (pick === game.winnerId) totalCorrect++;
+        }
+      }
+    }
+
+    const pct = totalPicks > 0 ? Math.round((totalCorrect / totalPicks) * 100) : 0;
+    document.getElementById('statPicks').textContent   = totalPicks;
+    document.getElementById('statCorrect').textContent = totalCorrect;
+    document.getElementById('statPct').textContent     = totalPicks > 0 ? `${pct}%` : '—';
+    document.getElementById('statsCard').style.display = '';
+  }
+
+  // ── Save name ─────────────────────────────────────────────────────────
+  document.getElementById('saveNameBtn').addEventListener('click', async () => {
+    const name = document.getElementById('newName').value.trim();
+    if (!name) { showMsg('nameMsg', 'Name cannot be empty.', 'error'); return; }
+
+    const btn = document.getElementById('saveNameBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    clearMsg('nameMsg');
+
+    try {
+      await update(ref(db, `adminConfig/members/${currentUser.uid}`), { displayName: name });
+      document.getElementById('profileName').textContent   = name;
+      document.getElementById('profileAvatar').textContent = initials(name);
+      document.getElementById('navUser').textContent       = name;
+      memberData.displayName = name;
+      showMsg('nameMsg', '✅ Name updated!', 'info');
+    } catch (err) {
+      showMsg('nameMsg', 'Failed to update name. Try again.', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save Name';
+    }
+  });
+
+  // ── Change PIN ────────────────────────────────────────────────────────
+  document.getElementById('changePinBtn').addEventListener('click', async () => {
+    const currentPin = document.getElementById('currentPin').value.trim();
+    const newPin     = document.getElementById('newPin').value.trim();
+    const confirmPin = document.getElementById('newPinConfirm').value.trim();
+
+    clearMsg('pinMsg');
+
+    if (!currentPin) { showMsg('pinMsg', 'Enter your current PIN.', 'error'); return; }
+    if (!/^\d{6,8}$/.test(newPin)) { showMsg('pinMsg', 'New PIN must be 6–8 digits.', 'error'); return; }
+    if (newPin !== confirmPin) { showMsg('pinMsg', 'New PINs do not match.', 'error'); return; }
+    if (currentPin === newPin) { showMsg('pinMsg', 'New PIN must be different from your current PIN.', 'error'); return; }
+
+    const btn = document.getElementById('changePinBtn');
+    btn.disabled = true; btn.textContent = 'Updating…';
+
+    try {
+      // Re-authenticate with current PIN first
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPin);
+      await reauthenticateWithCredential(currentUser, credential);
+
+      // Update password to new PIN
+      await updatePassword(currentUser, newPin);
+
+      // Clear fields
+      document.getElementById('currentPin').value    = '';
+      document.getElementById('newPin').value        = '';
+      document.getElementById('newPinConfirm').value = '';
+
+      showMsg('pinMsg', '✅ PIN updated successfully! Use your new PIN next time you sign in.', 'info');
+    } catch (err) {
+      const msgs = {
+        'auth/wrong-password':        'Current PIN is incorrect.',
+        'auth/invalid-credential':    'Current PIN is incorrect.',
+        'auth/too-many-requests':     'Too many attempts. Please wait and try again.',
+        'auth/requires-recent-login': 'Please sign out and sign back in before changing your PIN.',
+      };
+      showMsg('pinMsg', msgs[err.code] || `Error: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Change PIN';
+    }
+  });
+
+  // ── Auth gate ─────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    const snap      = await get(ref(db, `adminConfig/members/${user.uid}`));
+    const member    = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
+
+    if (!member?.approved && !isAdmin) { window.location.href = 'index.html'; return; }
+
+    document.getElementById('navUser').textContent = member?.displayName || user.email;
+    if (isAdmin) document.getElementById('adminLink').style.display = '';
+    document.getElementById('signOutBtn').addEventListener('click', () =>
+      signOut(auth).then(() => window.location.href = 'index.html'));
+
+    loadProfile();
+  });
+</script>
+
+</body>
+</html>
