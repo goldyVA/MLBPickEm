@@ -616,14 +616,6 @@
       .page-header { flex-direction: column; align-items: flex-start; }
     }
   </style>
-  <script type="module">
-    import { initNav, NAV_STYLES } from "./nav.js";
-    // inject nav styles
-    const _ns = document.createElement("style");
-    _ns.textContent = NAV_STYLES;
-    document.head.appendChild(_ns);
-    window._initNav = initNav;
-  </script>
 </head>
 <body>
 
@@ -693,9 +685,15 @@
 </div>
 
 <script type="module">
+  import { initNav, NAV_STYLES } from "./nav.js?v=3";
   import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, get, set, update }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  // Inject nav styles
+  const _navStyle = document.createElement('style');
+  _navStyle.textContent = NAV_STYLES;
+  document.head.appendChild(_navStyle);
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
@@ -1436,15 +1434,11 @@
     const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
     if (!member?.approved && !isAdmin) { window.location.href = 'index.html'; return; }
     // Init shared nav
-    if (window._initNav) {
-      window._initNav({
-        activePage: 'survivor.html',
-        isAdmin,
-        userName: member?.displayName || user.email,
-      });
-    } else {
-      document.getElementById('navUser').textContent = member?.displayName || user.email;
-    }
+    initNav({
+      activePage: 'survivor.html',
+      isAdmin,
+      userName: member?.displayName || user.email,
+    });
     // admin link handled by nav.js
     // Sign out — wire both desktop and drawer buttons
     const _signOut = () => signOut(auth).then(() => window.location.href = 'index.html');
