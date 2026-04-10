@@ -552,6 +552,12 @@
       if (child.val().approved) allMembers.push({ uid: child.key, ...child.val() });
     });
 
+    // Load league settings
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const settings = settingsSnap.exists() ? settingsSnap.val() : {};
+    const monthlyStartDay  = settings.monthlyStartDay  || 1;
+    const seasonStartDate  = settings.seasonStartDate  || null;
+
     // All games (cached in Firebase)
     const gamesSnap = await get(ref(db, 'games'));
     allGames = {};
@@ -600,7 +606,7 @@
   }
 
   // ── Compute standings ─────────────────────────────────────────────────
-  function computeStandings(filterType, month) {
+  function computeStandings(filterType, month, monthlyStartDay, seasonStartDate) {
     const rows = [];
 
     for (const member of allMembers) {
@@ -611,6 +617,15 @@
       for (const [date, games] of Object.entries(allGames)) {
         // Filter by month if needed
         if (filterType === 'month' && !date.startsWith(month)) continue;
+
+        // Monthly start day filter
+        if (filterType === 'month') {
+          const dayNum = parseInt(date.split('-')[2]);
+          if (dayNum < (monthlyStartDay || 1)) continue;
+        }
+
+        // Season start date filter
+        if (filterType === 'season' && seasonStartDate && date < seasonStartDate) continue;
 
         const dayPicks = allPicks[member.uid]?.[date] || {};
         let dayHasPick = false;
@@ -652,15 +667,20 @@
   function renderStandings() {
     const filter    = currentFilter;
     const month     = currentMonth;
-    const rows      = computeStandings(filter, month);
+    const rows      = computeStandings(filter, month, monthlyStartDay, seasonStartDate);
     const container = document.getElementById('standingsContainer');
     const podiumEl  = document.getElementById('podium');
 
     // Update subtitle
+    const startNote = filter === 'season' && seasonStartDate
+      ? ` · from ${seasonStartDate}`
+      : filter === 'month' && monthlyStartDay > 1
+        ? ` · from day ${monthlyStartDay}`
+        : '';
     document.getElementById('standingsSubtitle').textContent =
       filter === 'season'
-        ? `${currentYear()} season · all final games`
-        : `${monthName(month)} · monthly breakdown`;
+        ? `${currentYear()} season · all final games${startNote}`
+        : `${monthName(month)} · monthly breakdown${startNote}`;
 
     // Season summary chips
     if (filter === 'season') {
