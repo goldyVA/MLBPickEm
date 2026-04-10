@@ -770,20 +770,22 @@
           td.innerHTML = `<span class="chip-none">—</span>`;
         } else if (isFinal && game.winnerId) {
           // Final — show correct/wrong
-          const correct   = pick === game.winnerId;
+          const correct    = pick === game.winnerId;
           const teamAbbrev = pick === game.homeTeam.id ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+          const isAuto     = allPicks[member.uid]?.[game.id]?.auto === true;
           td.innerHTML = `
-            <span class="pick-chip ${correct ? 'chip-correct' : 'chip-wrong'}">
+            <span class="pick-chip ${correct ? 'chip-correct' : 'chip-wrong'}" title="${isAuto ? '🤖 Auto-picked' : ''}">
               <img src="${espnLogo(teamAbbrev)}" alt="${teamAbbrev}" onerror="this.style.display='none'" />
-              ${teamAbbrev}
+              ${teamAbbrev}${isAuto ? ' 🤖' : ''}
             </span>`;
         } else {
           // Live or locked but not final — reveal pick
           const teamAbbrev = pick === game.homeTeam.id ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+          const isAuto     = allPicks[member.uid]?.[game.id]?.auto === true;
           td.innerHTML = `
-            <span class="pick-chip chip-revealed">
+            <span class="pick-chip chip-revealed" title="${isAuto ? '🤖 Auto-picked' : ''}">
               <img src="${espnLogo(teamAbbrev)}" alt="${teamAbbrev}" onerror="this.style.display='none'" />
-              ${teamAbbrev}
+              ${teamAbbrev}${isAuto ? ' 🤖' : ''}
             </span>`;
         }
 
