@@ -624,6 +624,63 @@
       display: none;
     }
 
+
+    /* ── Inline name edit ────────────────────── */
+    .btn-edit {
+      padding: 5px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-edit:hover { border-color: var(--navy); color: var(--navy); }
+
+    .inline-edit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .inline-edit input {
+      padding: 5px 10px;
+      border: 1.5px solid var(--navy);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      width: 180px;
+    }
+
+    .btn-save-name {
+      padding: 5px 12px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel-name {
+      padding: 5px 10px;
+      background: transparent;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-faint);
+      cursor: pointer;
+    }
+
     @media (max-width: 600px) {
       .nav-links  { display: none; }
       .member-row { flex-direction: column; align-items: flex-start; }
@@ -955,6 +1012,35 @@
       loadMembers();
     } catch (e) {
       toast('Failed to remove member.', 'error');
+    }
+  };
+
+
+  // ── Edit display name ─────────────────────────────────────────────────
+  window.startEditName = function(uid) {
+    document.getElementById(`name-display-${uid}`).style.display = 'none';
+    document.getElementById(`name-edit-${uid}`).style.display = 'flex';
+    document.getElementById(`name-input-${uid}`).focus();
+  };
+
+  window.cancelEditName = function(uid) {
+    document.getElementById(`name-display-${uid}`).style.display = '';
+    document.getElementById(`name-edit-${uid}`).style.display = 'none';
+  };
+
+  window.saveDisplayName = async function(uid) {
+    const input = document.getElementById(`name-input-${uid}`);
+    const name  = input.value.trim();
+    if (!name) { toast('Name cannot be empty.', 'error'); return; }
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { displayName: name });
+      const m = allMembers.find(m => m.uid === uid);
+      if (m) m.displayName = name;
+      document.getElementById(`name-display-${uid}`).textContent = name;
+      cancelEditName(uid);
+      toast(`✅ Name updated to "${name}"`);
+    } catch (e) {
+      toast('Failed to update name.', 'error');
     }
   };
 
