@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; background: #F7F5F0; }
+    .box { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .ok  { color: green; font-weight: bold; }
+    .err { color: red;   font-weight: bold; }
+    pre  { font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="box"><h2>MLB Pick'em — Diagnostic</h2></div>
+  <div class="box" id="out">Running tests…</div>
+
+<script type="module">
+  const log = (msg, ok) => {
+    const div = document.getElementById('out');
+    div.innerHTML += `<p class="${ok ? 'ok' : 'err'}">${msg}</p>`;
+  };
+
+  log('✓ JavaScript module running', true);
+
+  // Test 1: Firebase app import
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js');
+    log('✓ Firebase app loaded', true);
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+      authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+      databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+      projectId:         "mlbpickem-5bc9c",
+      storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+      messagingSenderId: "699113861941",
+      appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    log('✓ Firebase app initialized', true);
+
+    // Test 2: Auth
+    const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js');
+    log('✓ Firebase auth loaded', true);
+
+    const auth = getAuth(app);
+    log('✓ getAuth() called', true);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        log(`✓ Logged in as: ${user.email}`, true);
+      } else {
+        log('✓ onAuthStateChanged fired — not logged in', true);
+      }
+
+      // Test 3: Database
+      import('https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js').then(({ getDatabase, ref, get }) => {
+        log('✓ Firebase database loaded', true);
+        const db = getDatabase(app);
+        return get(ref(db, 'adminConfig/settings'));
+      }).then(snap => {
+        log(`✓ Database read OK — settings exist: ${snap.exists()}`, true);
+      }).catch(e => {
+        log(`✗ Database error: ${e.message}`, false);
+      });
+    });
+
+  } catch(e) {
+    log(`✗ Firebase failed: ${e.message}`, false);
+    document.getElementById('out').innerHTML += `<pre>${e.stack}</pre>`;
+  }
+</script>
+</body>
+</html>
