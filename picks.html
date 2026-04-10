@@ -412,6 +412,20 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+
+    /* Auto-pick indicator */
+    .auto-pick-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--ink-faint);
+      background: var(--cream-dark);
+      border-radius: 100px;
+      padding: 2px 8px;
+      margin-left: 6px;
+    }
+
     /* ── Mobile ──────────────────────────────── */
     @media (max-width: 600px) {
       .nav-links { display: none; }
@@ -907,6 +921,11 @@
     // Load user picks for this date
     await loadUserPicks(dateStr);
 
+    // Auto-pick away team for any locked games with no pick (today only)
+    if (dateStr === todayStr()) {
+      await autoPickMissedGames(games, dateStr);
+    }
+
     renderGames(games, dateStr);
     updateSummary(games);
 
@@ -1047,11 +1066,13 @@
         return `<span class="lock-msg">🔒 No pick made</span>`;
       }
       const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
+      const isAuto   = userPicks[game.id]?.auto === true;
+      const autoBadge = isAuto ? '<span class="auto-pick-badge">🤖 auto</span>' : '';
       if (correct) {
-        return `<span class="result-indicator correct">✅ Correct — ${teamName}</span>`;
+        return `<span class="result-indicator correct">✅ Correct — ${teamName}${autoBadge}</span>`;
       } else {
         const winnerName = game.winnerId === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-        return `<span class="result-indicator wrong">❌ Wrong — picked ${teamName}, winner was ${winnerName}</span>`;
+        return `<span class="result-indicator wrong">❌ Wrong — picked ${teamName}, winner was ${winnerName}${autoBadge}</span>`;
       }
     }
 
@@ -1060,7 +1081,8 @@
         return `<span class="lock-msg">🔒 Locked — no pick made</span>`;
       }
       const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-      return `<span class="lock-msg">🔒 Locked in: <strong>${teamName}</strong></span>`;
+      const isAuto   = userPicks[game.id]?.auto === true;
+      return `<span class="lock-msg">🔒 Locked in: <strong>${teamName}</strong>${isAuto ? '<span class="auto-pick-badge">🤖 auto</span>' : ''}</span>`;
     }
 
     // Open for picks
@@ -1127,6 +1149,32 @@
       document.getElementById('sumCorrect').textContent = `${correct} / ${finals.length}`;
     } else {
       correctChip.style.display = 'none';
+    }
+  }
+
+
+  // ── Auto-pick missed games ────────────────────────────────────────────
+  // For any game that has started and user has no pick, default to away team
+  async function autoPickMissedGames(games, dateStr) {
+    const updates = [];
+    for (const game of games) {
+      const locked = gameIsLocked(game.startTime);
+      if (!locked) continue;                              // not started yet
+      if (userPicks[game.id]?.teamId) continue;           // already picked
+      if (game.statusName === 'STATUS_SCHEDULED') continue; // shouldn't happen but safety
+
+      // Auto-pick away team
+      const awayId = game.awayTeam.id;
+      updates.push({ game, teamId: awayId });
+    }
+
+    if (updates.length === 0) return;
+
+    // Save all auto-picks
+    for (const { game, teamId } of updates) {
+      const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`);
+      await set(pickRef, { teamId, lockedIn: true, correct: null, auto: true });
+      userPicks[game.id] = { teamId, lockedIn: true, auto: true };
     }
   }
 
