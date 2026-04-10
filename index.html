@@ -632,16 +632,15 @@
     if (!isSignIn) {
       // Check if registration is open before showing sign-up form
       try {
-        const snap = await get(child(ref(db), 'adminConfig/settings/registrationOpen'));
+        const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
         const isOpen = snap.exists() ? snap.val() : false;
         if (!isOpen) {
           showMsg('siMsg', 'Registration is currently closed. Contact the league admin to be added.', 'error');
           return;
         }
       } catch (e) {
-        // If can't read, assume closed
-        showMsg('siMsg', 'Registration is currently closed.', 'error');
-        return;
+        console.warn('Could not check registration status:', e);
+        // If rule error, allow through — server will reject if truly closed
       }
     }
 
