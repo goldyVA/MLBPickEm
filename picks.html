@@ -1157,44 +1157,42 @@
 
   // ── Auto-pick missed games ────────────────────────────────────────────
   // For any game that has started and user has no pick, default to away team
+  // ── Auto-pick ─────────────────────────────────────────────────────────
+  // When a game locks and a user has no pick, we record the away team in a
+  // shared autoPicks/{date}/{gameId} node. Each user only writes their own
+  // picks — autoPicks is just a shared "default" that the UI reads as a fallback.
   async function autoPickMissedGames(games, dateStr) {
-    // Run for current user first (updates userPicks in memory)
+    const autoPicksSnap = await get(ref(db, `autoPicks/${dateStr}`));
+    const existingAuto  = autoPicksSnap.exists() ? autoPicksSnap.val() : {};
+
     for (const game of games) {
       if (!gameIsLocked(game.startTime)) continue;
-      if (userPicks[game.id]?.teamId) continue;
       if (game.statusName === 'STATUS_SCHEDULED') continue;
-      const teamId = game.awayTeam.id;
-      await set(ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`),
-        { teamId, lockedIn: true, correct: null, auto: true });
-      userPicks[game.id] = { teamId, lockedIn: true, auto: true };
+      if (existingAuto[game.id]) continue; // already recorded
+
+      // Write the away team as the auto-pick default for this game
+      await set(ref(db, `autoPicks/${dateStr}/${game.id}`), {
+        teamId:   game.awayTeam.id,
+        abbrev:   game.awayTeam.abbrev,
+        auto:     true,
+      }).catch(() => {});
     }
 
-    // Also run for ALL other approved members (best-effort — no server so we piggyback on page load)
-    try {
-      const membersSnap = await get(ref(db, 'adminConfig/members'));
-      if (!membersSnap.exists()) return;
+    // Now apply to current user: if they have no pick for a locked game, use autoPick
+    const autoSnap = await get(ref(db, `autoPicks/${dateStr}`));
+    const autoPicks = autoSnap.exists() ? autoSnap.val() : {};
 
-      const otherUids = [];
-      membersSnap.forEach(child => {
-        if (child.val().approved && child.key !== currentUser.uid) {
-          otherUids.push(child.key);
-        }
-      });
+    for (const game of games) {
+      if (!gameIsLocked(game.startTime)) continue;
+      if (userPicks[game.id]?.teamId) continue; // already has a real pick
 
-      await Promise.all(otherUids.map(async uid => {
-        const picksSnap = await get(ref(db, `picks/${uid}/${dateStr}`));
-        const theirPicks = picksSnap.exists() ? picksSnap.val() : {};
+      const auto = autoPicks[game.id];
+      if (!auto) continue;
 
-        for (const game of games) {
-          if (!gameIsLocked(game.startTime)) continue;
-          if (theirPicks[game.id]?.teamId) continue;
-          if (game.statusName === 'STATUS_SCHEDULED') continue;
-          await set(ref(db, `picks/${uid}/${dateStr}/${game.id}`),
-            { teamId: game.awayTeam.id, lockedIn: true, correct: null, auto: true });
-        }
-      }));
-    } catch (e) {
-      console.warn('Auto-pick for other members failed:', e);
+      // Write auto-pick into user's own picks node
+      await set(ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`),
+        { teamId: auto.teamId, lockedIn: true, correct: null, auto: true });
+      userPicks[game.id] = { teamId: auto.teamId, lockedIn: true, auto: true };
     }
   }
 
