@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin · MLB Pick'em</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
@@ -635,10 +636,6 @@
       <div class="stat-label">Approved</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" id="statPending">—</div>
-      <div class="stat-label">Pending Approval</div>
-    </div>
-    <div class="stat-card">
       <div class="stat-value" id="statSurvivorAlive">—</div>
       <div class="stat-label">Survivor Alive</div>
     </div>
@@ -683,17 +680,6 @@
         <button class="btn-add-member" id="addMemberBtn">Add Member</button>
       </div>
       <div class="add-member-msg" id="addMemberMsg"></div>
-    </div>
-  </div>
-
-  <!-- ── Pending approvals ── -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-title">Pending Approvals</span>
-      <span class="section-badge zero" id="pendingBadge">0</span>
-    </div>
-    <div class="card" id="pendingList">
-      <div class="state-box"><div class="spinner"></div></div>
     </div>
   </div>
 
@@ -822,46 +808,11 @@
     // Stats
     const total    = allMembers.length;
     const approved = allMembers.filter(m => m.approved).length;
-    const pending  = allMembers.filter(m => !m.approved).length;
 
     document.getElementById('statTotal').textContent    = total;
     document.getElementById('statApproved').textContent = approved;
-    document.getElementById('statPending').textContent  = pending;
-
-    const badge = document.getElementById('pendingBadge');
-    badge.textContent = pending;
-    badge.className   = `section-badge ${pending === 0 ? 'zero' : ''}`;
-
-    renderPending();
     renderMembers();
     loadSurvivorStats();
-  }
-
-  // ── Render pending ────────────────────────────────────────────────────
-  function renderPending() {
-    const list    = document.getElementById('pendingList');
-    const pending = allMembers.filter(m => !m.approved);
-
-    if (pending.length === 0) {
-      list.innerHTML = `<div class="state-box"><div class="icon">✅</div><p>No pending approvals.</p></div>`;
-      return;
-    }
-
-    list.innerHTML = pending.map(m => `
-      <div class="member-row" id="pending-${m.uid}">
-        <div class="member-avatar">${initials(m.displayName || m.email)}</div>
-        <div class="member-info">
-          <div class="member-name">${m.displayName || '—'}</div>
-          <div class="member-email">${m.email}</div>
-        </div>
-        <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
-        <span class="status-pill pill-pending">Pending</span>
-        <div class="row-actions">
-          <button class="btn-approve" onclick="approveMember('${m.uid}', '${(m.displayName||'').replace(/'/g,"\\'")}')">Approve</button>
-          <button class="btn-deny"    onclick="denyMember('${m.uid}')">Deny</button>
-        </div>
-      </div>
-    `).join('');
   }
 
   // ── Render all members ────────────────────────────────────────────────
@@ -1266,17 +1217,9 @@
 
     const total    = allMembers.length;
     const approved = allMembers.filter(m => m.approved).length;
-    const pending  = allMembers.filter(m => !m.approved).length;
 
     document.getElementById('statTotal').textContent    = total;
     document.getElementById('statApproved').textContent = approved;
-    document.getElementById('statPending').textContent  = pending;
-
-    const badge = document.getElementById('pendingBadge');
-    badge.textContent = pending;
-    badge.className   = `section-badge ${pending === 0 ? 'zero' : ''}`;
-
-    renderPending();
     renderMembers();
     loadSurvivorStats();
     loadRegistrationState();
