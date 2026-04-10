@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Standings · MLB Pick'em</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --gold:        #F0C040;
+      --silver:      #C0C0C0;
+      --bronze:      #CD7F32;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── Nav ─────────────────────────────────── */
+    .app-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 4px; }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-link:hover  { background: var(--cream); color: var(--ink); }
+    .nav-link.active { background: var(--navy); color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-user  { font-size: 13px; color: var(--ink-faint); }
+
+    .btn-signout {
+      padding: 6px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Page body ───────────────────────────── */
+    .page-body {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 82px 24px 48px;
+    }
+
+    /* ── Page header ─────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+    /* ── Filter bar ──────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-faint);
+      margin-right: 4px;
+    }
+
+    .filter-btn {
+      padding: 7px 16px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 100px;
+      background: var(--white);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .filter-btn:hover  { border-color: var(--navy); color: var(--navy); }
+    .filter-btn.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+
+    .filter-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--cream-dark);
+      margin: 0 4px;
+    }
+
+    .month-select {
+      padding: 7px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 100px;
+      background: var(--white);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .month-select:focus { border-color: var(--navy); }
+
+    /* ── Top 3 podium cards ──────────────────── */
+    .podium {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .podium-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .podium-card.rank-1 {
+      border-color: var(--gold);
+      background: linear-gradient(160deg, #FFFDF0 0%, var(--white) 60%);
+    }
+
+    .podium-card.rank-2 {
+      border-color: var(--silver);
+      background: linear-gradient(160deg, #F8F8F8 0%, var(--white) 60%);
+    }
+
+    .podium-card.rank-3 {
+      border-color: var(--bronze);
+      background: linear-gradient(160deg, #FFF5EE 0%, var(--white) 60%);
+    }
+
+    .podium-card.is-you {
+      box-shadow: 0 0 0 3px rgba(27,58,92,.15), var(--shadow-md);
+    }
+
+    .podium-medal {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .podium-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .podium-you { font-size: 11px; color: var(--ink-faint); font-weight: 400; }
+
+    .podium-pct {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--navy);
+      margin: 8px 0 4px;
+    }
+
+    .podium-record {
+      font-size: 12px;
+      color: var(--ink-faint);
+    }
+
+    /* ── Standings table ─────────────────────── */
+    .standings-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      background: var(--cream);
+      border-bottom: 2px solid var(--cream-dark);
+      white-space: nowrap;
+    }
+
+    thead th.num { text-align: right; }
+    thead th.pct { text-align: right; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--cream-dark);
+      transition: background .1s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #FAFAF8; }
+
+    tbody tr.is-you {
+      background: #F0F4FA;
+    }
+
+    tbody tr.is-you:hover { background: #E8EEF8; }
+
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--ink);
+      vertical-align: middle;
+    }
+
+    td.num { text-align: right; color: var(--ink-light); }
+    td.pct { text-align: right; font-weight: 700; }
+
+    .rank-cell {
+      width: 40px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-faint);
+      text-align: center;
+      padding: 14px 8px;
+    }
+
+    .rank-medal { font-size: 18px; }
+
+    .member-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .member-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .you-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--navy);
+      color: var(--white);
+      border-radius: 100px;
+      padding: 1px 7px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--ink-faint);
+    }
+
+    /* Percentage bar */
+    .pct-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .pct-bar {
+      width: 80px;
+      height: 6px;
+      background: var(--cream-dark);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .pct-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--navy);
+      transition: width .4s ease;
+    }
+
+    .pct-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      min-width: 42px;
+      text-align: right;
+    }
+
+    /* ── Season summary chips ────────────────── */
+    .summary-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .summary-chip {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .chip-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--navy);
+    }
+
+    .chip-label {
+      font-size: 11px;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    /* ── States ──────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--ink-faint);
+    }
+
+    .state-box .icon { font-size: 48px; margin-bottom: 16px; }
+    .state-box h3    { font-size: 18px; color: var(--ink-light); margin-bottom: 8px; }
+    .state-box p     { font-size: 14px; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--cream-dark);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .podium { grid-template-columns: 1fr; }
+      .pct-bar { display: none; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+  <div class="nav-links">
+    <a href="picks.html"     class="nav-link">My Picks</a>
+    <a href="results.html"   class="nav-link">Results</a>
+    <a href="standings.html" class="nav-link active">Standings</a>
+    <a href="survivor.html"  class="nav-link">Survivor</a>
+    <a href="admin.html"     class="nav-link" id="adminLink" style="display:none">Admin</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-signout" id="signOutBtn">Sign out</button>
+  </div>
+</nav>
+
+<div class="page-body">
+
+  <div class="page-header">
+    <div>
+      <h1>Standings</h1>
+      <p id="standingsSubtitle">Season-long pick'em leaderboard.</p>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span class="filter-label">View:</span>
+    <button class="filter-btn active" data-filter="season" id="filterSeason">Full Season</button>
+    <button class="filter-btn" data-filter="month" id="filterMonth">By Month</button>
+    <div class="filter-divider"></div>
+    <select class="month-select" id="monthSelect" style="display:none"></select>
+  </div>
+
+  <!-- Season summary -->
+  <div class="summary-row" id="summaryRow" style="display:none">
+    <div class="summary-chip">
+      <span class="chip-value" id="sumDays">—</span>
+      <span class="chip-label">Days with games</span>
+    </div>
+    <div class="summary-chip">
+      <span class="chip-value" id="sumTotalGames">—</span>
+      <span class="chip-label">Total games</span>
+    </div>
+    <div class="summary-chip">
+      <span class="chip-value" id="sumMembers">—</span>
+      <span class="chip-label">Members</span>
+    </div>
+  </div>
+
+  <!-- Podium (top 3) -->
+  <div class="podium" id="podium" style="display:none"></div>
+
+  <!-- Full table -->
+  <div id="standingsContainer">
+    <div class="state-box">
+      <div class="spinner"></div>
+      <p>Loading standings…</p>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get }                from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser  = null;
+  let allMembers   = [];
+  let allGames     = {};   // { 'YYYY-MM-DD': { gameId: game } }
+  let allPicks     = {};   // { uid: { 'YYYY-MM-DD': { gameId: pick } } }
+  let currentFilter = 'season';
+  let currentMonth  = null;
+
+  const MEDALS = ['🥇','🥈','🥉'];
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function currentYear() { return new Date().getFullYear(); }
+
+  function monthName(yyyymm) {
+    const [y, m] = yyyymm.split('-');
+    return new Date(y, m-1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  function pct(correct, total) {
+    if (!total) return 0;
+    return Math.round((correct / total) * 100);
+  }
+
+  // ── Load all data ─────────────────────────────────────────────────────
+  async function loadAll() {
+    const container = document.getElementById('standingsContainer');
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading standings…</p></div>`;
+
+    // Members
+    const membersSnap = await get(ref(db, 'adminConfig/members'));
+    if (!membersSnap.exists()) {
+      container.innerHTML = `<div class="state-box"><div class="icon">👥</div><h3>No members yet</h3></div>`;
+      return;
+    }
+
+    allMembers = [];
+    membersSnap.forEach(child => {
+      if (child.val().approved) allMembers.push({ uid: child.key, ...child.val() });
+    });
+
+    // All games (cached in Firebase)
+    const gamesSnap = await get(ref(db, 'games'));
+    allGames = {};
+    if (gamesSnap.exists()) {
+      gamesSnap.forEach(dateChild => {
+        // Only include current year
+        if (dateChild.key.startsWith(String(currentYear()))) {
+          allGames[dateChild.key] = dateChild.val();
+        }
+      });
+    }
+
+    // All picks for all members
+    allPicks = {};
+    await Promise.all(allMembers.map(async m => {
+      const snap = await get(ref(db, `picks/${m.uid}`));
+      allPicks[m.uid] = snap.exists() ? snap.val() : {};
+    }));
+
+    // Populate month selector
+    populateMonths();
+
+    // Render
+    renderStandings();
+  }
+
+  // ── Populate month dropdown ───────────────────────────────────────────
+  function populateMonths() {
+    const select = document.getElementById('monthSelect');
+    const months = new Set();
+
+    for (const date of Object.keys(allGames)) {
+      months.add(date.substring(0, 7)); // 'YYYY-MM'
+    }
+
+    const sorted = [...months].sort().reverse();
+    select.innerHTML = sorted.map(m =>
+      `<option value="${m}">${monthName(m)}</option>`
+    ).join('');
+
+    // Default to current month
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    currentMonth = sorted.includes(thisMonth) ? thisMonth : (sorted[0] || thisMonth);
+    select.value = currentMonth;
+  }
+
+  // ── Compute standings ─────────────────────────────────────────────────
+  function computeStandings(filterType, month) {
+    const rows = [];
+
+    for (const member of allMembers) {
+      let totalPicks   = 0;
+      let totalCorrect = 0;
+      let daysActive   = 0;
+
+      for (const [date, games] of Object.entries(allGames)) {
+        // Filter by month if needed
+        if (filterType === 'month' && !date.startsWith(month)) continue;
+
+        const dayPicks = allPicks[member.uid]?.[date] || {};
+        let dayHasPick = false;
+
+        for (const [gameId, game] of Object.entries(games)) {
+          if (game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
+          const pick = dayPicks[gameId]?.teamId;
+          if (!pick) continue;
+
+          dayHasPick = true;
+          totalPicks++;
+          if (pick === game.winnerId) totalCorrect++;
+        }
+
+        if (dayHasPick) daysActive++;
+      }
+
+      rows.push({
+        uid:          member.uid,
+        displayName:  member.displayName,
+        totalPicks,
+        totalCorrect,
+        daysActive,
+        percentage:   pct(totalCorrect, totalPicks),
+      });
+    }
+
+    // Sort: by correct desc, then percentage desc, then name
+    rows.sort((a, b) => {
+      if (b.totalCorrect !== a.totalCorrect) return b.totalCorrect - a.totalCorrect;
+      if (b.percentage   !== a.percentage)   return b.percentage - a.percentage;
+      return a.displayName.localeCompare(b.displayName);
+    });
+
+    return rows;
+  }
+
+  // ── Render standings ──────────────────────────────────────────────────
+  function renderStandings() {
+    const filter    = currentFilter;
+    const month     = currentMonth;
+    const rows      = computeStandings(filter, month);
+    const container = document.getElementById('standingsContainer');
+    const podiumEl  = document.getElementById('podium');
+
+    // Update subtitle
+    document.getElementById('standingsSubtitle').textContent =
+      filter === 'season'
+        ? `${currentYear()} season · all final games`
+        : `${monthName(month)} · monthly breakdown`;
+
+    // Season summary chips
+    if (filter === 'season') {
+      const dates = Object.keys(allGames).filter(d => d.startsWith(String(currentYear())));
+      let totalGames = 0;
+      for (const d of dates) totalGames += Object.keys(allGames[d]).length;
+      document.getElementById('sumDays').textContent    = dates.length;
+      document.getElementById('sumTotalGames').textContent = totalGames;
+      document.getElementById('sumMembers').textContent = allMembers.length;
+      document.getElementById('summaryRow').style.display = 'flex';
+    } else {
+      document.getElementById('summaryRow').style.display = 'none';
+    }
+
+    // Empty state
+    const hasData = rows.some(r => r.totalPicks > 0);
+    if (!hasData) {
+      podiumEl.style.display = 'none';
+      container.innerHTML = `
+        <div class="state-box">
+          <div class="icon">📊</div>
+          <h3>No picks recorded yet</h3>
+          <p>Standings will appear once games are final and picks are in.</p>
+        </div>`;
+      return;
+    }
+
+    // Podium (top 3 with picks)
+    const podiumRows = rows.filter(r => r.totalPicks > 0).slice(0, 3);
+    if (podiumRows.length >= 2) {
+      podiumEl.style.display = 'grid';
+      podiumEl.innerHTML = podiumRows.map((r, i) => `
+        <div class="podium-card rank-${i+1} ${r.uid === currentUser.uid ? 'is-you' : ''}">
+          <div class="podium-medal">${MEDALS[i]}</div>
+          <div class="podium-name">
+            ${r.displayName}
+            ${r.uid === currentUser.uid ? '<span class="podium-you">(you)</span>' : ''}
+          </div>
+          <div class="podium-pct">${r.percentage}%</div>
+          <div class="podium-record">${r.totalCorrect} / ${r.totalPicks} correct</div>
+        </div>
+      `).join('');
+    } else {
+      podiumEl.style.display = 'none';
+    }
+
+    // Full table
+    const maxPct = Math.max(...rows.map(r => r.percentage), 1);
+    let rank = 0;
+    let lastCorrect = -1;
+
+    const tableHTML = `
+      <div class="standings-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;text-align:center">#</th>
+              <th>Member</th>
+              <th class="num">Picks</th>
+              <th class="num">Correct</th>
+              <th class="pct">Win %</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r, i) => {
+              if (r.totalCorrect !== lastCorrect) { rank = i + 1; lastCorrect = r.totalCorrect; }
+              const isYou   = r.uid === currentUser.uid;
+              const medal   = rank <= 3 && r.totalPicks > 0 ? MEDALS[rank-1] : rank;
+              const barPct  = maxPct > 0 ? Math.round((r.percentage / maxPct) * 100) : 0;
+
+              return `
+                <tr class="${isYou ? 'is-you' : ''}">
+                  <td class="rank-cell">
+                    ${rank <= 3 && r.totalPicks > 0
+                      ? `<span class="rank-medal">${MEDALS[rank-1]}</span>`
+                      : `<span>${rank}</span>`}
+                  </td>
+                  <td>
+                    <div class="member-info">
+                      <span class="member-name">
+                        ${r.displayName}
+                        ${isYou ? '<span class="you-tag">YOU</span>' : ''}
+                      </span>
+                      <span class="streak-badge">
+                        ${r.daysActive} day${r.daysActive !== 1 ? 's' : ''} active
+                      </span>
+                    </div>
+                  </td>
+                  <td class="num">${r.totalPicks}</td>
+                  <td class="num">${r.totalCorrect}</td>
+                  <td class="pct">
+                    <div class="pct-bar-wrap">
+                      <div class="pct-bar">
+                        <div class="pct-bar-fill" style="width:${barPct}%"></div>
+                      </div>
+                      <span class="pct-text">${r.totalPicks > 0 ? r.percentage + '%' : '—'}</span>
+                    </div>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+
+    container.innerHTML = tableHTML;
+  }
+
+  // ── Filter controls ───────────────────────────────────────────────────
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      const monthSelect = document.getElementById('monthSelect');
+      monthSelect.style.display = currentFilter === 'month' ? '' : 'none';
+      renderStandings();
+    });
+  });
+
+  document.getElementById('monthSelect').addEventListener('change', e => {
+    currentMonth = e.target.value;
+    renderStandings();
+  });
+
+  // ── Auth gate ─────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    const snap      = await get(ref(db, `adminConfig/members/${user.uid}`));
+    const member    = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
+
+    if (!member?.approved && !isAdmin) { window.location.href = 'index.html'; return; }
+
+    document.getElementById('navUser').textContent = member?.displayName || user.email;
+    if (isAdmin) document.getElementById('adminLink').style.display = '';
+    document.getElementById('signOutBtn').addEventListener('click', () =>
+      signOut(auth).then(() => window.location.href = 'index.html'));
+
+    loadAll();
+  });
+</script>
+
+</body>
+</html>
