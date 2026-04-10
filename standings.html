@@ -571,10 +571,38 @@
     }
 
     // All picks for all members
+    // Load autoPicks for each date (fallback for missed picks)
+    const autoPicksAll = {};
+    const autoSnap = await get(ref(db, 'autoPicks'));
+    if (autoSnap.exists()) {
+      autoSnap.forEach(dateChild => {
+        autoPicksAll[dateChild.key] = dateChild.val();
+      });
+    }
+
     allPicks = {};
     await Promise.all(allMembers.map(async m => {
-      const snap = await get(ref(db, `picks/${m.uid}`));
-      allPicks[m.uid] = snap.exists() ? snap.val() : {};
+      const snap      = await get(ref(db, `picks/${m.uid}`));
+      const rawPicks  = snap.exists() ? snap.val() : {};
+
+      // Merge autoPicks as fallback per date
+      const merged = {};
+      for (const [date, dayAutos] of Object.entries(autoPicksAll)) {
+        const dayPicks = rawPicks[date] || {};
+        const mergedDay = { ...dayPicks };
+        for (const [gameId, auto] of Object.entries(dayAutos)) {
+          if (!mergedDay[gameId]?.teamId) {
+            mergedDay[gameId] = { teamId: auto.teamId, lockedIn: true, correct: null, auto: true };
+          }
+        }
+        merged[date] = mergedDay;
+      }
+      // Also include any dates with real picks that have no autoPick entry
+      for (const [date, dayPicks] of Object.entries(rawPicks)) {
+        if (!merged[date]) merged[date] = dayPicks;
+      }
+
+      allPicks[m.uid] = merged;
     }));
 
     // Populate month selector
