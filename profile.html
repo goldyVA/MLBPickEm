@@ -274,13 +274,7 @@
         </div>
       </div>
 
-      <!-- Change display name -->
-      <div class="field">
-        <label for="newName">Display Name</label>
-        <input type="text" id="newName" placeholder="Your display name" />
-      </div>
-      <button class="btn-primary" id="saveNameBtn">Save Name</button>
-      <div class="msg" id="nameMsg"></div>
+
     </div>
   </div>
 
@@ -384,7 +378,7 @@
     document.getElementById('profileJoined').textContent = memberData.joinedAt
       ? `Joined ${new Date(memberData.joinedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
       : '';
-    document.getElementById('newName').value = memberData.displayName || '';
+
 
     // Load season stats
     loadSeasonStats();
@@ -423,28 +417,7 @@
     document.getElementById('statsCard').style.display = '';
   }
 
-  // ── Save name ─────────────────────────────────────────────────────────
-  document.getElementById('saveNameBtn').addEventListener('click', async () => {
-    const name = document.getElementById('newName').value.trim();
-    if (!name) { showMsg('nameMsg', 'Name cannot be empty.', 'error'); return; }
 
-    const btn = document.getElementById('saveNameBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
-    clearMsg('nameMsg');
-
-    try {
-      await update(ref(db, `adminConfig/members/${currentUser.uid}`), { displayName: name });
-      document.getElementById('profileName').textContent   = name;
-      document.getElementById('profileAvatar').textContent = initials(name);
-      document.getElementById('navUser').textContent       = name;
-      memberData.displayName = name;
-      showMsg('nameMsg', '✅ Name updated!', 'info');
-    } catch (err) {
-      showMsg('nameMsg', 'Failed to update name. Try again.', 'error');
-    } finally {
-      btn.disabled = false; btn.textContent = 'Save Name';
-    }
-  });
 
   // ── Change PIN ────────────────────────────────────────────────────────
   document.getElementById('changePinBtn').addEventListener('click', async () => {
