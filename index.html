@@ -508,6 +508,9 @@
           <input type="password" id="siPin" placeholder="6–8 digit PIN" required inputmode="numeric"
                  minlength="6" maxlength="8" autocomplete="current-password" />
         </div>
+        <div style="text-align:right;margin-top:-8px">
+          <a href="#" id="forgotPinLink" style="font-size:12px;color:var(--ink-faint);text-decoration:none">Forgot PIN?</a>
+        </div>
         <div class="msg" id="siMsg"></div>
         <button type="submit" class="btn-primary" id="siBtn">Sign In</button>
       </form>
@@ -586,7 +589,7 @@
 <script type="module">
   import { initializeApp }                              from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword,
-           createUserWithEmailAndPassword,
+           createUserWithEmailAndPassword, sendPasswordResetEmail,
            onAuthStateChanged, signOut }                from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, set, get, child }         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
@@ -623,13 +626,50 @@
   }
 
   // ── Tab switching ─────────────────────────────────────────────────────
-  window.switchTab = function(tab) {
+  window.switchTab = async function(tab) {
     const isSignIn = tab === 'signin';
+
+    if (!isSignIn) {
+      // Check if registration is open before showing sign-up form
+      try {
+        const snap = await get(child(ref(db), 'adminConfig/settings/registrationOpen'));
+        const isOpen = snap.exists() ? snap.val() : false;
+        if (!isOpen) {
+          showMsg('siMsg', 'Registration is currently closed. Contact the league admin to be added.', 'error');
+          return;
+        }
+      } catch (e) {
+        // If can't read, assume closed
+        showMsg('siMsg', 'Registration is currently closed.', 'error');
+        return;
+      }
+    }
+
     document.getElementById('signInForm').style.display = isSignIn ? 'flex' : 'none';
     document.getElementById('signUpForm').style.display = isSignIn ? 'none' : 'flex';
     document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
     document.getElementById('tabSignUp').classList.toggle('active', !isSignIn);
   };
+
+  // ── Forgot PIN ───────────────────────────────────────────────────────
+  document.getElementById('forgotPinLink').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('siEmail').value.trim();
+    if (!email) {
+      showMsg('siMsg', 'Enter your email address above first, then click Forgot PIN.', 'error');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      showMsg('siMsg', `Reset email sent to ${email}. Check your inbox and follow the link to set a new PIN.`, 'info');
+    } catch (err) {
+      const msgs = {
+        'auth/user-not-found': 'No account found with that email.',
+        'auth/invalid-email':  'Invalid email address.',
+      };
+      showMsg('siMsg', msgs[err.code] || 'Could not send reset email. Try again.', 'error');
+    }
+  });
 
   // ── Sign In ───────────────────────────────────────────────────────────
   window.handleSignIn = async function(e) {
