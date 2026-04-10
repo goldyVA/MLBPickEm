@@ -37,58 +37,23 @@
       color: var(--ink);
     }
 
-    /* ── Nav ─────────────────────────────────── */
-    .app-nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      background: var(--white);
-      box-shadow: var(--shadow-sm);
-      z-index: 100;
-      padding: 0 24px;
-      height: 58px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
 
-    .nav-logo {
-      font-family: 'DM Serif Display', serif;
-      font-size: 20px;
-      color: var(--navy);
-      text-decoration: none;
-    }
 
-    .nav-links { display: flex; gap: 4px; }
 
-    .nav-link {
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--ink-light);
-      text-decoration: none;
-      transition: background .15s, color .15s;
-    }
 
-    .nav-link:hover  { background: var(--cream); color: var(--ink); }
-    .nav-link.active { background: var(--navy); color: var(--white); }
 
-    .nav-right { display: flex; align-items: center; gap: 12px; }
-    .nav-user  { font-size: 13px; color: var(--ink-faint); }
 
-    .btn-signout {
-      padding: 6px 14px;
-      border: 1.5px solid var(--cream-dark);
-      border-radius: 6px;
-      background: transparent;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--ink-light);
-      cursor: pointer;
-      transition: border-color .15s, color .15s;
-    }
-    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+
+
+
+
+
+
+
+
+
+
 
     /* ── Page body ───────────────────────────── */
     .page-body {
@@ -429,7 +394,7 @@
 
     /* ── Mobile ──────────────────────────────── */
     @media (max-width: 600px) {
-      .nav-links { display: none; }
+  
       .page-header { flex-direction: column; align-items: flex-start; }
       .card-body {
         grid-template-columns: 1fr auto 1fr;
@@ -641,25 +606,19 @@
     .view-survivor-link:hover { text-decoration: underline; }
 
   </style>
+  <script type="module">
+    import { initNav, NAV_STYLES } from "./nav.js";
+    // inject nav styles
+    const _ns = document.createElement("style");
+    _ns.textContent = NAV_STYLES;
+    document.head.appendChild(_ns);
+    window._initNav = initNav;
+  </script>
 </head>
 <body>
 
 <!-- Nav -->
-<nav class="app-nav">
-  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
-  <div class="nav-links">
-    <a href="picks.html"     class="nav-link active">My Picks</a>
-    <a href="results.html"   class="nav-link">Results</a>
-    <a href="standings.html" class="nav-link">Standings</a>
-    <a href="survivor.html"  class="nav-link">Survivor</a>
-    <a href="profile.html"   class="nav-link">Profile</a>
-    <a href="admin.html"     class="nav-link" id="adminLink" style="display:none">Admin</a>
-  </div>
-  <div class="nav-right">
-    <span class="nav-user" id="navUser"></span>
-    <button class="btn-signout" id="signOutBtn">Sign out</button>
-  </div>
-</nav>
+<nav id="mainNav"></nav>
 
 <div class="page-body">
 
@@ -1465,9 +1424,20 @@
     }
 
     // Nav
-    document.getElementById('navUser').textContent = member?.displayName || user.email;
-    if (isAdmin) document.getElementById('adminLink').style.display = '';
-    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
+    // Init shared nav
+    if (window._initNav) {
+      window._initNav({
+        activePage: 'picks.html',
+        isAdmin,
+        userName: member?.displayName || user.email,
+      });
+    } else {
+      document.getElementById('navUser').textContent = member?.displayName || user.email;
+    }
+    // admin link handled by nav.js
+    const _signOut = () => signOut(auth).then(() => window.location.href = 'index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click', _signOut);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click', _signOut);
 
     // Load today's games
     setDate(todayStr());
