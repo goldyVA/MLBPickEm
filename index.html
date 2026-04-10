@@ -447,8 +447,30 @@
   <div class="nav-right">
     <span class="nav-user" id="navUser"></span>
     <button class="btn-signout" id="signOutBtn">Sign out</button>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+
+<!-- Mobile drawer -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="drawer-header">
+    <span class="drawer-title">⚾ Pick'em</span>
+    <button class="drawer-close" id="drawerClose">✕</button>
+  </div>
+  <div class="drawer-user" id="drawerUser"></div>
+  <nav class="drawer-nav">
+    <a href="picks.html"     class="drawer-link"><span class="drawer-icon">🎯</span>My Picks</a>
+    <a href="results.html"   class="drawer-link"><span class="drawer-icon">📋</span>Results</a>
+    <a href="standings.html" class="drawer-link"><span class="drawer-icon">🏆</span>Standings</a>
+    <a href="survivor.html"  class="drawer-link"><span class="drawer-icon">💀</span>Survivor</a>
+    <a href="profile.html"   class="drawer-link"><span class="drawer-icon">🔐</span>Profile</a>
+    <a href="admin.html"     class="drawer-link" id="drawerAdminLink" style="display:none"><span class="drawer-icon">⚙️</span>Admin</a>
+  </nav>
+  <button class="drawer-signout" id="drawerSignOutBtn">Sign out</button>
+</div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
 
 <!-- Loading overlay -->
 <div id="loadingOverlay" style="position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:999">
@@ -788,7 +810,30 @@
     appNav.style.display  = 'flex';
     document.getElementById('navUser').textContent = member?.displayName || user.email;
     if (adminUser) document.getElementById('adminLink').style.display = '';
-    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+    const _doSignOut = () => signOut(auth);
+    document.getElementById('signOutBtn')?.addEventListener('click', _doSignOut);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click', _doSignOut);
+
+    // Update drawer user name
+    const drawerUser = document.getElementById('drawerUser');
+    if (drawerUser) drawerUser.textContent = member?.displayName || user.email;
+    if (adminUser) {
+      const dal = document.getElementById('drawerAdminLink');
+      if (dal) dal.style.display = '';
+    }
+
+    // Hamburger
+    const hamburger = document.getElementById('hamburgerBtn');
+    const drawer    = document.getElementById('mobileDrawer');
+    const overlay   = document.getElementById('drawerOverlay');
+    const closeBtn  = document.getElementById('drawerClose');
+    if (hamburger) {
+      const openDrawer  = () => { drawer.classList.add('open'); overlay.classList.add('show'); hamburger.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+      const closeDrawer = () => { drawer.classList.remove('open'); overlay.classList.remove('show'); hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+      hamburger.addEventListener('click', openDrawer);
+      closeBtn?.addEventListener('click', closeDrawer);
+      overlay?.addEventListener('click', closeDrawer);
+    }
 
     document.getElementById('welcomeHeading').textContent =
       `Welcome back, ${member?.displayName?.split(' ')[0] || 'friend'}!`;
