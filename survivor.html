@@ -497,6 +497,153 @@
     .msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
     .msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
 
+
+    /* ── Monthly grid ────────────────────────── */
+    .grid-legend {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .grid-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-light);
+    }
+
+    .gl-swatch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px; height: 24px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .gl-win     { background: #D4EDDA; color: #155724; }
+    .gl-loss    { background: #F8D7DA; color: #721C24; }
+    .gl-pending { background: #EEF2F8; color: var(--navy); }
+    .gl-locked  { background: var(--cream-dark); color: var(--ink-faint); font-size: 13px; }
+    .gl-fp      { background: #FEF9EE; color: #7A5A10; font-size: 13px; }
+    .gl-none    { background: var(--white); border: 1.5px solid var(--cream-dark); color: var(--ink-faint); }
+
+    .monthly-grid-wrap {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .monthly-grid-table {
+      border-collapse: collapse;
+      min-width: 100%;
+    }
+
+    .monthly-grid-table th {
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      background: var(--cream);
+      border-bottom: 2px solid var(--cream-dark);
+      white-space: nowrap;
+    }
+
+    .monthly-grid-table th.member-th {
+      text-align: left;
+      padding: 8px 14px;
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      min-width: 130px;
+      border-right: 2px solid var(--cream-dark);
+    }
+
+    .monthly-grid-table th.day-th {
+      min-width: 46px;
+      border-right: 1px solid var(--cream-dark);
+    }
+
+    .monthly-grid-table th.day-th.today-th {
+      background: #EEF2F8;
+      color: var(--navy);
+    }
+
+    .monthly-grid-table th.totals-th {
+      border-left: 2px solid var(--cream-dark);
+      min-width: 60px;
+    }
+
+    .monthly-grid-table td {
+      padding: 6px 4px;
+      text-align: center;
+      border-bottom: 1px solid var(--cream-dark);
+      border-right: 1px solid var(--cream-dark);
+      vertical-align: middle;
+    }
+
+    .monthly-grid-table td.member-td {
+      text-align: left;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      position: sticky;
+      left: 0;
+      background: var(--white);
+      border-right: 2px solid var(--cream-dark);
+      white-space: nowrap;
+    }
+
+    .monthly-grid-table tr:hover td.member-td { background: #FAFAF8; }
+    .monthly-grid-table tr.is-you td.member-td { background: #F0F4FA; }
+    .monthly-grid-table tr.is-you:hover td.member-td { background: #E8EEF8; }
+
+    .monthly-grid-table tr { border-bottom: 1px solid var(--cream-dark); }
+    .monthly-grid-table tr:hover { background: #FAFAF8; }
+    .monthly-grid-table tr.is-you { background: #F0F4FA; }
+
+    .monthly-grid-table td.totals-td {
+      border-left: 2px solid var(--cream-dark);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .grid-cell {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px; height: 28px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .gc-win     { background: #D4EDDA; color: #155724; }
+    .gc-loss    { background: #F8D7DA; color: #721C24; }
+    .gc-pending { background: #EEF2F8; color: var(--navy); font-size: 13px; font-weight: 400; }
+    .gc-locked  { background: var(--cream-dark); color: var(--ink-faint); font-size: 13px; }
+    .gc-fp      { background: #FEF9EE; color: #7A5A10; font-size: 13px; }
+    .gc-none    { color: var(--ink-faint); font-size: 13px; }
+    .gc-future  { color: var(--cream-dark); font-size: 13px; }
+
+    .member-you-tag {
+      font-size: 10px;
+      color: var(--ink-faint);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
     @media (max-width: 680px) {
       .nav-links  { display: none; }
       .two-col    { grid-template-columns: 1fr; }
@@ -549,21 +696,39 @@
     <div class="state-box"><div class="spinner"></div><p>Loading…</p></div>
   </div>
 
-  <!-- Bottom two-col: history + leaderboard -->
+  <!-- Leaderboard + history row -->
   <div class="two-col" id="bottomSection" style="display:none">
-
-    <!-- Pick history -->
-    <div class="card">
-      <div class="card-header">My Picks This Month</div>
-      <div class="history-list" id="historyList"></div>
-    </div>
-
     <!-- Leaderboard -->
     <div class="card">
       <div class="card-header">Survivor Board</div>
       <div id="leaderboardList"></div>
     </div>
+    <!-- Pick history -->
+    <div class="card">
+      <div class="card-header">My Picks This Month</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
 
+  <!-- Full monthly grid -->
+  <div id="monthlyGridSection" style="display:none; margin-top:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy)">Monthly Pick Grid</div>
+        <div style="font-size:13px;color:var(--ink-faint);margin-top:3px">Everyone's picks day by day. Picks hidden until last game of the day starts.</div>
+      </div>
+    </div>
+    <div class="grid-legend">
+      <div class="grid-legend-item"><span class="gl-swatch gl-win">W</span> Win</div>
+      <div class="grid-legend-item"><span class="gl-swatch gl-loss">L</span> Loss</div>
+      <div class="grid-legend-item"><span class="gl-swatch gl-pending">?</span> Pending</div>
+      <div class="grid-legend-item"><span class="gl-swatch gl-locked">🔒</span> Locked</div>
+      <div class="grid-legend-item"><span class="gl-swatch gl-fp">🎟️</span> Free Pass</div>
+      <div class="grid-legend-item"><span class="gl-swatch gl-none">—</span> No pick</div>
+    </div>
+    <div class="monthly-grid-wrap">
+      <div id="monthlyGrid"></div>
+    </div>
   </div>
 
 </div>
@@ -687,6 +852,7 @@
     renderHistory();
     renderLeaderboard();
     document.getElementById('bottomSection').style.display = 'grid';
+    await renderMonthlyGrid();
   }
 
   // ── Load today's games from ESPN ──────────────────────────────────────
@@ -815,7 +981,8 @@
     }
 
     const usedAbbrevs = new Set(Object.values(usedTeams));
-    const canPick     = myState.alive && !todayPick;
+    const picksOpen   = survivorPicksUnlocked();
+    const canPick     = myState.alive && !todayPick && !picksOpen;
     const freePassAvail = myState.alive && !myState.freePassUsed;
 
     // Build pick section HTML
@@ -851,7 +1018,7 @@
             <div class="msg" id="fpMsg"></div>
           ` : ''}
         </div>`;
-    } else if (canPick) {
+    } else if (myState.alive && !todayPick && !picksOpen) {
       // Build team grid
       const tilesHTML = MLB_TEAMS.map(team => {
         const isUsed     = usedAbbrevs.has(team.abbrev);
@@ -875,6 +1042,11 @@
           <div class="team-grid" id="teamGrid">${tilesHTML}</div>
           <div class="msg" id="pickMsg"></div>
           <button class="btn-primary" id="confirmPickBtn" disabled>Confirm Pick</button>
+        </div>`;
+    } else if (myState.alive && !todayPick && picksOpen) {
+      pickHTML = `
+        <div class="pick-section">
+          <p style="font-size:14px;color:var(--ink-faint)">⏳ Survivor picks lock after the last game of the day starts. Check back later!</p>
         </div>`;
     } else {
       pickHTML = `
@@ -1072,6 +1244,172 @@
           <span class="leader-streak">${r.pickCount} picks</span>
         </div>`;
     }).join('');
+  }
+
+
+  // ── Render monthly pick grid ──────────────────────────────────────────
+  async function renderMonthlyGrid() {
+    const section = document.getElementById('monthlyGridSection');
+    const gridEl  = document.getElementById('monthlyGrid');
+    const ym      = yearMonthStr();
+    const today   = todayStr();
+    const todayDay = new Date().getDate();
+    const now      = new Date();
+
+    if (allMembers.length === 0) { section.style.display = 'none'; return; }
+    section.style.display = '';
+
+    // Load all games for this month from Firebase to get winners
+    const gamesSnap = await get(ref(db, 'games'));
+    const monthGames = {}; // { 'YYYY-MM-DD': { lastStartTime, games: [], allFinal: bool } }
+
+    if (gamesSnap.exists()) {
+      gamesSnap.forEach(dateChild => {
+        if (!dateChild.key.startsWith(ym)) return;
+        const games = Object.values(dateChild.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+        if (games.length === 0) return;
+        const lastStart = new Date(games[games.length-1].startTime);
+        monthGames[dateChild.key] = {
+          lastStartTime: lastStart,
+          games,
+          allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
+        };
+      });
+    }
+
+    // Days 1–30 of the month (skip 31)
+    const year  = parseInt(ym.split('-')[0]);
+    const month = parseInt(ym.split('-')[1]) - 1;
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const days = [];
+    for (let d = 1; d <= Math.min(daysInMonth, 30); d++) {
+      const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
+      days.push({ day: d, dateStr });
+    }
+
+    // Sort members: current user first, then alpha
+    const members = [...allMembers].sort((a,b) => {
+      if (a.uid === currentUser.uid) return -1;
+      if (b.uid === currentUser.uid) return 1;
+      return (a.displayName||'').localeCompare(b.displayName||'');
+    });
+
+    // Determine result for a pick on a given date
+    function getPickResult(abbrev, dateStr) {
+      const dayData = monthGames[dateStr];
+      if (!dayData) return 'unknown';
+      const game = dayData.games.find(g =>
+        g.homeTeam?.abbrev?.toUpperCase() === abbrev?.toUpperCase() ||
+        g.awayTeam?.abbrev?.toUpperCase() === abbrev?.toUpperCase()
+      );
+      if (!game) return 'unknown';
+      if (game.statusName !== 'STATUS_FINAL') return 'pending';
+      const won = game.winnerId === game.homeTeam?.id
+        ? game.homeTeam.abbrev.toUpperCase() === abbrev.toUpperCase()
+        : game.awayTeam.abbrev.toUpperCase() === abbrev.toUpperCase();
+      return won ? 'win' : 'loss';
+    }
+
+    // Build table
+    const table = document.createElement('table');
+    table.className = 'monthly-grid-table';
+
+    // Header row — days
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    const memberTh = document.createElement('th');
+    memberTh.className = 'member-th';
+    memberTh.textContent = 'Member';
+    headerRow.appendChild(memberTh);
+
+    for (const { day, dateStr } of days) {
+      const th = document.createElement('th');
+      th.className = `day-th${dateStr === today ? ' today-th' : ''}`;
+      th.textContent = day;
+      th.title = dateStr;
+      headerRow.appendChild(th);
+    }
+
+    const totalsTh = document.createElement('th');
+    totalsTh.className = 'totals-th';
+    totalsTh.textContent = 'W–L';
+    headerRow.appendChild(totalsTh);
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Body rows — members
+    const tbody = document.createElement('tbody');
+
+    for (const member of members) {
+      const state     = allStates[member.uid] || { alive: true, freePassUsed: false, freePassDay: null, usedTeams: {} };
+      const usedTeams = state.usedTeams || {};
+      const isYou     = member.uid === currentUser.uid;
+      const row       = document.createElement('tr');
+      if (isYou) row.classList.add('is-you');
+
+      // Member name cell
+      const nameTd = document.createElement('td');
+      nameTd.className = 'member-td';
+      nameTd.innerHTML = `${member.displayName}${isYou ? '<span class="member-you-tag">(you)</span>' : ''}`;
+      row.appendChild(nameTd);
+
+      let wins = 0, losses = 0;
+
+      for (const { day, dateStr } of days) {
+        const td   = document.createElement('td');
+        const pick = usedTeams[dateStr];
+        const dayData    = monthGames[dateStr];
+        const isFuture   = dateStr > today;
+        const isToday    = dateStr === today;
+
+        // Is this day's last game started yet?
+        const dayUnlocked = dayData
+          ? now >= dayData.lastStartTime
+          : (dateStr < today); // past days with no cached games treat as unlocked
+
+        // Free pass day
+        const fpDay = state.freePassDay ? `${ym}-${String(state.freePassDay).padStart(2,'0')}` : null;
+        const isFP  = fpDay === dateStr;
+
+        let cellHTML = '';
+
+        if (isFP && !pick) {
+          cellHTML = `<span class="grid-cell gc-fp" title="Free pass used">🎟️</span>`;
+        } else if (isFuture) {
+          cellHTML = `<span class="gc-future">·</span>`;
+        } else if (!pick) {
+          cellHTML = `<span class="gc-none">—</span>`;
+        } else if (!dayUnlocked) {
+          // Pick exists but day not unlocked — show locked
+          cellHTML = `<span class="grid-cell gc-locked" title="Locked until last game starts">🔒</span>`;
+        } else {
+          const result = getPickResult(pick, dateStr);
+          if (result === 'win')     { wins++;   cellHTML = `<span class="grid-cell gc-win" title="${pick}">${pick}</span>`; }
+          else if (result === 'loss')  { losses++; cellHTML = `<span class="grid-cell gc-loss" title="${pick}">${pick}</span>`; }
+          else if (result === 'pending') { cellHTML = `<span class="grid-cell gc-pending" title="${pick}">${pick}</span>`; }
+          else { cellHTML = `<span class="grid-cell gc-pending" title="${pick}">${pick}</span>`; }
+        }
+
+        td.innerHTML = cellHTML;
+        row.appendChild(td);
+      }
+
+      // Totals
+      const totalsTd = document.createElement('td');
+      totalsTd.className = 'totals-td';
+      totalsTd.innerHTML = wins > 0 || losses > 0
+        ? `<span style="color:var(--green)">${wins}</span><span style="color:var(--ink-faint)">–</span><span style="color:var(--red)">${losses}</span>`
+        : `<span style="color:var(--ink-faint)">—</span>`;
+      row.appendChild(totalsTd);
+
+      tbody.appendChild(row);
+    }
+
+    table.appendChild(tbody);
+    gridEl.innerHTML = '';
+    gridEl.appendChild(table);
   }
 
   // ── Auth gate ─────────────────────────────────────────────────────────
