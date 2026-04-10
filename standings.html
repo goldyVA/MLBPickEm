@@ -497,7 +497,7 @@
 <script type="module">
   import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-  import { getDatabase, ref, get }                from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { getDatabase, ref, get, set }           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
@@ -571,6 +571,35 @@
         }
       });
     }
+
+    // Refresh today's games live from ESPN so standings reflect finished games
+    try {
+      const d = new Date();
+      const todayKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${todayKey.replace(/-/g,'')}`);
+      const data = await res.json();
+      const todayGames = {};
+      for (const event of (data?.events || [])) {
+        const comp = event.competitions?.[0];
+        if (!comp) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        if (!home || !away) continue;
+        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+        const winnerId   = statusName === 'STATUS_FINAL'
+          ? (home.winner ? home.team.id : away.winner ? away.team.id : null) : null;
+        todayGames[event.id] = {
+          id: event.id, startTime: event.date, statusName,
+          homeTeam: { id: home.team.id, abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary||'' },
+          awayTeam: { id: away.team.id, abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary||'' },
+          winnerId,
+        };
+      }
+      if (Object.keys(todayGames).length > 0) {
+        allGames[todayKey] = todayGames;
+        await set(ref(db, `games/${todayKey}`), todayGames).catch(() => {});
+      }
+    } catch (e) { console.warn('ESPN refresh failed:', e); }
 
     // All picks for all members
     allPicks = {};
