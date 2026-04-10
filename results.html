@@ -231,6 +231,19 @@
       white-space: nowrap;
     }
 
+
+    .game-header-score {
+      font-family: 'DM Serif Display', serif;
+      font-size: 13px;
+      color: var(--ink);
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+
+    .game-header-score .score-away { color: var(--ink); }
+    .game-header-score .score-home { color: var(--ink); }
+    .game-header-score .score-sep  { color: var(--ink-faint); margin: 0 2px; }
+
     .game-header-status {
       font-size: 10px;
       font-weight: 600;
@@ -1049,6 +1062,7 @@ const NAV_STYLES = `
 
   let currentUser = null;
   let currentDate = todayStr();
+  let gamesCache  = {};
 
   // ── Date helpers ──────────────────────────────────────────────────────
   function todayStr() {
@@ -1164,6 +1178,7 @@ const NAV_STYLES = `
     }));
 
     // 4. Render
+    gamesCache = {}; for (const g of games) gamesCache[g.id] = g;
     renderTable(games, members, allPicks, dateStr);
   }
 
@@ -1275,6 +1290,16 @@ const NAV_STYLES = `
       if (isFinal) { statusClass = 'status-final'; statusText = 'Final'; }
       else if (isLive) { statusClass = 'status-live'; statusText = game.statusShort || 'Live'; }
 
+      // Build score display for live and final games
+      const showScore = (isLive || isFinal) && game.awayScore != null && game.homeScore != null;
+      const scoreHTML = showScore
+        ? `<div class="game-header-score">
+             <span class="score-away">${game.awayScore}</span>
+             <span class="score-sep">–</span>
+             <span class="score-home">${game.homeScore}</span>
+           </div>`
+        : '';
+
       th.innerHTML = `
         <div class="game-header">
           <div class="game-header-logos">
@@ -1284,7 +1309,7 @@ const NAV_STYLES = `
             <img class="game-header-logo" src="${espnLogo(game.homeTeam.abbrev)}" alt="${game.homeTeam.abbrev}"
                  onerror="this.style.display='none'" />
           </div>
-          <div class="game-header-time">${game.awayTeam.abbrev} @ ${game.homeTeam.abbrev}</div>
+          ${scoreHTML}
           <span class="game-header-status ${statusClass}">${statusText}</span>
         </div>
       `;
@@ -1380,11 +1405,27 @@ const NAV_STYLES = `
   }
 
   // ── Date nav ──────────────────────────────────────────────────────────
+  let resultsPollInterval = null;
+
   function setDate(dateStr) {
     currentDate = dateStr;
     document.getElementById('dateLabel').textContent = formatDateLabel(dateStr);
     document.getElementById('datePicker').value = dateStr;
-    loadResults(dateStr);
+
+    // Clear any existing poll
+    if (resultsPollInterval) { clearInterval(resultsPollInterval); resultsPollInterval = null; }
+
+    loadResults(dateStr).then(() => {
+      // Poll every 3 minutes while viewing today and games are active
+      if (dateStr === todayStr()) {
+        resultsPollInterval = setInterval(async () => {
+          await loadResults(dateStr);
+          // Stop polling once all games are final
+          const allFinal = Object.values(gamesCache || {}).every(g => g.statusName === 'STATUS_FINAL');
+          if (allFinal) { clearInterval(resultsPollInterval); resultsPollInterval = null; }
+        }, 3 * 60 * 1000);
+      }
+    });
   }
 
   document.getElementById('prevDay').addEventListener('click', () => setDate(shiftDate(currentDate, -1)));
