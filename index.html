@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Picks · MLB Pick'em</title>
+  <title>MLB Pick'em League</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
@@ -30,14 +30,259 @@
     }
 
     html, body {
-      min-height: 100%;
+      height: 100%;
       font-family: 'DM Sans', sans-serif;
       background: var(--cream);
       color: var(--ink);
     }
 
-    /* ── Nav ─────────────────────────────────── */
+    /* ── Layout ─────────────────────────────── */
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── Left panel ─────────────────────────── */
+    .hero {
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 110%, rgba(232,168,56,.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 90% -10%, rgba(192,57,43,.12) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,.7);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: 36px;
+    }
+
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(.8); }
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(38px, 4vw, 56px);
+      line-height: 1.08;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero p {
+      font-size: 16px;
+      line-height: 1.65;
+      color: rgba(255,255,255,.62);
+      max-width: 380px;
+      margin-bottom: 48px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+    }
+
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hero-stat-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--white);
+    }
+
+    .hero-stat-label {
+      font-size: 12px;
+      color: rgba(255,255,255,.45);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* ── Right panel ────────────────────────── */
+    .auth-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 48px;
+      background: var(--cream);
+    }
+
+    .auth-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+
+    .auth-logo-icon {
+      width: 36px; height: 36px;
+      background: var(--navy);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .auth-logo-text {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    /* Tabs */
+    .auth-tabs {
+      display: flex;
+      background: var(--cream-dark);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 32px;
+      gap: 4px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 9px 0;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-faint);
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+
+    .auth-tab.active {
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Form */
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .field input:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(27,58,92,.10);
+    }
+
+    .field input::placeholder { color: var(--ink-faint); }
+
+    .pin-hint {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s ease, transform .1s ease;
+      margin-top: 4px;
+    }
+
+    .btn-primary:hover  { background: #152e4a; }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* Messages */
+    .msg {
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      line-height: 1.45;
+      display: none;
+    }
+    .msg.show  { display: block; }
+    .msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+    .msg.warn  { background: #FEF9EE; color: #7A5A10; border: 1px solid #F5DFA0; }
+
+    .auth-footer {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--ink-faint);
+    }
+
+    /* Nav (after login) */
     .app-nav {
+      display: none;
       position: fixed;
       top: 0; left: 0; right: 0;
       background: var(--white);
@@ -45,10 +290,11 @@
       z-index: 100;
       padding: 0 24px;
       height: 58px;
-      display: flex;
       align-items: center;
       justify-content: space-between;
     }
+
+    .app-nav.show { display: flex; }
 
     .nav-logo {
       font-family: 'DM Serif Display', serif;
@@ -69,11 +315,15 @@
       transition: background .15s, color .15s;
     }
 
-    .nav-link:hover  { background: var(--cream); color: var(--ink); }
+    .nav-link:hover { background: var(--cream); color: var(--ink); }
     .nav-link.active { background: var(--navy); color: var(--white); }
 
     .nav-right { display: flex; align-items: center; gap: 12px; }
-    .nav-user  { font-size: 13px; color: var(--ink-faint); }
+
+    .nav-user {
+      font-size: 13px;
+      color: var(--ink-faint);
+    }
 
     .btn-signout {
       padding: 6px 14px;
@@ -89,350 +339,105 @@
     }
     .btn-signout:hover { border-color: var(--red); color: var(--red); }
 
-    /* ── Page body ───────────────────────────── */
-    .page-body {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 82px 24px 48px;
+    /* Welcome screen */
+    .welcome-screen {
+      display: none; /* always hidden until JS sets inline style */
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px 40px;
+      text-align: center;
     }
 
-    /* ── Page header ─────────────────────────── */
-    .page-header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
+    /* .welcome-screen visibility controlled via JS inline styles */
+
+    .welcome-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
     }
 
-    .page-header h1 {
+    .welcome-screen h2 {
       font-family: 'DM Serif Display', serif;
       font-size: 32px;
       color: var(--navy);
-      line-height: 1.1;
+      margin-bottom: 12px;
     }
 
-    .page-header p {
-      font-size: 14px;
-      color: var(--ink-faint);
-      margin-top: 4px;
-    }
-
-    /* ── Date selector ───────────────────────── */
-    .date-nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .date-btn {
-      width: 34px; height: 34px;
-      border: 1.5px solid var(--cream-dark);
-      border-radius: 8px;
-      background: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
+    .welcome-screen p {
       font-size: 16px;
       color: var(--ink-light);
-      transition: border-color .15s, color .15s;
-    }
-    .date-btn:hover { border-color: var(--navy); color: var(--navy); }
-
-    .date-display {
-      padding: 7px 16px;
-      background: var(--white);
-      border: 1.5px solid var(--cream-dark);
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ink);
-      min-width: 140px;
-      text-align: center;
-      cursor: pointer;
-      position: relative;
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 32px;
     }
 
-    .date-display input[type="date"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
+    .welcome-nav-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      max-width: 640px;
       width: 100%;
     }
 
-    /* ── Summary bar ─────────────────────────── */
-    .summary-bar {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-
-    .summary-chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--white);
-      border: 1.5px solid var(--cream-dark);
-      border-radius: 100px;
-      padding: 6px 16px;
-      font-size: 13px;
-      color: var(--ink-light);
-    }
-
-    .summary-chip strong { color: var(--ink); }
-
-    /* ── Game cards ──────────────────────────── */
-    .games-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .game-card {
+    .welcome-card {
       background: var(--white);
       border: 1.5px solid var(--cream-dark);
       border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow .2s;
-    }
-
-    .game-card:hover { box-shadow: var(--shadow-md); }
-
-    /* locked / final states */
-    .game-card.locked  { border-color: #D4CAB8; }
-    .game-card.correct { border-color: #A8D5B5; background: #F4FBF6; }
-    .game-card.wrong   { border-color: #F0C4C0; background: #FDF5F4; }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--cream-dark);
-      background: var(--cream);
-    }
-
-    .game-time { font-size: 12px; font-weight: 600; color: var(--ink-light); text-transform: uppercase; letter-spacing: .04em; }
-
-    .game-status-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 100px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-
-    .badge-upcoming { background: #EEF2F8; color: var(--navy); }
-    .badge-live     { background: #FDECEA; color: var(--red); }
-    .badge-final    { background: var(--cream-dark); color: var(--ink-faint); }
-
-    .card-body {
-      padding: 16px;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 12px;
-      align-items: center;
-    }
-
-    /* Team side */
-    .team-side {
+      padding: 24px 16px;
+      text-decoration: none;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
+    }
+
+    .welcome-card:hover {
+      border-color: var(--navy);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .welcome-card-icon { font-size: 28px; }
+    .welcome-card-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .welcome-card-desc  { font-size: 12px; color: var(--ink-faint); text-align: center; }
+
+    .pending-banner {
+      background: #FEF9EE;
+      border: 1.5px solid #F5DFA0;
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      max-width: 480px;
       text-align: center;
     }
 
-    .team-logo {
-      width: 56px; height: 56px;
-      object-fit: contain;
-    }
+    .pending-banner h3 { font-size: 18px; color: #7A5A10; margin-bottom: 8px; }
+    .pending-banner p  { font-size: 14px; color: #A07830; line-height: 1.5; }
 
-    .team-logo-placeholder {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: var(--cream-dark);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-    }
-
-    .team-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--ink);
-      line-height: 1.2;
-    }
-
-    .team-record {
-      font-size: 12px;
-      color: var(--ink-faint);
-    }
-
-    .team-pitcher {
-      font-size: 11.5px;
-      color: var(--ink-light);
-      background: var(--cream);
-      border-radius: 100px;
-      padding: 3px 10px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 130px;
-    }
-
-    /* Middle VS / score */
-    .card-mid {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .vs-text {
-      font-family: 'DM Serif Display', serif;
-      font-size: 20px;
-      color: var(--ink-faint);
-    }
-
-    .score-display {
-      font-family: 'DM Serif Display', serif;
-      font-size: 26px;
-      color: var(--ink);
-      letter-spacing: .04em;
-    }
-
-    .at-label {
-      font-size: 11px;
-      color: var(--ink-faint);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    /* Pick section */
-    .card-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--cream-dark);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .pick-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--ink-light);
-      white-space: nowrap;
-    }
-
-    .pick-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-    .pick-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border: 1.5px solid var(--cream-dark);
-      border-radius: 8px;
-      background: var(--white);
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--ink-light);
-      cursor: pointer;
-      transition: all .15s;
-    }
-
-    .pick-btn img {
-      width: 20px; height: 20px;
-      object-fit: contain;
-    }
-
-    .pick-btn:hover:not(:disabled) {
-      border-color: var(--navy);
-      color: var(--navy);
-      background: #EEF2F8;
-    }
-
-    .pick-btn.selected {
-      border-color: var(--navy);
-      background: var(--navy);
-      color: var(--white);
-    }
-
-    .pick-btn:disabled {
-      cursor: not-allowed;
-      opacity: .6;
-    }
-
-    /* Result indicators */
-    .result-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .result-indicator.correct { color: var(--green); }
-    .result-indicator.wrong   { color: var(--red); }
-
-    .lock-msg {
-      font-size: 12px;
-      color: var(--ink-faint);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* ── States ──────────────────────────────── */
-    .state-box {
-      text-align: center;
-      padding: 64px 24px;
-      color: var(--ink-faint);
-    }
-
-    .state-box .icon { font-size: 48px; margin-bottom: 16px; }
-    .state-box h3    { font-size: 18px; color: var(--ink-light); margin-bottom: 8px; }
-    .state-box p     { font-size: 14px; line-height: 1.5; }
-
-    .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--cream-dark);
-      border-top-color: var(--navy);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Mobile ──────────────────────────────── */
-    @media (max-width: 600px) {
-      .nav-links { display: none; }
-      .page-header { flex-direction: column; align-items: flex-start; }
-      .card-body {
-        grid-template-columns: 1fr auto 1fr;
-        gap: 8px;
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
       }
-      .team-logo { width: 44px; height: 44px; }
-      .team-name { font-size: 13px; }
-      .pick-btn  { padding: 7px 10px; font-size: 12px; }
+      .hero {
+        padding: 40px 28px 36px;
+      }
+      .hero h1 { font-size: 32px; }
+      .hero p  { display: none; }
+      .hero-stats { gap: 20px; }
+      .auth-panel { padding: 36px 24px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
-<nav class="app-nav">
+<!-- Nav (shown when logged in) -->
+<nav class="app-nav" id="appNav" style="display:none">
   <a href="index.html" class="nav-logo">⚾ Pick'em</a>
   <div class="nav-links">
-    <a href="picks.html"     class="nav-link active">My Picks</a>
+    <a href="picks.html"     class="nav-link">My Picks</a>
     <a href="results.html"   class="nav-link">Results</a>
     <a href="standings.html" class="nav-link">Standings</a>
     <a href="survivor.html"  class="nav-link">Survivor</a>
@@ -444,48 +449,146 @@
   </div>
 </nav>
 
-<div class="page-body">
+<!-- Loading overlay -->
+<div id="loadingOverlay" style="position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:999">
+  <div style="text-align:center">
+    <div style="width:36px;height:36px;border:3px solid #EDEAE2;border-top-color:#1B3A5C;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px"></div>
+    <div style="font-family:DM Sans,sans-serif;font-size:14px;color:#999990">Loading…</div>
+  </div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
-  <!-- Header + date nav -->
-  <div class="page-header">
-    <div>
-      <h1>My Picks</h1>
-      <p id="headerSubtitle">Pick a winner for each game before first pitch.</p>
+<!-- Auth page (shown when logged out) -->
+<div class="page" id="authPage" style="display:none">
+  <!-- Hero panel -->
+  <div class="hero">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      <span id="seasonYear"></span> MLB Season
     </div>
-    <div class="date-nav">
-      <button class="date-btn" id="prevDay" title="Previous day">‹</button>
-      <div class="date-display" id="dateDisplay">
-        <span id="dateLabel">Today</span>
-        <input type="date" id="datePicker" />
+    <h1>Pick every<br/><em>game,</em><br/>beat the group.</h1>
+    <p>Daily MLB pick'em with your crew. Lock in your picks before first pitch, track the board, and climb the standings.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num">162</span>
+        <span class="hero-stat-label">Games / team</span>
       </div>
-      <button class="date-btn" id="nextDay" title="Next day">›</button>
+      <div class="hero-stat">
+        <span class="hero-stat-num">30</span>
+        <span class="hero-stat-label">MLB teams</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">Daily</span>
+        <span class="hero-stat-label">Picks lock</span>
+      </div>
     </div>
   </div>
 
-  <!-- Summary bar -->
-  <div class="summary-bar" id="summaryBar" style="display:none">
-    <div class="summary-chip">Games: <strong id="sumGames">0</strong></div>
-    <div class="summary-chip">Picked: <strong id="sumPicked">0</strong></div>
-    <div class="summary-chip" id="sumCorrectChip" style="display:none">
-      Correct: <strong id="sumCorrect">0</strong>
+  <!-- Auth panel -->
+  <div class="auth-panel">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">⚾</div>
+        <span class="auth-logo-text">MLB Pick'em League</span>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn" onclick="switchTab('signin')">Sign In</button>
+        <button class="auth-tab"        id="tabSignUp" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form class="auth-form" id="signInForm" onsubmit="handleSignIn(event)">
+        <div class="field">
+          <label for="siEmail">Email</label>
+          <input type="email" id="siEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="siPin">PIN</label>
+          <input type="password" id="siPin" placeholder="6–8 digit PIN" required inputmode="numeric"
+                 minlength="6" maxlength="8" autocomplete="current-password" />
+        </div>
+        <div class="msg" id="siMsg"></div>
+        <button type="submit" class="btn-primary" id="siBtn">Sign In</button>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form class="auth-form" id="signUpForm" style="display:none" onsubmit="handleSignUp(event)">
+        <div class="field">
+          <label for="suName">Display Name</label>
+          <input type="text" id="suName" placeholder="Your name" required autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="suEmail">Email</label>
+          <input type="email" id="suEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="suPin">Create PIN</label>
+          <input type="password" id="suPin" placeholder="6–8 digits" required inputmode="numeric"
+                 minlength="6" maxlength="8" autocomplete="new-password" />
+          <span class="pin-hint">Numbers only, 6–8 digits</span>
+        </div>
+        <div class="field">
+          <label for="suPinConfirm">Confirm PIN</label>
+          <input type="password" id="suPinConfirm" placeholder="Re-enter PIN" required inputmode="numeric"
+                 minlength="6" maxlength="8" autocomplete="new-password" />
+        </div>
+        <div class="msg" id="suMsg"></div>
+        <button type="submit" class="btn-primary" id="suBtn">Request Access</button>
+      </form>
+
+      <div class="auth-footer">
+        By signing up you agree to play fair and have fun ⚾
+      </div>
     </div>
   </div>
-
-  <!-- Games container -->
-  <div id="gamesContainer">
-    <div class="state-box">
-      <div class="spinner"></div>
-      <p>Loading games…</p>
-    </div>
-  </div>
-
 </div>
 
-<!-- Firebase + App logic -->
+<!-- Welcome / dashboard (shown when logged in & approved) -->
+<div class="welcome-screen" id="welcomeScreen" style="display:none">
+  <div class="welcome-icon">⚾</div>
+  <h2 id="welcomeHeading">Welcome back!</h2>
+  <p>You're in. Make your picks before first pitch — they lock automatically at game time.</p>
+  <div class="welcome-nav-cards">
+    <a href="picks.html" class="welcome-card">
+      <span class="welcome-card-icon">🎯</span>
+      <span class="welcome-card-label">My Picks</span>
+      <span class="welcome-card-desc">Pick today's games</span>
+    </a>
+    <a href="results.html" class="welcome-card">
+      <span class="welcome-card-icon">📋</span>
+      <span class="welcome-card-label">Results</span>
+      <span class="welcome-card-desc">See the group board</span>
+    </a>
+    <a href="standings.html" class="welcome-card">
+      <span class="welcome-card-icon">🏆</span>
+      <span class="welcome-card-label">Standings</span>
+      <span class="welcome-card-desc">Season leaderboard</span>
+    </a>
+    <a href="survivor.html" class="welcome-card">
+      <span class="welcome-card-icon">💀</span>
+      <span class="welcome-card-label">Survivor</span>
+      <span class="welcome-card-desc">Monthly survivor game</span>
+    </a>
+  </div>
+</div>
+
+<!-- Pending approval screen -->
+<div class="welcome-screen" id="pendingScreen" style="display:none">
+  <div class="welcome-icon">⏳</div>
+  <div class="pending-banner">
+    <h3>Awaiting Approval</h3>
+    <p>Your account has been created and is pending admin approval. You'll be able to make picks once you're approved. Check back soon!</p>
+  </div>
+</div>
+
+<!-- Firebase -->
 <script type="module">
-  import { initializeApp }                         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-  import { getDatabase, ref, get, set, child }     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { initializeApp }                              from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword,
+           createUserWithEmailAndPassword,
+           onAuthStateChanged, signOut }                from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, set, get, child }         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
@@ -501,425 +604,158 @@
   const auth = getAuth(app);
   const db   = getDatabase(app);
 
-  // ── State ─────────────────────────────────────────────────────────────
-  let currentUser   = null;
-  let currentDate   = todayStr();       // 'YYYY-MM-DD'
-  let userPicks     = {};               // gameId → {teamId, lockedIn}
-  let gamesCache    = {};               // gameId → game object
-  let lockTimers    = {};               // gameId → setTimeout id
+  const ADMIN_EMAIL = "steven.goldburg@gmail.com";
 
-  // ── Date helpers ──────────────────────────────────────────────────────
-  function todayStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  // Set season year dynamically
+  document.getElementById('seasonYear').textContent = new Date().getFullYear();
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = `msg ${type} show`;
   }
 
-  function dateToESPN(dateStr) {
-    return dateStr.replace(/-/g, '');  // 'YYYYMMDD'
+  function setLoading(btnId, loading, defaultText) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Please wait…' : defaultText;
   }
 
-  function formatDateLabel(dateStr) {
-    const today = todayStr();
-    const d = new Date(dateStr + 'T12:00:00');
-    if (dateStr === today) return 'Today';
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-    const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
-    if (dateStr === yStr) return 'Yesterday';
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-    const tStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
-    if (dateStr === tStr) return 'Tomorrow';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
-  }
+  // ── Tab switching ─────────────────────────────────────────────────────
+  window.switchTab = function(tab) {
+    const isSignIn = tab === 'signin';
+    document.getElementById('signInForm').style.display = isSignIn ? 'flex' : 'none';
+    document.getElementById('signUpForm').style.display = isSignIn ? 'none' : 'flex';
+    document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
+    document.getElementById('tabSignUp').classList.toggle('active', !isSignIn);
+  };
 
-  function shiftDate(dateStr, days) {
-    const d = new Date(dateStr + 'T12:00:00');
-    d.setDate(d.getDate() + days);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
+  // ── Sign In ───────────────────────────────────────────────────────────
+  window.handleSignIn = async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('siEmail').value.trim();
+    const pin   = document.getElementById('siPin').value.trim();
 
-  // ── ESPN helpers ──────────────────────────────────────────────────────
-  function espnLogoUrl(teamId) {
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${teamId}.png`;
-  }
-
-  function gameIsLocked(startTimeISO) {
-    return new Date() >= new Date(startTimeISO);
-  }
-
-  function formatGameTime(iso) {
-    return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-  }
-
-  // ── Parse ESPN scoreboard ─────────────────────────────────────────────
-  function parseESPN(data) {
-    const games = [];
-    const events = data?.events || [];
-
-    for (const event of events) {
-      const comp      = event.competitions?.[0];
-      if (!comp) continue;
-
-      const competitors = comp.competitors || [];
-      const home = competitors.find(c => c.homeAway === 'home');
-      const away = competitors.find(c => c.homeAway === 'away');
-      if (!home || !away) continue;
-
-      const status     = event.status?.type;
-      const statusName = status?.name || 'STATUS_SCHEDULED';
-      const startTime  = event.date;
-
-      // Pitchers from comp.situation or odds/notes
-      const getPitcher = (side) => {
-        const prob = comp.probables?.find(p => p.homeAway === side);
-        return prob?.athlete?.shortName || null;
-      };
-
-      // Score
-      const homeScore = home.score ?? null;
-      const awayScore = away.score ?? null;
-
-      // Winner
-      let winnerId = null;
-      if (statusName === 'STATUS_FINAL') {
-        winnerId = home.winner ? home.team.id : away.winner ? away.team.id : null;
-      }
-
-      games.push({
-        id:          event.id,
-        startTime,
-        statusName,
-        statusShort: status?.shortDetail || '',
-        homeTeam:    { id: home.team.id, abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
-        awayTeam:    { id: away.team.id, abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
-        homePitcher: getPitcher('home'),
-        awayPitcher: getPitcher('away'),
-        homeScore,
-        awayScore,
-        winnerId,
-      });
-    }
-    return games;
-  }
-
-  // ── Load games ────────────────────────────────────────────────────────
-  async function loadGames(dateStr) {
-    const container = document.getElementById('gamesContainer');
-    const summaryBar = document.getElementById('summaryBar');
-    summaryBar.style.display = 'none';
-    container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading games…</p></div>`;
-
-    // Clear old lock timers
-    Object.values(lockTimers).forEach(clearTimeout);
-    lockTimers = {};
-
-    // 1. Try Firebase cache
-    const dbSnap = await get(ref(db, `games/${dateStr}`));
-    let games = [];
-
-    if (dbSnap.exists()) {
-      const raw = dbSnap.val();
-      games = Object.values(raw);
-    } else {
-      // 2. Fetch from ESPN
-      try {
-        const espnDate = dateToESPN(dateStr);
-        const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`;
-        const res  = await fetch(url);
-        const data = await res.json();
-        games = parseESPN(data);
-
-        // Cache in Firebase (admin writes; regular writes still helpful for reads)
-        const cacheObj = {};
-        for (const g of games) cacheObj[g.id] = g;
-        if (games.length > 0) {
-          await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
-        }
-      } catch (err) {
-        console.error('ESPN fetch failed:', err);
-        container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
-        return;
-      }
-    }
-
-    // For live/in-progress games, always re-fetch scores (don't use stale cache)
-    const hasLive = games.some(g => g.statusName === 'STATUS_IN_PROGRESS');
-    if (hasLive || games.some(g => g.statusName !== 'STATUS_FINAL')) {
-      try {
-        const espnDate = dateToESPN(dateStr);
-        const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`);
-        const data = await res.json();
-        const fresh = parseESPN(data);
-        if (fresh.length > 0) {
-          games = fresh;
-          const cacheObj = {};
-          for (const g of games) cacheObj[g.id] = g;
-          await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
-        }
-      } catch (_) {}
-    }
-
-    gamesCache = {};
-    for (const g of games) gamesCache[g.id] = g;
-
-    if (games.length === 0) {
-      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><h3>No games scheduled</h3><p>Enjoy the off day!</p></div>`;
+    if (!/^\d{6,8}$/.test(pin)) {
+      showMsg('siMsg', 'PIN must be 6–8 digits.', 'error');
       return;
     }
 
-    // Load user picks for this date
-    await loadUserPicks(dateStr);
+    setLoading('siBtn', true, 'Sign In');
+    try {
+      await signInWithEmailAndPassword(auth, email, pin);
+      // onAuthStateChanged will handle redirect
+    } catch (err) {
+      const msgs = {
+        'auth/user-not-found':   'No account found with that email.',
+        'auth/wrong-password':   'Incorrect PIN.',
+        'auth/invalid-email':    'Invalid email address.',
+        'auth/invalid-credential': 'Incorrect email or PIN.',
+        'auth/too-many-requests':'Too many attempts. Try again later.',
+      };
+      showMsg('siMsg', msgs[err.code] || 'Sign in failed. Please try again.', 'error');
+      setLoading('siBtn', false, 'Sign In');
+    }
+  };
 
-    renderGames(games, dateStr);
-    updateSummary(games);
-  }
+  // ── Sign Up ───────────────────────────────────────────────────────────
+  window.handleSignUp = async function(e) {
+    e.preventDefault();
+    const name  = document.getElementById('suName').value.trim();
+    const email = document.getElementById('suEmail').value.trim();
+    const pin   = document.getElementById('suPin').value.trim();
+    const pin2  = document.getElementById('suPinConfirm').value.trim();
 
-  // ── Load picks ────────────────────────────────────────────────────────
-  async function loadUserPicks(dateStr) {
-    if (!currentUser) return;
-    const snap = await get(ref(db, `picks/${currentUser.uid}/${dateStr}`));
-    userPicks = snap.exists() ? snap.val() : {};
-  }
-
-  // ── Save pick ─────────────────────────────────────────────────────────
-  async function savePick(dateStr, gameId, teamId) {
-    if (!currentUser) return;
-    const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${gameId}`);
-    await set(pickRef, { teamId, lockedIn: true, correct: null });
-    if (!userPicks[gameId]) userPicks[gameId] = {};
-    userPicks[gameId].teamId = teamId;
-    userPicks[gameId].lockedIn = true;
-  }
-
-  // ── Render ─────────────────────────────────────────────────────────────
-  function renderGames(games, dateStr) {
-    const container = document.getElementById('gamesContainer');
-    container.innerHTML = '';
-
-    const grid = document.createElement('div');
-    grid.className = 'games-grid';
-
-    for (const game of games) {
-      grid.appendChild(buildCard(game, dateStr));
+    if (!name) {
+      showMsg('suMsg', 'Please enter your display name.', 'error'); return;
+    }
+    if (!/^\d{6,8}$/.test(pin)) {
+      showMsg('suMsg', 'PIN must be 6–8 digits (numbers only).', 'error'); return;
+    }
+    if (pin !== pin2) {
+      showMsg('suMsg', 'PINs do not match.', 'error'); return;
     }
 
-    container.appendChild(grid);
-  }
+    setLoading('suBtn', true, 'Request Access');
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pin);
+      const uid  = cred.user.uid;
+      const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  function buildCard(game, dateStr) {
-    const locked   = gameIsLocked(game.startTime);
-    const isFinal  = game.statusName === 'STATUS_FINAL';
-    const isLive   = game.statusName === 'STATUS_IN_PROGRESS';
-    const userPick = userPicks[game.id]?.teamId || null;
+      // Write member profile
+      await set(ref(db, `adminConfig/members/${uid}`), {
+        email,
+        displayName: name,
+        approved: isAdmin,   // admin auto-approved
+        joinedAt: new Date().toISOString(),
+      });
 
-    // Determine correct/wrong
-    let resultClass = '';
-    let correct = null;
-    if (isFinal && game.winnerId && userPick) {
-      correct = userPick === game.winnerId;
-      resultClass = correct ? 'correct' : 'wrong';
-    }
-
-    const card = document.createElement('div');
-    card.className = `game-card ${locked ? 'locked' : ''} ${resultClass}`;
-    card.dataset.gameId = game.id;
-
-    // Status badge
-    let badgeClass = 'badge-upcoming';
-    let badgeText  = formatGameTime(game.startTime);
-    if (isFinal) { badgeClass = 'badge-final'; badgeText = 'Final'; }
-    else if (isLive) { badgeClass = 'badge-live'; badgeText = game.statusShort || 'Live'; }
-
-    // Score or VS
-    const midContent = (isFinal || isLive)
-      ? `<div class="score-display">${game.awayScore ?? '–'} – ${game.homeScore ?? '–'}</div>`
-      : `<div class="vs-text">vs</div>`;
-
-    // Team logo helper
-    const logoHtml = (team) => `
-      <img class="team-logo"
-           src="${espnLogoUrl(team.abbrev.toLowerCase())}"
-           alt="${team.name}"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-      <div class="team-logo-placeholder" style="display:none">⚾</div>`;
-
-    card.innerHTML = `
-      <div class="card-header">
-        <span class="game-time">${badgeText}</span>
-        <span class="game-status-badge ${badgeClass}">${isFinal ? 'Final' : isLive ? '🔴 Live' : 'Upcoming'}</span>
-      </div>
-
-      <div class="card-body">
-        <div class="team-side">
-          ${logoHtml(game.awayTeam)}
-          <div class="team-name">${game.awayTeam.name}</div>
-          <div class="team-record">${game.awayTeam.record}</div>
-          ${game.awayPitcher ? `<div class="team-pitcher">🎯 ${game.awayPitcher}</div>` : ''}
-        </div>
-
-        <div class="card-mid">
-          ${midContent}
-          <div class="at-label">@ ${game.homeTeam.abbrev}</div>
-        </div>
-
-        <div class="team-side">
-          ${logoHtml(game.homeTeam)}
-          <div class="team-name">${game.homeTeam.name}</div>
-          <div class="team-record">${game.homeTeam.record}</div>
-          ${game.homePitcher ? `<div class="team-pitcher">🎯 ${game.homePitcher}</div>` : ''}
-        </div>
-      </div>
-
-      <div class="card-footer" id="footer-${game.id}">
-        ${buildFooter(game, locked, isFinal, userPick, correct)}
-      </div>
-    `;
-
-    // Pick button listeners (only if not locked)
-    if (!locked) {
-      card.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
-      card.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
-
-      // Schedule lock at game start
-      const msUntilLock = new Date(game.startTime) - new Date();
-      if (msUntilLock > 0 && msUntilLock < 86400000) {
-        lockTimers[game.id] = setTimeout(() => {
-          const footer = document.getElementById(`footer-${game.id}`);
-          if (footer) footer.innerHTML = buildFooter(game, true, false, userPicks[game.id]?.teamId || null, null);
-          card.classList.add('locked');
-        }, msUntilLock);
+      // If admin, write to admins node
+      if (isAdmin) {
+        await set(ref(db, `adminConfig/admins/${uid}`), true);
       }
-    }
 
-    return card;
-  }
-
-  function buildFooter(game, locked, isFinal, userPick, correct) {
-    const awaySelected = userPick === game.awayTeam.id;
-    const homeSelected = userPick === game.homeTeam.id;
-
-    if (isFinal) {
-      if (!userPick) {
-        return `<span class="lock-msg">🔒 No pick made</span>`;
+      if (!isAdmin) {
+        showMsg('suMsg', 'Account created! Waiting for admin approval before you can play.', 'info');
       }
-      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-      if (correct) {
-        return `<span class="result-indicator correct">✅ Correct — ${teamName}</span>`;
-      } else {
-        const winnerName = game.winnerId === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-        return `<span class="result-indicator wrong">❌ Wrong — picked ${teamName}, winner was ${winnerName}</span>`;
-      }
+      // onAuthStateChanged handles the rest
+    } catch (err) {
+      const msgs = {
+        'auth/email-already-in-use': 'An account with that email already exists.',
+        'auth/invalid-email':        'Invalid email address.',
+        'auth/weak-password':        'PIN too short (min 6 digits).',
+      };
+      showMsg('suMsg', msgs[err.code] || 'Sign up failed. Please try again.', 'error');
+      setLoading('suBtn', false, 'Request Access');
     }
+  };
 
-    if (locked) {
-      if (!userPick) {
-        return `<span class="lock-msg">🔒 Locked — no pick made</span>`;
-      }
-      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-      return `<span class="lock-msg">🔒 Locked in: <strong>${teamName}</strong></span>`;
-    }
-
-    // Open for picks
-    return `
-      <span class="pick-label">Pick the winner:</span>
-      <div class="pick-controls">
-        <button class="pick-btn ${awaySelected ? 'selected' : ''}" id="pick-away-${game.id}">
-          <img src="${espnLogoUrl(game.awayTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
-          ${game.awayTeam.abbrev}
-        </button>
-        <button class="pick-btn ${homeSelected ? 'selected' : ''}" id="pick-home-${game.id}">
-          <img src="${espnLogoUrl(game.homeTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
-          ${game.homeTeam.abbrev}
-        </button>
-      </div>
-    `;
-  }
-
-  async function handlePick(game, teamId, dateStr) {
-    if (gameIsLocked(game.startTime)) return;
-
-    // Toggle off if same pick
-    const existing = userPicks[game.id]?.teamId;
-    const newTeamId = existing === teamId ? null : teamId;
-
-    userPicks[game.id] = newTeamId ? { teamId: newTeamId, lockedIn: true } : {};
-
-    // Update UI immediately
-    const footer = document.getElementById(`footer-${game.id}`);
-    if (footer) {
-      footer.innerHTML = buildFooter(game, false, false, newTeamId, null);
-      footer.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
-      footer.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
-    }
-
-    // Save to Firebase
-    if (newTeamId) {
-      await savePick(dateStr, game.id, newTeamId);
-    } else {
-      // Remove pick
-      const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`);
-      await set(pickRef, null).catch(() => {});
-    }
-
-    updateSummary(Object.values(gamesCache));
-  }
-
-  // ── Summary bar ────────────────────────────────────────────────────────
-  function updateSummary(games) {
-    const bar = document.getElementById('summaryBar');
-    bar.style.display = 'flex';
-
-    const total   = games.length;
-    const picked  = games.filter(g => userPicks[g.id]?.teamId).length;
-    const finals  = games.filter(g => g.statusName === 'STATUS_FINAL' && userPicks[g.id]?.teamId);
-    const correct = finals.filter(g => userPicks[g.id]?.teamId === g.winnerId).length;
-
-    document.getElementById('sumGames').textContent  = total;
-    document.getElementById('sumPicked').textContent = picked;
-
-    const correctChip = document.getElementById('sumCorrectChip');
-    if (finals.length > 0) {
-      correctChip.style.display = '';
-      document.getElementById('sumCorrect').textContent = `${correct} / ${finals.length}`;
-    } else {
-      correctChip.style.display = 'none';
-    }
-  }
-
-  // ── Date nav ──────────────────────────────────────────────────────────
-  function setDate(dateStr) {
-    currentDate = dateStr;
-    document.getElementById('dateLabel').textContent = formatDateLabel(dateStr);
-    document.getElementById('datePicker').value = dateStr;
-    loadGames(dateStr);
-  }
-
-  document.getElementById('prevDay').addEventListener('click', () => setDate(shiftDate(currentDate, -1)));
-  document.getElementById('nextDay').addEventListener('click', () => setDate(shiftDate(currentDate, +1)));
-  document.getElementById('datePicker').addEventListener('change', e => setDate(e.target.value));
-
-  // ── Auth gate ─────────────────────────────────────────────────────────
+  // ── Auth state ────────────────────────────────────────────────────────
   onAuthStateChanged(auth, async (user) => {
-    if (!user) { window.location.href = 'index.html'; return; }
+    const overlay       = document.getElementById('loadingOverlay');
+    const authPage      = document.getElementById('authPage');
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const pendingScreen = document.getElementById('pendingScreen');
+    const appNav        = document.getElementById('appNav');
 
-    currentUser = user;
-
-    // Check approval
-    const snap = await get(child(ref(db), `adminConfig/members/${user.uid}`));
-    const member = snap.exists() ? snap.val() : null;
-    const adminSnap = await get(child(ref(db), `adminConfig/admins/${user.uid}`));
-    const isAdmin = adminSnap.exists() && adminSnap.val() === true;
-
-    if (!member?.approved && !isAdmin) {
-      window.location.href = 'index.html'; return;
+    if (!user) {
+      // Not logged in — show auth page, hide everything else
+      authPage.style.display      = '';
+      welcomeScreen.style.display = 'none';
+      pendingScreen.style.display = 'none';
+      appNav.style.display        = 'none';
+      overlay.style.display       = 'none';
+      return;
     }
 
-    // Nav
-    document.getElementById('navUser').textContent = member?.displayName || user.email;
-    if (isAdmin) document.getElementById('adminLink').style.display = '';
-    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
+    // Logged in — keep overlay up while we fetch member data
+    authPage.style.display      = 'none';
+    welcomeScreen.style.display = 'none';
+    pendingScreen.style.display = 'none';
+    appNav.style.display        = 'none';
 
-    // Load today's games
-    setDate(todayStr());
+    // Fetch member + admin status
+    const dbRef    = ref(db);
+    const snap     = await get(child(dbRef, `adminConfig/members/${user.uid}`));
+    const member   = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(child(dbRef, `adminConfig/admins/${user.uid}`));
+    const adminUser = adminSnap.exists() && adminSnap.val() === true;
+
+    // Now reveal the right screen all at once
+    overlay.style.display = 'none';
+    appNav.style.display  = 'flex';
+    document.getElementById('navUser').textContent = member?.displayName || user.email;
+    if (adminUser) document.getElementById('adminLink').style.display = '';
+    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+
+    if (member?.approved || adminUser) {
+      document.getElementById('welcomeHeading').textContent =
+        `Welcome back, ${member?.displayName?.split(' ')[0] || 'friend'}!`;
+      welcomeScreen.style.display = 'flex';
+    } else {
+      pendingScreen.style.display = 'flex';
+    }
   });
 </script>
 
