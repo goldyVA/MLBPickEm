@@ -762,6 +762,21 @@
   let survivorState    = null;
   let survivorSelected = null;
 
+  // ── Winner resolution ────────────────────────────────────────────────
+  function didPickWin(userPick, game) {
+    if (!userPick || !game.winnerId) return false;
+    const winnerIsHome  = String(game.winnerId) === String(game.homeTeam.id);
+    const winningAbbrev = winnerIsHome ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+    const pickedAbbrev  = String(userPick) === String(game.homeTeam.id)
+      ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+    return pickedAbbrev === winningAbbrev;
+  }
+
+  function pickAbbrev(userPick, game) {
+    return String(userPick) === String(game.homeTeam.id)
+      ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+  }
+
   // ── Date helpers ──────────────────────────────────────────────────────
   function todayStr() {
     const d = new Date();
@@ -835,7 +850,7 @@
       // Winner
       let winnerId = null;
       if (statusName === 'STATUS_FINAL') {
-        winnerId = home.winner ? home.team.id : away.winner ? away.team.id : null;
+        winnerId = home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null;
       }
 
       games.push({
@@ -843,8 +858,8 @@
         startTime,
         statusName,
         statusShort: status?.shortDetail || '',
-        homeTeam:    { id: home.team.id, abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
-        awayTeam:    { id: away.team.id, abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
+        homeTeam:    { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
+        awayTeam:    { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
         homePitcher: getPitcher('home'),
         awayPitcher: getPitcher('away'),
         homeScore,
@@ -887,12 +902,14 @@
 
     try {
       if (isToday) {
-        // Always fetch live from ESPN for today — never trust stale cache
+        // Always fetch live from ESPN for today
         games = await fetchGamesFromESPN(dateStr);
       } else {
-        // Past/future dates: use Firebase cache, fall back to ESPN
+        // Past dates: use cache only if all games are final, otherwise re-fetch
         const dbSnap = await get(ref(db, `games/${dateStr}`));
-        if (dbSnap.exists()) {
+        const allFinal = dbSnap.exists() &&
+          Object.values(dbSnap.val()).every(g => g.statusName === 'STATUS_FINAL');
+        if (allFinal) {
           games = Object.values(dbSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
         } else {
           games = await fetchGamesFromESPN(dateStr);
@@ -995,7 +1012,7 @@
     let resultClass = '';
     let correct = null;
     if (isFinal && game.winnerId && userPick) {
-      correct = userPick === game.winnerId;
+      correct = didPickWin(userPick, game);
       resultClass = correct ? 'correct' : 'wrong';
     }
 
@@ -1074,8 +1091,8 @@
   }
 
   function buildFooter(game, locked, isFinal, userPick, correct) {
-    const awaySelected = userPick === game.awayTeam.id;
-    const homeSelected = userPick === game.homeTeam.id;
+    const awaySelected = String(userPick) === String(game.awayTeam.id);
+    const homeSelected = String(userPick) === String(game.homeTeam.id);
 
     if (isFinal) {
       if (!userPick) {
@@ -1206,7 +1223,7 @@
     for (const game of games) {
       if (userPicks[game.id]?.teamId) continue; // already picked
       // Auto-pick away team for every unpicked game once first game starts
-      const teamId = game.awayTeam.id;
+      const teamId = String(game.awayTeam.id);
       await set(ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`),
         { teamId, lockedIn: true, correct: null, auto: true });
       userPicks[game.id] = { teamId, lockedIn: true, auto: true };
