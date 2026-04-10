@@ -823,16 +823,16 @@
     }
 
     // Hamburger
-    const hamburger = document.getElementById('hamburgerBtn');
-    const drawer    = document.getElementById('mobileDrawer');
-    const overlay   = document.getElementById('drawerOverlay');
-    const closeBtn  = document.getElementById('drawerClose');
+    const hamburger       = document.getElementById('hamburgerBtn');
+    const drawer          = document.getElementById('mobileDrawer');
+    const drawerOverlay   = document.getElementById('drawerOverlay');
+    const closeBtn        = document.getElementById('drawerClose');
     if (hamburger) {
-      const openDrawer  = () => { drawer.classList.add('open'); overlay.classList.add('show'); hamburger.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
-      const closeDrawer = () => { drawer.classList.remove('open'); overlay.classList.remove('show'); hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+      const openDrawer  = () => { drawer.classList.add('open'); drawerOverlay.classList.add('show'); hamburger.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+      const closeDrawer = () => { drawer.classList.remove('open'); drawerOverlay.classList.remove('show'); hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
       hamburger.addEventListener('click', openDrawer);
       closeBtn?.addEventListener('click', closeDrawer);
-      overlay?.addEventListener('click', closeDrawer);
+      drawerOverlay?.addEventListener('click', closeDrawer);
     }
 
     document.getElementById('welcomeHeading').textContent =
