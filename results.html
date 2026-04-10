@@ -568,20 +568,38 @@
     container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading results…</p></div>`;
     document.getElementById('leadersBar').style.display = 'none';
 
-    // 1. Load games from Firebase cache, or ESPN
+    // 1. Load games — always fetch live from ESPN, use cache as fallback only
     let games = [];
-    const gamesSnap = await get(ref(db, `games/${dateStr}`));
+    const isToday = dateStr === todayStr();
 
-    if (gamesSnap.exists()) {
+    // For today: always go to ESPN. For past dates: try cache first.
+    const gamesSnap = await get(ref(db, `games/${dateStr}`));
+    const allFinalInCache = gamesSnap.exists() &&
+      Object.values(gamesSnap.val()).every(g => g.statusName === 'STATUS_FINAL');
+
+    if (!isToday && allFinalInCache) {
+      // Past date, all games final — safe to use cache
       games = Object.values(gamesSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
     } else {
+      // Today or non-final games — fetch fresh from ESPN
       try {
         const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateToESPN(dateStr)}`);
         const data = await res.json();
         games = parseESPN(data).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+        // Update cache
+        if (games.length > 0) {
+          const cacheObj = {};
+          for (const g of games) cacheObj[g.id] = g;
+          await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
+        }
       } catch (e) {
-        container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
-        return;
+        // Fall back to cache if ESPN fails
+        if (gamesSnap.exists()) {
+          games = Object.values(gamesSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+        } else {
+          container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
+          return;
+        }
       }
     }
 
@@ -635,21 +653,40 @@
       const statusName  = event.status?.type?.name || 'STATUS_SCHEDULED';
       let winnerId = null;
       if (statusName === 'STATUS_FINAL') {
-        winnerId = home.winner ? home.team.id : away.winner ? away.team.id : null;
+        winnerId = home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null;
       }
       games.push({
         id:        event.id,
         startTime: event.date,
         statusName,
         statusShort: event.status?.type?.shortDetail || '',
-        homeTeam:  { id: home.team.id, abbrev: home.team.abbreviation, name: home.team.displayName },
-        awayTeam:  { id: away.team.id, abbrev: away.team.abbreviation, name: away.team.displayName },
+        homeTeam:  { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName },
+        awayTeam:  { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName },
         homeScore: home.score ?? null,
         awayScore: away.score ?? null,
         winnerId,
       });
     }
     return games;
+  }
+
+  // ── Resolve which abbrev won a game ─────────────────────────────────
+  // Compares by both ID and abbrev to be resilient to type mismatches
+  function didPickWin(pick, game) {
+    if (!pick || !game.winnerId) return false;
+    const winnerIsHome = String(game.winnerId) === String(game.homeTeam.id);
+    const winningAbbrev = winnerIsHome ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+    const pickedAbbrev  = String(pick) === String(game.homeTeam.id)
+      ? game.homeTeam.abbrev
+      : game.awayTeam.abbrev;
+    return pickedAbbrev === winningAbbrev;
+  }
+
+  function pickAbbrev(pick, game) {
+    if (!pick) return null;
+    return String(pick) === String(game.homeTeam.id)
+      ? game.homeTeam.abbrev
+      : game.awayTeam.abbrev;
   }
 
   // ── Render table ──────────────────────────────────────────────────────
@@ -665,7 +702,7 @@
         const pick = allPicks[m.uid]?.[g.id]?.teamId;
         if (pick) {
           total++;
-          if (pick === g.winnerId) correct++;
+          if (didPickWin(pick, g)) correct++;
         }
       }
       memberTotals[m.uid] = { correct, total };
@@ -772,8 +809,8 @@
           td.innerHTML = `<span class="chip-none">—</span>`;
         } else if (isFinal && game.winnerId) {
           // Final — show correct/wrong
-          const correct    = pick === game.winnerId;
-          const teamAbbrev = pick === game.homeTeam.id ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+          const correct    = didPickWin(pick, game);
+          const teamAbbrev = pickAbbrev(pick, game);
           const isAuto     = allPicks[member.uid]?.[game.id]?.auto === true;
           td.innerHTML = `
             <span class="pick-chip ${correct ? 'chip-correct' : 'chip-wrong'}" title="${isAuto ? '🤖 Auto-picked' : ''}">
@@ -782,7 +819,7 @@
             </span>`;
         } else {
           // Live or locked but not final — reveal pick
-          const teamAbbrev = pick === game.homeTeam.id ? game.homeTeam.abbrev : game.awayTeam.abbrev;
+          const teamAbbrev = pickAbbrev(pick, game);
           const isAuto     = allPicks[member.uid]?.[game.id]?.auto === true;
           td.innerHTML = `
             <span class="pick-chip chip-revealed" title="${isAuto ? '🤖 Auto-picked' : ''}">
