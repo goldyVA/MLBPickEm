@@ -20,10 +20,7 @@ export function initNav({ activePage, isAdmin = false, userName = '' }) {
 
   nav.innerHTML = `
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo">
-        <span class="nav-logo-desktop">⚾ Pick'em</span>
-        <span class="nav-logo-mobile">⚾ Pick'em</span>
-      </a>
+<a href="index.html" class="nav-logo">⚾ Pick'em</a>
 
       <div class="nav-links" id="navLinks">
         ${pages.map(p => `
