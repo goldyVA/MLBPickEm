@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survivor · MLB Pick'em</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── Nav ─────────────────────────────────── */
+    .app-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 4px; }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-link:hover  { background: var(--cream); color: var(--ink); }
+    .nav-link.active { background: var(--navy); color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-user  { font-size: 13px; color: var(--ink-faint); }
+
+    .btn-signout {
+      padding: 6px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Page body ───────────────────────────── */
+    .page-body {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 82px 24px 48px;
+    }
+
+    /* ── Page header ─────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+    .month-badge {
+      background: var(--navy);
+      color: var(--white);
+      border-radius: var(--radius-sm);
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ── My status card ──────────────────────── */
+    .status-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .status-card.alive  { border-color: #A8D5B5; background: linear-gradient(135deg, #F0FBF4 0%, var(--white) 50%); }
+    .status-card.dead   { border-color: #F0C4C0; background: linear-gradient(135deg, #FDF0EF 0%, var(--white) 50%); }
+    .status-card.freepass { border-color: #F5DFA0; background: linear-gradient(135deg, #FEF9EE 0%, var(--white) 50%); }
+
+    .status-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .status-left { display: flex; align-items: center; gap: 16px; }
+
+    .status-icon { font-size: 44px; line-height: 1; }
+
+    .status-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      color: var(--ink);
+    }
+
+    .status-subtitle {
+      font-size: 13px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+
+    .freepass-btn {
+      padding: 9px 18px;
+      border: 1.5px solid var(--accent);
+      border-radius: var(--radius-sm);
+      background: #FEF9EE;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      color: #7A5A10;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .freepass-btn:hover:not(:disabled) { background: var(--accent); color: var(--white); }
+    .freepass-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Today's pick section */
+    .pick-section {
+      border-top: 1px solid var(--cream-dark);
+      padding-top: 20px;
+    }
+
+    .pick-section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 12px;
+    }
+
+    .current-pick-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--cream);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+
+    .current-pick-display img {
+      width: 32px; height: 32px;
+      object-fit: contain;
+    }
+
+    .current-pick-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .current-pick-result {
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .result-win  { color: var(--green); }
+    .result-loss { color: var(--red); }
+    .result-pending { color: var(--ink-faint); }
+
+    /* Team grid for picking */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px;
+    }
+
+    .team-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 8px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+    }
+
+    .team-tile:hover:not(.used):not(.selected):not(:disabled) {
+      border-color: var(--navy);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .team-tile.selected {
+      border-color: var(--navy);
+      background: var(--navy);
+    }
+
+    .team-tile.selected .team-abbrev { color: var(--white); }
+
+    .team-tile.used {
+      opacity: .4;
+      cursor: not-allowed;
+      background: var(--cream);
+    }
+
+    .team-tile.locked-in {
+      cursor: not-allowed;
+    }
+
+    .team-tile img {
+      width: 36px; height: 36px;
+      object-fit: contain;
+    }
+
+    .team-abbrev {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .used-label {
+      position: absolute;
+      top: 4px; right: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      background: var(--cream-dark);
+      color: var(--ink-faint);
+      border-radius: 4px;
+      padding: 1px 4px;
+      text-transform: uppercase;
+    }
+
+    .btn-primary {
+      padding: 11px 24px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      margin-top: 14px;
+    }
+
+    .btn-primary:hover  { background: #152e4a; }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Two-col layout ──────────────────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    /* ── History card ────────────────────────── */
+    .card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--cream-dark);
+      background: var(--cream);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .history-list { padding: 8px 0; }
+
+    .history-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--cream-dark);
+    }
+
+    .history-row:last-child { border-bottom: none; }
+
+    .history-date {
+      font-size: 12px;
+      color: var(--ink-faint);
+      min-width: 70px;
+    }
+
+    .history-team {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      flex: 1;
+    }
+
+    .history-team img {
+      width: 22px; height: 22px;
+      object-fit: contain;
+    }
+
+    .history-result {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 100px;
+    }
+
+    .history-win     { background: #D4EDDA; color: #155724; }
+    .history-loss    { background: #F8D7DA; color: #721C24; }
+    .history-pending { background: var(--cream-dark); color: var(--ink-faint); }
+    .history-freepass { background: #FEF9EE; color: #7A5A10; }
+
+    /* ── Leaderboard card ────────────────────── */
+    .leader-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--cream-dark);
+    }
+
+    .leader-row:last-child { border-bottom: none; }
+
+    .leader-rank {
+      font-size: 16px;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .leader-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .leader-you { font-size: 11px; color: var(--ink-faint); font-weight: 400; }
+
+    .leader-status {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+
+    .lstatus-alive    { background: #D4EDDA; color: #155724; }
+    .lstatus-dead     { background: #F8D7DA; color: #721C24; }
+    .lstatus-freepass { background: #FEF9EE; color: #7A5A10; }
+
+    .leader-streak {
+      font-size: 12px;
+      color: var(--ink-faint);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    /* ── Rules card ──────────────────────────── */
+    .rules-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .rules-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 12px;
+    }
+
+    .rules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .rule-item {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--ink-light);
+      line-height: 1.5;
+    }
+
+    .rule-icon { flex-shrink: 0; }
+
+    /* ── States ──────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--ink-faint);
+    }
+
+    .state-box .icon { font-size: 48px; margin-bottom: 16px; }
+    .state-box h3    { font-size: 18px; color: var(--ink-light); margin-bottom: 8px; }
+    .state-box p     { font-size: 14px; line-height: 1.5; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--cream-dark);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .msg {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+    .msg.show  { display: block; }
+    .msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+
+    @media (max-width: 680px) {
+      .nav-links  { display: none; }
+      .two-col    { grid-template-columns: 1fr; }
+      .team-grid  { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+  <div class="nav-links">
+    <a href="picks.html"     class="nav-link">My Picks</a>
+    <a href="results.html"   class="nav-link">Results</a>
+    <a href="standings.html" class="nav-link">Standings</a>
+    <a href="survivor.html"  class="nav-link active">Survivor</a>
+    <a href="admin.html"     class="nav-link" id="adminLink" style="display:none">Admin</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-signout" id="signOutBtn">Sign out</button>
+  </div>
+</nav>
+
+<div class="page-body">
+
+  <div class="page-header">
+    <div>
+      <h1>Survivor</h1>
+      <p>Pick one team per day. Each team can only be used once per month. Lose and you're out.</p>
+    </div>
+    <div class="month-badge" id="monthBadge">—</div>
+  </div>
+
+  <!-- Rules -->
+  <div class="rules-card">
+    <div class="rules-title">How It Works</div>
+    <div class="rules-list">
+      <div class="rule-item"><span class="rule-icon">📅</span><span>Resets on the 1st of each month. Days 1–30 count (day 31 never counts).</span></div>
+      <div class="rule-item"><span class="rule-icon">🏟️</span><span>Pick one MLB team per day. If they win, you survive. If they lose, you're eliminated.</span></div>
+      <div class="rule-item"><span class="rule-icon">🚫</span><span>Each team can only be picked once per calendar month.</span></div>
+      <div class="rule-item"><span class="rule-icon">🎟️</span><span>One free pass per month — use it for a missed day OR a loss. You still can't reuse that team.</span></div>
+    </div>
+  </div>
+
+  <!-- My status -->
+  <div id="myStatusSection">
+    <div class="state-box"><div class="spinner"></div><p>Loading…</p></div>
+  </div>
+
+  <!-- Bottom two-col: history + leaderboard -->
+  <div class="two-col" id="bottomSection" style="display:none">
+
+    <!-- Pick history -->
+    <div class="card">
+      <div class="card-header">My Picks This Month</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="card">
+      <div class="card-header">Survivor Board</div>
+      <div id="leaderboardList"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get, set, update }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser  = null;
+  let myState      = null;   // survivor state for current user
+  let allMembers   = [];
+  let allStates    = {};     // uid → survivor state
+  let todayGames   = [];     // ESPN games for today
+  let selectedTeam = null;   // team selected in UI but not yet saved
+
+  // ── All 30 MLB teams ──────────────────────────────────────────────────
+  const MLB_TEAMS = [
+    { id:'108', abbrev:'LAA', name:'Angels' },
+    { id:'117', abbrev:'HOU', name:'Astros' },
+    { id:'133', abbrev:'OAK', name:'Athletics' },
+    { id:'141', abbrev:'TOR', name:'Blue Jays' },
+    { id:'144', abbrev:'ATL', name:'Braves' },
+    { id:'158', abbrev:'MIL', name:'Brewers' },
+    { id:'Cardinals', abbrev:'STL', name:'Cardinals' },
+    { id:'116', abbrev:'DET', name:'Tigers' },
+    { id:'114', abbrev:'CLE', name:'Guardians' },
+    { id:'137', abbrev:'SF',  name:'Giants' },
+    { id:'135', abbrev:'SD',  name:'Padres' },
+    { id:'119', abbrev:'LAD', name:'Dodgers' },
+    { id:'139', abbrev:'TB',  name:'Rays' },
+    { id:'140', abbrev:'TEX', name:'Rangers' },
+    { id:'142', abbrev:'MIN', name:'Twins' },
+    { id:'147', abbrev:'NYY', name:'Yankees' },
+    { id:'146', abbrev:'MIA', name:'Marlins' },
+    { id:'121', abbrev:'NYM', name:'Mets' },
+    { id:'143', abbrev:'PHI', name:'Phillies' },
+    { id:'134', abbrev:'PIT', name:'Pirates' },
+    { id:'109', abbrev:'ARI', name:'Diamondbacks' },
+    { id:'115', abbrev:'COL', name:'Rockies' },
+    { id:'118', abbrev:'KC',  name:'Royals' },
+    { id:'110', abbrev:'BAL', name:'Orioles' },
+    { id:'111', abbrev:'BOS', name:'Red Sox' },
+    { id:'113', abbrev:'CIN', name:'Reds' },
+    { id:'112', abbrev:'CHC', name:'Cubs' },
+    { id:'145', abbrev:'CWS', name:'White Sox' },
+    { id:'136', abbrev:'SEA', name:'Mariners' },
+    { id:'120', abbrev:'WSH', name:'Nationals' },
+  ];
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function yearMonthStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  function todayDay() { return new Date().getDate(); }
+
+  function monthLabel() {
+    return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  function espnLogo(abbrev) {
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png`;
+  }
+
+  function formatDate(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // ── Load survivor state ───────────────────────────────────────────────
+  async function loadSurvivor() {
+    const ym = yearMonthStr();
+    document.getElementById('monthBadge').textContent = monthLabel();
+
+    // Load all members
+    const membersSnap = await get(ref(db, 'adminConfig/members'));
+    allMembers = [];
+    if (membersSnap.exists()) {
+      membersSnap.forEach(c => { if (c.val().approved) allMembers.push({ uid: c.key, ...c.val() }); });
+    }
+
+    // Load all survivor states for this month
+    const survivorSnap = await get(ref(db, `survivor/${ym}`));
+    allStates = survivorSnap.exists() ? survivorSnap.val() : {};
+
+    // My state (initialize if missing)
+    myState = allStates[currentUser.uid] || {
+      alive: true,
+      freePassUsed: false,
+      freePassDay: null,
+      usedTeams: {},      // { 'YYYY-MM-DD': teamAbbrev }
+      eliminatedDay: null,
+    };
+
+    // Load today's ESPN games
+    await loadTodayGames();
+
+    // Render everything
+    renderMyStatus();
+    renderHistory();
+    renderLeaderboard();
+    document.getElementById('bottomSection').style.display = 'grid';
+  }
+
+  // ── Load today's games from ESPN ──────────────────────────────────────
+  async function loadTodayGames() {
+    const today = todayStr();
+
+    // Try Firebase cache first
+    const snap = await get(ref(db, `games/${today}`));
+    if (snap.exists()) {
+      todayGames = Object.values(snap.val());
+      return;
+    }
+
+    try {
+      const dateStr = today.replace(/-/g, '');
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr}`);
+      const data = await res.json();
+      todayGames = [];
+      for (const event of (data?.events || [])) {
+        const comp = event.competitions?.[0];
+        if (!comp) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        if (!home || !away) continue;
+        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+        const winnerId = statusName === 'STATUS_FINAL'
+          ? (home.winner ? home.team.id : away.winner ? away.team.id : null)
+          : null;
+        todayGames.push({
+          id: event.id,
+          startTime: event.date,
+          statusName,
+          homeTeam: { id: home.team.id, abbrev: home.team.abbreviation },
+          awayTeam: { id: away.team.id, abbrev: away.team.abbreviation },
+          winnerId,
+        });
+      }
+    } catch (e) {
+      console.warn('Could not load ESPN games:', e);
+    }
+  }
+
+  // ── Get which team abbrevs are playing today ──────────────────────────
+  function teamsPlayingToday() {
+    const abbrevs = new Set();
+    for (const g of todayGames) {
+      abbrevs.add(g.homeTeam.abbrev.toUpperCase());
+      abbrevs.add(g.awayTeam.abbrev.toUpperCase());
+    }
+    return abbrevs;
+  }
+
+  // ── Determine if my pick today won/lost/pending ───────────────────────
+  function getTodayPickResult() {
+    const today     = todayStr();
+    const todayPick = myState.usedTeams?.[today];
+    if (!todayPick) return null;
+
+    const team = MLB_TEAMS.find(t => t.abbrev === todayPick);
+    if (!team) return { teamAbbrev: todayPick, result: 'pending' };
+
+    for (const game of todayGames) {
+      const inGame = game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ||
+                     game.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+      if (!inGame) continue;
+
+      if (game.statusName === 'STATUS_FINAL') {
+        const winner = todayGames.find(g => g.id === game.id);
+        const myTeamId = team.id;
+        const won = game.winnerId === game.homeTeam.id
+          ? game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+          : game.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+        return { teamAbbrev: todayPick, result: won ? 'win' : 'loss' };
+      }
+      return { teamAbbrev: todayPick, result: 'pending' };
+    }
+
+    return { teamAbbrev: todayPick, result: 'pending' };
+  }
+
+  // ── Render my status card ─────────────────────────────────────────────
+  function renderMyStatus() {
+    const section   = document.getElementById('myStatusSection');
+    const today     = todayStr();
+    const day       = todayDay();
+    const ym        = yearMonthStr();
+    const usedTeams = myState.usedTeams || {};
+    const todayPick = usedTeams[today];
+    const playing   = teamsPlayingToday();
+    const pickResult = getTodayPickResult();
+
+    // Day 31 never counts
+    if (day === 31) {
+      section.innerHTML = `
+        <div class="status-card">
+          <div class="status-top">
+            <div class="status-left">
+              <div class="status-icon">📆</div>
+              <div>
+                <div class="status-title">Day 31 — No Pick</div>
+                <div class="status-subtitle">Day 31 never counts. See you tomorrow!</div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    let cardClass   = 'alive';
+    let icon        = '✅';
+    let title       = 'You\'re Alive!';
+    let subtitle    = `Day ${day} of the month · ${Object.keys(usedTeams).length} picks made`;
+
+    if (!myState.alive) {
+      cardClass = 'dead';
+      icon      = '💀';
+      title     = 'Eliminated';
+      subtitle  = myState.eliminatedDay
+        ? `Eliminated on day ${myState.eliminatedDay}`
+        : 'Better luck next month';
+    } else if (myState.freePassUsed) {
+      cardClass = 'freepass';
+      icon      = '🎟️';
+      title     = 'Alive — Free Pass Used';
+      subtitle  = `Day ${day} · free pass already used this month`;
+    }
+
+    const usedAbbrevs = new Set(Object.values(usedTeams));
+    const canPick     = myState.alive && !todayPick;
+    const freePassAvail = myState.alive && !myState.freePassUsed;
+
+    // Build pick section HTML
+    let pickHTML = '';
+
+    if (todayPick) {
+      // Already picked today
+      const resultLabel = pickResult
+        ? { win: '✅ Win', loss: '❌ Loss', pending: '⏳ Pending' }[pickResult.result]
+        : '⏳ Pending';
+      const resultClass = pickResult
+        ? { win: 'result-win', loss: 'result-loss', pending: 'result-pending' }[pickResult.result]
+        : 'result-pending';
+
+      pickHTML = `
+        <div class="pick-section">
+          <div class="pick-section-label">Today's Pick</div>
+          <div class="current-pick-display">
+            <img src="${espnLogo(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
+            <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
+            <span class="current-pick-result ${resultClass}">${resultLabel}</span>
+          </div>
+        </div>`;
+    } else if (!myState.alive) {
+      pickHTML = `
+        <div class="pick-section">
+          <div class="pick-section-label">Eliminated</div>
+          <p style="font-size:14px;color:var(--ink-faint)">You've been eliminated. Come back on the 1st!</p>
+          ${freePassAvail ? `
+            <button class="freepass-btn" id="freePassBtn" style="margin-top:12px">
+              🎟️ Use Free Pass to Rejoin
+            </button>
+            <div class="msg" id="fpMsg"></div>
+          ` : ''}
+        </div>`;
+    } else if (canPick) {
+      // Build team grid
+      const tilesHTML = MLB_TEAMS.map(team => {
+        const isUsed     = usedAbbrevs.has(team.abbrev);
+        const isPlaying  = playing.has(team.abbrev.toUpperCase());
+        const tileClass  = isUsed ? 'used' : '';
+        return `
+          <div class="team-tile ${tileClass}"
+               data-abbrev="${team.abbrev}"
+               data-name="${team.name}"
+               ${isUsed ? 'title="Already used this month"' : ''}
+               ${!isPlaying && !isUsed ? 'style="opacity:.55" title="Not playing today"' : ''}>
+            ${isUsed ? '<span class="used-label">Used</span>' : ''}
+            <img src="${espnLogo(team.abbrev)}" alt="${team.abbrev}" onerror="this.style.display='none'" />
+            <span class="team-abbrev">${team.abbrev}</span>
+          </div>`;
+      }).join('');
+
+      pickHTML = `
+        <div class="pick-section">
+          <div class="pick-section-label">Pick Today's Team</div>
+          <div class="team-grid" id="teamGrid">${tilesHTML}</div>
+          <div class="msg" id="pickMsg"></div>
+          <button class="btn-primary" id="confirmPickBtn" disabled>Confirm Pick</button>
+        </div>`;
+    } else {
+      pickHTML = `
+        <div class="pick-section">
+          <p style="font-size:14px;color:var(--ink-faint)">No pick needed — check back tomorrow.</p>
+        </div>`;
+    }
+
+    section.innerHTML = `
+      <div class="status-card ${cardClass}">
+        <div class="status-top">
+          <div class="status-left">
+            <div class="status-icon">${icon}</div>
+            <div>
+              <div class="status-title">${title}</div>
+              <div class="status-subtitle">${subtitle}</div>
+            </div>
+          </div>
+          ${freePassAvail && myState.alive ? `
+            <button class="freepass-btn" id="freePassBtn" ${todayPick || !myState.alive ? 'disabled' : ''}>
+              🎟️ Use Free Pass
+            </button>` : ''}
+          ${myState.freePassUsed ? `<span style="font-size:13px;color:var(--ink-faint)">🎟️ Free pass used</span>` : ''}
+        </div>
+        ${pickHTML}
+      </div>`;
+
+    // Bind team grid events
+    if (canPick) {
+      document.getElementById('teamGrid')?.addEventListener('click', e => {
+        const tile = e.target.closest('.team-tile');
+        if (!tile || tile.classList.contains('used')) return;
+        const abbrev = tile.dataset.abbrev;
+
+        // Toggle selection
+        document.querySelectorAll('.team-tile').forEach(t => t.classList.remove('selected'));
+        if (selectedTeam === abbrev) {
+          selectedTeam = null;
+          document.getElementById('confirmPickBtn').disabled = true;
+        } else {
+          selectedTeam = abbrev;
+          tile.classList.add('selected');
+          document.getElementById('confirmPickBtn').disabled = false;
+        }
+      });
+
+      document.getElementById('confirmPickBtn')?.addEventListener('click', confirmPick);
+    }
+
+    // Free pass button
+    document.getElementById('freePassBtn')?.addEventListener('click', useFreePass);
+  }
+
+  // ── Confirm pick ──────────────────────────────────────────────────────
+  async function confirmPick() {
+    if (!selectedTeam) return;
+    const today = todayStr();
+    const ym    = yearMonthStr();
+
+    const btn = document.getElementById('confirmPickBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      const updatedUsedTeams = { ...(myState.usedTeams || {}), [today]: selectedTeam };
+      const updates = {
+        [`survivor/${ym}/${currentUser.uid}/usedTeams`]: updatedUsedTeams,
+        [`survivor/${ym}/${currentUser.uid}/alive`]:     myState.alive,
+        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: myState.freePassUsed,
+      };
+
+      await update(ref(db), updates);
+
+      myState.usedTeams = updatedUsedTeams;
+      allStates[currentUser.uid] = myState;
+      selectedTeam = null;
+
+      renderMyStatus();
+      renderHistory();
+    } catch (err) {
+      console.error(err);
+      const msg = document.getElementById('pickMsg');
+      if (msg) { msg.textContent = 'Failed to save pick. Try again.'; msg.className = 'msg error show'; }
+      btn.disabled = false;
+      btn.textContent = 'Confirm Pick';
+    }
+  }
+
+  // ── Use free pass ─────────────────────────────────────────────────────
+  async function useFreePass() {
+    const ym    = yearMonthStr();
+    const today = todayStr();
+    const day   = todayDay();
+
+    if (!confirm('Use your free pass? This cannot be undone. You will survive today regardless of result (or rejoin if eliminated).')) return;
+
+    try {
+      const updates = {
+        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: true,
+        [`survivor/${ym}/${currentUser.uid}/freePassDay`]:  day,
+        [`survivor/${ym}/${currentUser.uid}/alive`]:        true,
+      };
+      await update(ref(db), updates);
+
+      myState.freePassUsed = true;
+      myState.freePassDay  = day;
+      myState.alive        = true;
+      allStates[currentUser.uid] = myState;
+
+      renderMyStatus();
+      renderLeaderboard();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to use free pass. Please try again.');
+    }
+  }
+
+  // ── Render pick history ───────────────────────────────────────────────
+  function renderHistory() {
+    const list      = document.getElementById('historyList');
+    const usedTeams = myState.usedTeams || {};
+    const entries   = Object.entries(usedTeams).sort((a,b) => b[0].localeCompare(a[0]));
+
+    if (entries.length === 0) {
+      list.innerHTML = `<div style="padding:20px 18px;font-size:13px;color:var(--ink-faint)">No picks yet this month.</div>`;
+      return;
+    }
+
+    list.innerHTML = entries.map(([date, abbrev]) => {
+      const team   = MLB_TEAMS.find(t => t.abbrev === abbrev);
+      const today  = todayStr();
+      const isFP   = myState.freePassDay && date === `${yearMonthStr()}-${String(myState.freePassDay).padStart(2,'0')}`;
+
+      // Find result from today's games if date === today, else check game cache
+      let resultClass = 'history-pending';
+      let resultLabel = 'Pending';
+
+      if (isFP) {
+        resultClass = 'history-freepass';
+        resultLabel = '🎟️ Free Pass';
+      } else if (date === today) {
+        const r = getTodayPickResult();
+        if (r) {
+          resultClass = { win:'history-win', loss:'history-loss', pending:'history-pending' }[r.result];
+          resultLabel = { win:'Win ✅', loss:'Loss ❌', pending:'Pending ⏳' }[r.result];
+        }
+      }
+
+      return `
+        <div class="history-row">
+          <span class="history-date">${formatDate(date)}</span>
+          <div class="history-team">
+            <img src="${espnLogo(abbrev)}" alt="${abbrev}" onerror="this.style.display='none'" />
+            ${team?.name || abbrev}
+          </div>
+          <span class="history-result ${resultClass}">${resultLabel}</span>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Render leaderboard ────────────────────────────────────────────────
+  function renderLeaderboard() {
+    const list = document.getElementById('leaderboardList');
+
+    const rows = allMembers.map(m => {
+      const state = allStates[m.uid] || { alive: true, freePassUsed: false, usedTeams: {} };
+      const pickCount = Object.keys(state.usedTeams || {}).length;
+      return { ...m, state, pickCount };
+    });
+
+    // Sort: alive first (most picks), then eliminated (most picks)
+    rows.sort((a, b) => {
+      if (a.state.alive !== b.state.alive) return a.state.alive ? -1 : 1;
+      return b.pickCount - a.pickCount;
+    });
+
+    const RANK_ICONS = ['🥇','🥈','🥉'];
+
+    list.innerHTML = rows.map((r, i) => {
+      const isYou     = r.uid === currentUser.uid;
+      const alive     = r.state.alive;
+      const fpUsed    = r.state.freePassUsed;
+      let statusClass = alive ? 'lstatus-alive' : 'lstatus-dead';
+      let statusText  = alive ? '✅ Alive' : '💀 Out';
+      if (alive && fpUsed) { statusClass = 'lstatus-freepass'; statusText = '🎟️ Alive (FP)'; }
+
+      return `
+        <div class="leader-row">
+          <span class="leader-rank">${i < 3 && alive ? RANK_ICONS[i] : i+1}</span>
+          <span class="leader-name">
+            ${r.displayName}
+            ${isYou ? '<span class="leader-you">(you)</span>' : ''}
+          </span>
+          <span class="leader-status ${statusClass}">${statusText}</span>
+          <span class="leader-streak">${r.pickCount} picks</span>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Auth gate ─────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    const snap      = await get(ref(db, `adminConfig/members/${user.uid}`));
+    const member    = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
+
+    if (!member?.approved && !isAdmin) { window.location.href = 'index.html'; return; }
+
+    document.getElementById('navUser').textContent = member?.displayName || user.email;
+    if (isAdmin) document.getElementById('adminLink').style.display = '';
+    document.getElementById('signOutBtn').addEventListener('click', () =>
+      signOut(auth).then(() => window.location.href = 'index.html'));
+
+    await loadSurvivor();
+  });
+</script>
+
+</body>
+</html>
