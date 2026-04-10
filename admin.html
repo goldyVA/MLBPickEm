@@ -1337,11 +1337,15 @@
 
   // ── Reset survivor ────────────────────────────────────────────────────
   document.getElementById('resetSurvivorBtn').addEventListener('click', async () => {
-    const ym = yearMonthStr();
-    if (!confirm(`⚠️ Reset ALL survivor data for ${ym}? This cannot be undone.`)) return;
+    const ym  = yearMonthStr();
+    const day = new Date().getDate();
+    if (!confirm(`⚠️ Reset ALL survivor data for ${ym}? Everyone will be marked alive again, all picks cleared, and the start day set to today (day ${day}). This cannot be undone.`)) return;
     try {
       await remove(ref(db, `survivor/${ym}`));
-      toast('Survivor data reset for this month.', 'success');
+      // Set survivor start day to today so past days don't count
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      document.getElementById('monthlyStartDay').value = day;
+      toast('Survivor reset. Everyone is alive again from today.', 'success');
       loadSurvivorData();
       loadSurvivorStats();
     } catch (e) {
