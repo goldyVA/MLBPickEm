@@ -612,14 +612,27 @@
       return a.displayName.localeCompare(b.displayName);
     });
 
-    // 3. Load all picks for this date for all members
+    // 3. Load autoPicks fallback for this date
+    const autoPicksSnap = await get(ref(db, `autoPicks/${dateStr}`));
+    const autoPicks     = autoPicksSnap.exists() ? autoPicksSnap.val() : {};
+
+    // 4. Load all picks for this date for all members, merge autoPicks as fallback
     const allPicks = {};
     await Promise.all(members.map(async (m) => {
-      const snap = await get(ref(db, `picks/${m.uid}/${dateStr}`));
-      allPicks[m.uid] = snap.exists() ? snap.val() : {};
+      const snap       = await get(ref(db, `picks/${m.uid}/${dateStr}`));
+      const realPicks  = snap.exists() ? snap.val() : {};
+
+      // Merge: for any locked game with no real pick, use autoPick
+      const merged = { ...realPicks };
+      for (const [gameId, auto] of Object.entries(autoPicks)) {
+        if (!merged[gameId]?.teamId) {
+          merged[gameId] = { teamId: auto.teamId, lockedIn: true, correct: null, auto: true };
+        }
+      }
+      allPicks[m.uid] = merged;
     }));
 
-    // 4. Render
+    // 5. Render
     renderTable(games, members, allPicks, dateStr);
   }
 
