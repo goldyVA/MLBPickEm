@@ -896,13 +896,17 @@
     if (changed) {
       myState = state;
       allStates[currentUser.uid] = state;
-      await update(ref(db), {
-        [`survivor/${ym}/${currentUser.uid}/alive`]:           state.alive,
-        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]:    state.freePassUsed,
-        [`survivor/${ym}/${currentUser.uid}/freePassDay`]:     state.freePassDay ?? null,
-        [`survivor/${ym}/${currentUser.uid}/eliminatedDay`]:   state.eliminatedDay ?? null,
-        [`survivor/${ym}/${currentUser.uid}/eliminatedReason`]:state.eliminatedReason ?? null,
-      });
+      try {
+        await update(ref(db), {
+          [`survivor/${ym}/${currentUser.uid}/alive`]:           state.alive,
+          [`survivor/${ym}/${currentUser.uid}/freePassUsed`]:    state.freePassUsed,
+          [`survivor/${ym}/${currentUser.uid}/freePassDay`]:     state.freePassDay ?? null,
+          [`survivor/${ym}/${currentUser.uid}/eliminatedDay`]:   state.eliminatedDay ?? null,
+          [`survivor/${ym}/${currentUser.uid}/eliminatedReason`]:state.eliminatedReason ?? null,
+        });
+      } catch (e) {
+        console.warn('settlePastDays write failed (permission?):', e);
+      }
     }
   }
 
@@ -980,19 +984,23 @@
 
   // ── Load all month games from Firebase ───────────────────────────────
   async function loadMonthGames(ym) {
-    const gamesSnap = await get(ref(db, 'games'));
     const monthGames = {};
-    if (gamesSnap.exists()) {
-      gamesSnap.forEach(dateChild => {
-        if (!dateChild.key.startsWith(ym)) return;
-        const games = Object.values(dateChild.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
-        if (!games.length) return;
-        monthGames[dateChild.key] = {
-          lastStartTime: new Date(games[games.length-1].startTime),
-          games,
-          allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
-        };
-      });
+    try {
+      const gamesSnap = await get(ref(db, 'games'));
+      if (gamesSnap.exists()) {
+        gamesSnap.forEach(dateChild => {
+          if (!dateChild.key.startsWith(ym)) return;
+          const games = Object.values(dateChild.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (!games.length) return;
+          monthGames[dateChild.key] = {
+            lastStartTime: new Date(games[games.length-1].startTime),
+            games,
+            allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
+          };
+        });
+      }
+    } catch (e) {
+      console.warn('loadMonthGames failed:', e);
     }
     return monthGames;
   }
@@ -1472,7 +1480,17 @@
     if (isAdmin) document.getElementById('adminLink').style.display = '';
     document.getElementById('signOutBtn').addEventListener('click', () =>
       signOut(auth).then(() => window.location.href = 'index.html'));
-    await loadSurvivor();
+    try {
+      await loadSurvivor();
+    } catch (err) {
+      console.error('loadSurvivor failed:', err);
+      document.getElementById('myStatusSection').innerHTML = `
+        <div class="state-box">
+          <div class="icon">⚠️</div>
+          <h3>Could not load survivor</h3>
+          <p style="font-size:13px;color:var(--ink-faint)">${err.message}</p>
+        </div>`;
+    }
   });
 </script>
 
