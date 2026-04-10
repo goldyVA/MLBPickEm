@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · MLB Pick'em</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── Nav ─────────────────────────────────── */
+    .app-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 4px; }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-link:hover  { background: var(--cream); color: var(--ink); }
+    .nav-link.active { background: var(--navy); color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-user  { font-size: 13px; color: var(--ink-faint); }
+
+    .btn-signout {
+      padding: 6px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Page body ───────────────────────────── */
+    .page-body {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 82px 24px 48px;
+    }
+
+    /* ── Page header ─────────────────────────── */
+    .page-header {
+      margin-bottom: 28px;
+    }
+
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+    /* ── Stats row ───────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--navy);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-top: 4px;
+    }
+
+    /* ── Section ─────────────────────────────── */
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--ink);
+    }
+
+    .section-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--red);
+      color: var(--white);
+    }
+
+    .section-badge.zero {
+      background: var(--cream-dark);
+      color: var(--ink-faint);
+    }
+
+    /* ── Cards ───────────────────────────────── */
+    .card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    /* ── Member rows ─────────────────────────── */
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--cream-dark);
+      flex-wrap: wrap;
+    }
+
+    .member-row:last-child { border-bottom: none; }
+
+    .member-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .member-info { flex: 1; min-width: 0; }
+
+    .member-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-email {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-meta {
+      font-size: 12px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .pill-pending  { background: #FEF9EE; color: #7A5A10; border: 1px solid #F5DFA0; }
+    .pill-approved { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+    .pill-admin    { background: #EEF2F8; color: var(--navy); border: 1px solid #C0CEDF; }
+
+    /* Action buttons */
+    .row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .btn-approve {
+      padding: 7px 14px;
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-approve:hover { background: #1E8A4A; }
+
+    .btn-deny {
+      padding: 7px 14px;
+      background: transparent;
+      color: var(--red);
+      border: 1.5px solid #F0C4C0;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-deny:hover { background: var(--red); color: var(--white); border-color: var(--red); }
+
+    .btn-revoke {
+      padding: 7px 14px;
+      background: transparent;
+      color: var(--ink-faint);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-revoke:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Data viewer ─────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      background: var(--cream-dark);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-faint);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .tab-btn.active {
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Date filter for data viewer */
+    .data-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .data-input {
+      padding: 8px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .data-input:focus { border-color: var(--navy); }
+
+    .btn-load {
+      padding: 8px 18px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-load:hover { background: #152e4a; }
+
+    /* Data table */
+    .data-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--cream-dark);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      background: var(--cream);
+      border-bottom: 1.5px solid var(--cream-dark);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--cream-dark);
+      color: var(--ink);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #FAFAF8; }
+
+    .pick-correct { color: var(--green); font-weight: 700; }
+    .pick-wrong   { color: var(--red);   font-weight: 700; }
+    .pick-pending { color: var(--ink-faint); }
+
+    /* ── Survivor admin ──────────────────────── */
+    .survivor-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .btn-danger {
+      padding: 8px 18px;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-danger:hover { background: #A93226; }
+
+    /* ── Toasts ──────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .25s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+
+    /* ── States ──────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--ink-faint);
+    }
+
+    .state-box .icon { font-size: 40px; margin-bottom: 12px; }
+    .state-box p     { font-size: 14px; }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--cream-dark);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .nav-links  { display: none; }
+      .member-row { flex-direction: column; align-items: flex-start; }
+      .row-actions { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+  <div class="nav-links">
+    <a href="picks.html"     class="nav-link">My Picks</a>
+    <a href="results.html"   class="nav-link">Results</a>
+    <a href="standings.html" class="nav-link">Standings</a>
+    <a href="survivor.html"  class="nav-link">Survivor</a>
+    <a href="admin.html"     class="nav-link active">Admin</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-signout" id="signOutBtn">Sign out</button>
+  </div>
+</nav>
+
+<div class="page-body">
+
+  <div class="page-header">
+    <h1>Admin Panel</h1>
+    <p>Manage members, review picks, and oversee survivor.</p>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">Total Members</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statApproved">—</div>
+      <div class="stat-label">Approved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statPending">—</div>
+      <div class="stat-label">Pending Approval</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statSurvivorAlive">—</div>
+      <div class="stat-label">Survivor Alive</div>
+    </div>
+  </div>
+
+  <!-- ── Pending approvals ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Pending Approvals</span>
+      <span class="section-badge zero" id="pendingBadge">0</span>
+    </div>
+    <div class="card" id="pendingList">
+      <div class="state-box"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ── All members ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">All Members</span>
+    </div>
+    <div class="card" id="membersList">
+      <div class="state-box"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ── Data viewer ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Data Viewer</span>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="picks">Picks</button>
+      <button class="tab-btn" data-tab="games">Games</button>
+      <button class="tab-btn" data-tab="survivor">Survivor</button>
+    </div>
+
+    <!-- Picks tab -->
+    <div id="tab-picks">
+      <div class="data-controls">
+        <input type="date" class="data-input" id="picksDate" />
+        <button class="btn-load" id="loadPicksBtn">Load</button>
+      </div>
+      <div id="picksDataContainer">
+        <div class="state-box"><p>Select a date and click Load.</p></div>
+      </div>
+    </div>
+
+    <!-- Games tab -->
+    <div id="tab-games" style="display:none">
+      <div class="data-controls">
+        <input type="date" class="data-input" id="gamesDate" />
+        <button class="btn-load" id="loadGamesBtn">Load</button>
+      </div>
+      <div id="gamesDataContainer">
+        <div class="state-box"><p>Select a date and click Load.</p></div>
+      </div>
+    </div>
+
+    <!-- Survivor tab -->
+    <div id="tab-survivor" style="display:none">
+      <div class="survivor-controls">
+        <span style="font-size:13px;color:var(--ink-faint)">Current month: <strong id="survivorMonth">—</strong></span>
+        <button class="btn-danger" id="resetSurvivorBtn">⚠️ Reset This Month</button>
+      </div>
+      <div id="survivorDataContainer">
+        <div class="state-box"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp }                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut }    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let allMembers  = [];
+  let allGamesMap = {};
+  let currentUser = null;
+
+  // ── Toast ─────────────────────────────────────────────────────────────
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className   = `toast ${type} show`;
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function yearMonthStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  function initials(name) {
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  function formatJoined(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ── Load all members ──────────────────────────────────────────────────
+  async function loadMembers() {
+    const snap = await get(ref(db, 'adminConfig/members'));
+    allMembers = [];
+
+    if (snap.exists()) {
+      snap.forEach(child => allMembers.push({ uid: child.key, ...child.val() }));
+    }
+
+    // Stats
+    const total    = allMembers.length;
+    const approved = allMembers.filter(m => m.approved).length;
+    const pending  = allMembers.filter(m => !m.approved).length;
+
+    document.getElementById('statTotal').textContent    = total;
+    document.getElementById('statApproved').textContent = approved;
+    document.getElementById('statPending').textContent  = pending;
+
+    const badge = document.getElementById('pendingBadge');
+    badge.textContent = pending;
+    badge.className   = `section-badge ${pending === 0 ? 'zero' : ''}`;
+
+    renderPending();
+    renderMembers();
+    loadSurvivorStats();
+  }
+
+  // ── Render pending ────────────────────────────────────────────────────
+  function renderPending() {
+    const list    = document.getElementById('pendingList');
+    const pending = allMembers.filter(m => !m.approved);
+
+    if (pending.length === 0) {
+      list.innerHTML = `<div class="state-box"><div class="icon">✅</div><p>No pending approvals.</p></div>`;
+      return;
+    }
+
+    list.innerHTML = pending.map(m => `
+      <div class="member-row" id="pending-${m.uid}">
+        <div class="member-avatar">${initials(m.displayName || m.email)}</div>
+        <div class="member-info">
+          <div class="member-name">${m.displayName || '—'}</div>
+          <div class="member-email">${m.email}</div>
+        </div>
+        <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
+        <span class="status-pill pill-pending">Pending</span>
+        <div class="row-actions">
+          <button class="btn-approve" onclick="approveMember('${m.uid}', '${(m.displayName||'').replace(/'/g,"\\'")}')">Approve</button>
+          <button class="btn-deny"    onclick="denyMember('${m.uid}')">Deny</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── Render all members ────────────────────────────────────────────────
+  function renderMembers() {
+    const list     = document.getElementById('membersList');
+    const approved = allMembers.filter(m => m.approved);
+
+    if (approved.length === 0) {
+      list.innerHTML = `<div class="state-box"><p>No approved members yet.</p></div>`;
+      return;
+    }
+
+    // Sort: admins first, then alpha
+    approved.sort((a, b) => {
+      if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
+      return (a.displayName || '').localeCompare(b.displayName || '');
+    });
+
+    list.innerHTML = approved.map(m => `
+      <div class="member-row" id="member-${m.uid}">
+        <div class="member-avatar" style="${m.isAdmin ? 'background:var(--accent);color:var(--ink)' : ''}">${initials(m.displayName || m.email)}</div>
+        <div class="member-info">
+          <div class="member-name">${m.displayName || '—'}</div>
+          <div class="member-email">${m.email}</div>
+        </div>
+        <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
+        <span class="status-pill ${m.isAdmin ? 'pill-admin' : 'pill-approved'}">${m.isAdmin ? 'Admin' : 'Member'}</span>
+        <div class="row-actions">
+          ${m.uid !== currentUser.uid && !m.isAdmin ? `
+            <button class="btn-revoke" onclick="revokeMember('${m.uid}', '${(m.displayName||'').replace(/'/g,"\\'")}')">Revoke</button>
+          ` : '<span style="font-size:12px;color:var(--ink-faint)">—</span>'}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── Approve member ────────────────────────────────────────────────────
+  window.approveMember = async function(uid, name) {
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { approved: true });
+      const m = allMembers.find(m => m.uid === uid);
+      if (m) m.approved = true;
+      toast(`✅ ${name} approved!`);
+      loadMembers();
+    } catch (e) {
+      toast('Failed to approve member.', 'error');
+    }
+  };
+
+  // ── Deny / remove member ──────────────────────────────────────────────
+  window.denyMember = async function(uid) {
+    if (!confirm('Remove this member request? They will need to sign up again.')) return;
+    try {
+      await remove(ref(db, `adminConfig/members/${uid}`));
+      allMembers = allMembers.filter(m => m.uid !== uid);
+      toast('Member request removed.');
+      loadMembers();
+    } catch (e) {
+      toast('Failed to remove member.', 'error');
+    }
+  };
+
+  // ── Revoke approval ───────────────────────────────────────────────────
+  window.revokeMember = async function(uid, name) {
+    if (!confirm(`Revoke ${name}'s access? They will no longer be able to make picks.`)) return;
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { approved: false });
+      const m = allMembers.find(m => m.uid === uid);
+      if (m) m.approved = false;
+      toast(`${name}'s access revoked.`);
+      loadMembers();
+    } catch (e) {
+      toast('Failed to revoke access.', 'error');
+    }
+  };
+
+  // ── Survivor stats ────────────────────────────────────────────────────
+  async function loadSurvivorStats() {
+    const ym   = yearMonthStr();
+    const snap = await get(ref(db, `survivor/${ym}`));
+    let alive  = 0;
+
+    if (snap.exists()) {
+      snap.forEach(child => { if (child.val().alive) alive++; });
+    }
+
+    document.getElementById('statSurvivorAlive').textContent = alive;
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['picks','games','survivor'].forEach(t => {
+        document.getElementById(`tab-${t}`).style.display = t === btn.dataset.tab ? '' : 'none';
+      });
+      if (btn.dataset.tab === 'survivor') loadSurvivorData();
+    });
+  });
+
+  // ── Picks data viewer ─────────────────────────────────────────────────
+  document.getElementById('picksDate').value = todayStr();
+
+  document.getElementById('loadPicksBtn').addEventListener('click', async () => {
+    const date      = document.getElementById('picksDate').value;
+    const container = document.getElementById('picksDataContainer');
+    if (!date) { container.innerHTML = `<div class="state-box"><p>Please select a date.</p></div>`; return; }
+
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+
+    // Load games for that date
+    const gamesSnap = await get(ref(db, `games/${date}`));
+    const games     = gamesSnap.exists() ? gamesSnap.val() : {};
+
+    // Load picks for all members
+    const approved = allMembers.filter(m => m.approved);
+    const rows = [];
+
+    await Promise.all(approved.map(async m => {
+      const snap = await get(ref(db, `picks/${m.uid}/${date}`));
+      const picks = snap.exists() ? snap.val() : {};
+
+      for (const [gameId, game] of Object.entries(games)) {
+        if (game.statusName !== 'STATUS_FINAL') continue;
+        const pick = picks[gameId];
+        rows.push({
+          member:    m.displayName || m.email,
+          game:      `${game.awayTeam?.abbrev || '?'} @ ${game.homeTeam?.abbrev || '?'}`,
+          picked:    pick?.teamId ? (pick.teamId === game.homeTeam?.id ? game.homeTeam.abbrev : game.awayTeam?.abbrev) : '—',
+          winner:    game.winnerId === game.homeTeam?.id ? game.homeTeam?.abbrev : game.awayTeam?.abbrev,
+          correct:   pick?.teamId ? (pick.teamId === game.winnerId ? 'correct' : 'wrong') : 'pending',
+        });
+      }
+    }));
+
+    if (rows.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">📭</div><p>No final game picks for this date.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Game</th>
+              <th>Picked</th>
+              <th>Winner</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>${r.member}</td>
+                <td>${r.game}</td>
+                <td>${r.picked}</td>
+                <td>${r.winner}</td>
+                <td class="pick-${r.correct}">${{ correct:'✅ Correct', wrong:'❌ Wrong', pending:'⏳ Pending' }[r.correct]}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  });
+
+  // ── Games data viewer ─────────────────────────────────────────────────
+  document.getElementById('gamesDate').value = todayStr();
+
+  document.getElementById('loadGamesBtn').addEventListener('click', async () => {
+    const date      = document.getElementById('gamesDate').value;
+    const container = document.getElementById('gamesDataContainer');
+    if (!date) return;
+
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+
+    const snap  = await get(ref(db, `games/${date}`));
+    const games = snap.exists() ? Object.values(snap.val()) : [];
+
+    if (games.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><p>No games cached for this date.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Matchup</th>
+              <th>Start Time</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Winner</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${games.map(g => {
+              const matchup = `${g.awayTeam?.abbrev || '?'} @ ${g.homeTeam?.abbrev || '?'}`;
+              const time    = g.startTime ? new Date(g.startTime).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) : '—';
+              const status  = g.statusName?.replace('STATUS_','') || '—';
+              const score   = (g.awayScore != null && g.homeScore != null) ? `${g.awayScore} – ${g.homeScore}` : '—';
+              const winner  = g.winnerId
+                ? (g.winnerId === g.homeTeam?.id ? g.homeTeam?.abbrev : g.awayTeam?.abbrev)
+                : '—';
+              return `
+                <tr>
+                  <td>${matchup}</td>
+                  <td>${time}</td>
+                  <td>${status}</td>
+                  <td>${score}</td>
+                  <td>${winner}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  });
+
+  // ── Survivor data viewer ──────────────────────────────────────────────
+  async function loadSurvivorData() {
+    const ym        = yearMonthStr();
+    const container = document.getElementById('survivorDataContainer');
+    document.getElementById('survivorMonth').textContent = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+
+    const snap = await get(ref(db, `survivor/${ym}`));
+    const data = snap.exists() ? snap.val() : {};
+
+    const approved = allMembers.filter(m => m.approved);
+
+    if (approved.length === 0) {
+      container.innerHTML = `<div class="state-box"><p>No approved members.</p></div>`;
+      return;
+    }
+
+    const rows = approved.map(m => {
+      const state     = data[m.uid] || { alive: true, freePassUsed: false, usedTeams: {} };
+      const pickCount = Object.keys(state.usedTeams || {}).length;
+      const lastPick  = Object.entries(state.usedTeams || {}).sort((a,b) => b[0].localeCompare(a[0]))[0];
+      return { ...m, state, pickCount, lastPick };
+    });
+
+    rows.sort((a, b) => {
+      if (a.state.alive !== b.state.alive) return a.state.alive ? -1 : 1;
+      return b.pickCount - a.pickCount;
+    });
+
+    container.innerHTML = `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Status</th>
+              <th>Picks Made</th>
+              <th>Free Pass</th>
+              <th>Last Pick</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>${r.displayName || r.email}</td>
+                <td>${r.state.alive ? '✅ Alive' : '💀 Eliminated'}</td>
+                <td>${r.pickCount}</td>
+                <td>${r.state.freePassUsed ? `Used (Day ${r.state.freePassDay || '?'})` : 'Available'}</td>
+                <td>${r.lastPick ? `${r.lastPick[1]} on ${r.lastPick[0]}` : '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // ── Reset survivor ────────────────────────────────────────────────────
+  document.getElementById('resetSurvivorBtn').addEventListener('click', async () => {
+    const ym = yearMonthStr();
+    if (!confirm(`⚠️ Reset ALL survivor data for ${ym}? This cannot be undone.`)) return;
+    try {
+      await remove(ref(db, `survivor/${ym}`));
+      toast('Survivor data reset for this month.', 'success');
+      loadSurvivorData();
+      loadSurvivorStats();
+    } catch (e) {
+      toast('Failed to reset survivor data.', 'error');
+    }
+  });
+
+  // ── Auth gate (admin only) ────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
+
+    if (!isAdmin) { window.location.href = 'index.html'; return; }
+
+    // Mark each member as admin or not
+    const adminListSnap = await get(ref(db, 'adminConfig/admins'));
+    const adminUids = new Set();
+    if (adminListSnap.exists()) adminListSnap.forEach(c => adminUids.add(c.key));
+
+    document.getElementById('navUser').textContent = user.email;
+    document.getElementById('signOutBtn').addEventListener('click', () =>
+      signOut(auth).then(() => window.location.href = 'index.html'));
+
+    // Load members then tag admins
+    const snap = await get(ref(db, 'adminConfig/members'));
+    allMembers = [];
+    if (snap.exists()) {
+      snap.forEach(child => {
+        allMembers.push({ uid: child.key, isAdmin: adminUids.has(child.key), ...child.val() });
+      });
+    }
+
+    const total    = allMembers.length;
+    const approved = allMembers.filter(m => m.approved).length;
+    const pending  = allMembers.filter(m => !m.approved).length;
+
+    document.getElementById('statTotal').textContent    = total;
+    document.getElementById('statApproved').textContent = approved;
+    document.getElementById('statPending').textContent  = pending;
+
+    const badge = document.getElementById('pendingBadge');
+    badge.textContent = pending;
+    badge.className   = `section-badge ${pending === 0 ? 'zero' : ''}`;
+
+    renderPending();
+    renderMembers();
+    loadSurvivorStats();
+
+    // Set default dates
+    document.getElementById('picksDate').value = todayStr();
+    document.getElementById('gamesDate').value = todayStr();
+  });
+</script>
+
+</body>
+</html>
