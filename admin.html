@@ -594,6 +594,71 @@
     .add-member-msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
     .add-member-msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
 
+
+    /* ── Settings card ───────────────────────── */
+    .settings-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--cream-dark);
+      flex-wrap: wrap;
+    }
+
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-row-info { flex: 1; }
+    .settings-row-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .settings-row-sub   { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+
+    .settings-row-control { display: flex; align-items: center; gap: 10px; }
+
+    .day-input {
+      width: 70px;
+      padding: 8px 10px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: center;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .day-input:focus { border-color: var(--navy); }
+
+    .btn-save-setting {
+      padding: 7px 16px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-save-setting:hover { background: #152e4a; }
+
+    .setting-saved {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 600;
+      display: none;
+    }
+
     @media (max-width: 600px) {
       .nav-links  { display: none; }
       .member-row { flex-direction: column; align-items: flex-start; }
@@ -690,6 +755,53 @@
     </div>
     <div class="card" id="membersList">
       <div class="state-box"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ── League Settings ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">League Settings</span>
+    </div>
+    <div class="settings-card">
+
+      <!-- Monthly standings start day -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Monthly Standings — Start From Day</div>
+          <div class="settings-row-sub">Only count picks from this day of the month onward. Useful when new members join mid-month. Set to 1 to count the full month.</div>
+        </div>
+        <div class="settings-row-control">
+          <input type="number" class="day-input" id="monthlyStartDay" min="1" max="31" value="1" />
+          <button class="btn-save-setting" id="saveMonthlyStartBtn">Save</button>
+          <span class="setting-saved" id="monthlyStartSaved">✓ Saved</span>
+        </div>
+      </div>
+
+      <!-- Season standings start date -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Season Standings — Start From Date</div>
+          <div class="settings-row-sub">Only count picks from this date onward for the season leaderboard.</div>
+        </div>
+        <div class="settings-row-control">
+          <input type="date" class="data-input" id="seasonStartDate" style="border-radius:var(--radius-sm)" />
+          <button class="btn-save-setting" id="saveSeasonStartBtn">Save</button>
+          <span class="setting-saved" id="seasonStartSaved">✓ Saved</span>
+        </div>
+      </div>
+
+      <!-- Reset monthly standings -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Reset Monthly Standings</div>
+          <div class="settings-row-sub">Wipes all picks for the current month from the standings calculation. Does <em>not</em> delete pick records — only resets the month start day to today.</div>
+        </div>
+        <div class="settings-row-control">
+          <button class="btn-danger" id="resetMonthlyBtn">⚠️ Reset This Month</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -889,6 +1001,56 @@
     }
   };
 
+
+
+  // ── League settings ───────────────────────────────────────────────────
+  async function loadLeagueSettings() {
+    const snap = await get(ref(db, 'adminConfig/settings'));
+    const settings = snap.exists() ? snap.val() : {};
+
+    const monthlyStart = settings.monthlyStartDay || 1;
+    const seasonStart  = settings.seasonStartDate || '';
+
+    document.getElementById('monthlyStartDay').value = monthlyStart;
+    document.getElementById('seasonStartDate').value = seasonStart;
+  }
+
+  function flashSaved(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 2000);
+  }
+
+  document.getElementById('saveMonthlyStartBtn').addEventListener('click', async () => {
+    const day = parseInt(document.getElementById('monthlyStartDay').value);
+    if (isNaN(day) || day < 1 || day > 31) { toast('Enter a valid day (1–31).', 'error'); return; }
+    try {
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      flashSaved('monthlyStartSaved');
+      toast(`✅ Monthly standings now start from day ${day}`);
+    } catch (e) { toast('Failed to save setting.', 'error'); }
+  });
+
+  document.getElementById('saveSeasonStartBtn').addEventListener('click', async () => {
+    const date = document.getElementById('seasonStartDate').value;
+    if (!date) { toast('Pick a start date.', 'error'); return; }
+    try {
+      await update(ref(db, 'adminConfig/settings'), { seasonStartDate: date });
+      flashSaved('seasonStartSaved');
+      toast(`✅ Season standings now start from ${date}`);
+    } catch (e) { toast('Failed to save setting.', 'error'); }
+  });
+
+  document.getElementById('resetMonthlyBtn').addEventListener('click', async () => {
+    const today = todayStr();
+    const day   = new Date().getDate();
+    if (!confirm(`Reset monthly standings to start from today (day ${day})? Picks before today won't count toward this month's standings.`)) return;
+    try {
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      document.getElementById('monthlyStartDay').value = day;
+      toast(`✅ Monthly standings reset — now starting from day ${day}`);
+    } catch (e) { toast('Failed to reset standings.', 'error'); }
+  });
 
   // ── Registration toggle ───────────────────────────────────────────────
   async function loadRegistrationState() {
@@ -1223,6 +1385,7 @@
     renderMembers();
     loadSurvivorStats();
     loadRegistrationState();
+    loadLeagueSettings();
 
     // Set default dates
     document.getElementById('picksDate').value = todayStr();
