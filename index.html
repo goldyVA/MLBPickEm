@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLB Pick'em League</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── Layout ─────────────────────────────── */
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── Left panel ─────────────────────────── */
+    .hero {
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 110%, rgba(232,168,56,.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 90% -10%, rgba(192,57,43,.12) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,.7);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: 36px;
+    }
+
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(.8); }
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(38px, 4vw, 56px);
+      line-height: 1.08;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero p {
+      font-size: 16px;
+      line-height: 1.65;
+      color: rgba(255,255,255,.62);
+      max-width: 380px;
+      margin-bottom: 48px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+    }
+
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hero-stat-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--white);
+    }
+
+    .hero-stat-label {
+      font-size: 12px;
+      color: rgba(255,255,255,.45);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* ── Right panel ────────────────────────── */
+    .auth-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 48px;
+      background: var(--cream);
+    }
+
+    .auth-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+
+    .auth-logo-icon {
+      width: 36px; height: 36px;
+      background: var(--navy);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .auth-logo-text {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    /* Tabs */
+    .auth-tabs {
+      display: flex;
+      background: var(--cream-dark);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 32px;
+      gap: 4px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 9px 0;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-faint);
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+
+    .auth-tab.active {
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Form */
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .field input:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(27,58,92,.10);
+    }
+
+    .field input::placeholder { color: var(--ink-faint); }
+
+    .pin-hint {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s ease, transform .1s ease;
+      margin-top: 4px;
+    }
+
+    .btn-primary:hover  { background: #152e4a; }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* Messages */
+    .msg {
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      line-height: 1.45;
+      display: none;
+    }
+    .msg.show  { display: block; }
+    .msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+    .msg.warn  { background: #FEF9EE; color: #7A5A10; border: 1px solid #F5DFA0; }
+
+    .auth-footer {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--ink-faint);
+    }
+
+    /* Nav (after login) */
+    .app-nav {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      padding: 0 24px;
+      height: 58px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .app-nav.show { display: flex; }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 4px; }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-link:hover { background: var(--cream); color: var(--ink); }
+    .nav-link.active { background: var(--navy); color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+
+    .nav-user {
+      font-size: 13px;
+      color: var(--ink-faint);
+    }
+
+    .btn-signout {
+      padding: 6px 14px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* Welcome screen */
+    .welcome-screen {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px 40px;
+      text-align: center;
+    }
+
+    .welcome-screen.show { display: flex; }
+
+    .welcome-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
+    }
+
+    .welcome-screen h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+
+    .welcome-screen p {
+      font-size: 16px;
+      color: var(--ink-light);
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .welcome-nav-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      max-width: 640px;
+      width: 100%;
+    }
+
+    .welcome-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 24px 16px;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
+    }
+
+    .welcome-card:hover {
+      border-color: var(--navy);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .welcome-card-icon { font-size: 28px; }
+    .welcome-card-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .welcome-card-desc  { font-size: 12px; color: var(--ink-faint); text-align: center; }
+
+    .pending-banner {
+      background: #FEF9EE;
+      border: 1.5px solid #F5DFA0;
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    .pending-banner h3 { font-size: 18px; color: #7A5A10; margin-bottom: 8px; }
+    .pending-banner p  { font-size: 14px; color: #A07830; line-height: 1.5; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .hero {
+        padding: 40px 28px 36px;
+      }
+      .hero h1 { font-size: 32px; }
+      .hero p  { display: none; }
+      .hero-stats { gap: 20px; }
+      .auth-panel { padding: 36px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav (shown when logged in) -->
+<nav class="app-nav" id="appNav">
+  <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+  <div class="nav-links">
+    <a href="picks.html"     class="nav-link">My Picks</a>
+    <a href="results.html"   class="nav-link">Results</a>
+    <a href="standings.html" class="nav-link">Standings</a>
+    <a href="survivor.html"  class="nav-link">Survivor</a>
+    <a href="admin.html"     class="nav-link" id="adminLink" style="display:none">Admin</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-signout" id="signOutBtn">Sign out</button>
+  </div>
+</nav>
+
+<!-- Auth page (shown when logged out) -->
+<div class="page" id="authPage">
+  <!-- Hero panel -->
+  <div class="hero">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      <span id="seasonYear"></span> MLB Season
+    </div>
+    <h1>Pick every<br/><em>game,</em><br/>beat the group.</h1>
+    <p>Daily MLB pick'em with your crew. Lock in your picks before first pitch, track the board, and climb the standings.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num">162</span>
+        <span class="hero-stat-label">Games / team</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">30</span>
+        <span class="hero-stat-label">MLB teams</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">Daily</span>
+        <span class="hero-stat-label">Picks lock</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth panel -->
+  <div class="auth-panel">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">⚾</div>
+        <span class="auth-logo-text">MLB Pick'em League</span>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn" onclick="switchTab('signin')">Sign In</button>
+        <button class="auth-tab"        id="tabSignUp" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form class="auth-form" id="signInForm" onsubmit="handleSignIn(event)">
+        <div class="field">
+          <label for="siEmail">Email</label>
+          <input type="email" id="siEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="siPin">PIN</label>
+          <input type="password" id="siPin" placeholder="4–8 digit PIN" required inputmode="numeric"
+                 minlength="4" maxlength="8" pattern="\d{4,8}" autocomplete="current-password" />
+        </div>
+        <div class="msg" id="siMsg"></div>
+        <button type="submit" class="btn-primary" id="siBtn">Sign In</button>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form class="auth-form" id="signUpForm" style="display:none" onsubmit="handleSignUp(event)">
+        <div class="field">
+          <label for="suName">Display Name</label>
+          <input type="text" id="suName" placeholder="Your name" required autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="suEmail">Email</label>
+          <input type="email" id="suEmail" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="suPin">Create PIN</label>
+          <input type="password" id="suPin" placeholder="4–8 digits" required inputmode="numeric"
+                 minlength="4" maxlength="8" pattern="\d{4,8}" autocomplete="new-password" />
+          <span class="pin-hint">Numbers only, 4–8 digits</span>
+        </div>
+        <div class="field">
+          <label for="suPinConfirm">Confirm PIN</label>
+          <input type="password" id="suPinConfirm" placeholder="Re-enter PIN" required inputmode="numeric"
+                 minlength="4" maxlength="8" pattern="\d{4,8}" autocomplete="new-password" />
+        </div>
+        <div class="msg" id="suMsg"></div>
+        <button type="submit" class="btn-primary" id="suBtn">Request Access</button>
+      </form>
+
+      <div class="auth-footer">
+        By signing up you agree to play fair and have fun ⚾
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Welcome / dashboard (shown when logged in & approved) -->
+<div class="welcome-screen" id="welcomeScreen">
+  <div class="welcome-icon">⚾</div>
+  <h2 id="welcomeHeading">Welcome back!</h2>
+  <p>You're in. Make your picks before first pitch — they lock automatically at game time.</p>
+  <div class="welcome-nav-cards">
+    <a href="picks.html" class="welcome-card">
+      <span class="welcome-card-icon">🎯</span>
+      <span class="welcome-card-label">My Picks</span>
+      <span class="welcome-card-desc">Pick today's games</span>
+    </a>
+    <a href="results.html" class="welcome-card">
+      <span class="welcome-card-icon">📋</span>
+      <span class="welcome-card-label">Results</span>
+      <span class="welcome-card-desc">See the group board</span>
+    </a>
+    <a href="standings.html" class="welcome-card">
+      <span class="welcome-card-icon">🏆</span>
+      <span class="welcome-card-label">Standings</span>
+      <span class="welcome-card-desc">Season leaderboard</span>
+    </a>
+    <a href="survivor.html" class="welcome-card">
+      <span class="welcome-card-icon">💀</span>
+      <span class="welcome-card-label">Survivor</span>
+      <span class="welcome-card-desc">Monthly survivor game</span>
+    </a>
+  </div>
+</div>
+
+<!-- Pending approval screen -->
+<div class="welcome-screen" id="pendingScreen">
+  <div class="welcome-icon">⏳</div>
+  <div class="pending-banner">
+    <h3>Awaiting Approval</h3>
+    <p>Your account has been created and is pending admin approval. You'll be able to make picks once you're approved. Check back soon!</p>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp }                              from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword,
+           createUserWithEmailAndPassword,
+           onAuthStateChanged, signOut }                from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, set, get, child }         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  const ADMIN_EMAIL = "steven.goldburg@gmail.com";
+
+  // Set season year dynamically
+  document.getElementById('seasonYear').textContent = new Date().getFullYear();
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = `msg ${type} show`;
+  }
+
+  function setLoading(btnId, loading, defaultText) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Please wait…' : defaultText;
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────
+  window.switchTab = function(tab) {
+    const isSignIn = tab === 'signin';
+    document.getElementById('signInForm').style.display = isSignIn ? 'flex' : 'none';
+    document.getElementById('signUpForm').style.display = isSignIn ? 'none' : 'flex';
+    document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
+    document.getElementById('tabSignUp').classList.toggle('active', !isSignIn);
+  };
+
+  // ── Sign In ───────────────────────────────────────────────────────────
+  window.handleSignIn = async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('siEmail').value.trim();
+    const pin   = document.getElementById('siPin').value.trim();
+
+    if (!/^\d{4,8}$/.test(pin)) {
+      showMsg('siMsg', 'PIN must be 4–8 digits.', 'error');
+      return;
+    }
+
+    setLoading('siBtn', true, 'Sign In');
+    try {
+      await signInWithEmailAndPassword(auth, email, pin);
+      // onAuthStateChanged will handle redirect
+    } catch (err) {
+      const msgs = {
+        'auth/user-not-found':   'No account found with that email.',
+        'auth/wrong-password':   'Incorrect PIN.',
+        'auth/invalid-email':    'Invalid email address.',
+        'auth/invalid-credential': 'Incorrect email or PIN.',
+        'auth/too-many-requests':'Too many attempts. Try again later.',
+      };
+      showMsg('siMsg', msgs[err.code] || 'Sign in failed. Please try again.', 'error');
+      setLoading('siBtn', false, 'Sign In');
+    }
+  };
+
+  // ── Sign Up ───────────────────────────────────────────────────────────
+  window.handleSignUp = async function(e) {
+    e.preventDefault();
+    const name  = document.getElementById('suName').value.trim();
+    const email = document.getElementById('suEmail').value.trim();
+    const pin   = document.getElementById('suPin').value.trim();
+    const pin2  = document.getElementById('suPinConfirm').value.trim();
+
+    if (!name) {
+      showMsg('suMsg', 'Please enter your display name.', 'error'); return;
+    }
+    if (!/^\d{4,8}$/.test(pin)) {
+      showMsg('suMsg', 'PIN must be 4–8 digits (numbers only).', 'error'); return;
+    }
+    if (pin !== pin2) {
+      showMsg('suMsg', 'PINs do not match.', 'error'); return;
+    }
+
+    setLoading('suBtn', true, 'Request Access');
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pin);
+      const uid  = cred.user.uid;
+      const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+      // Write member profile
+      await set(ref(db, `adminConfig/members/${uid}`), {
+        email,
+        displayName: name,
+        approved: isAdmin,   // admin auto-approved
+        joinedAt: new Date().toISOString(),
+      });
+
+      // If admin, write to admins node
+      if (isAdmin) {
+        await set(ref(db, `adminConfig/admins/${uid}`), true);
+      }
+
+      if (!isAdmin) {
+        showMsg('suMsg', 'Account created! Waiting for admin approval before you can play.', 'info');
+      }
+      // onAuthStateChanged handles the rest
+    } catch (err) {
+      const msgs = {
+        'auth/email-already-in-use': 'An account with that email already exists.',
+        'auth/invalid-email':        'Invalid email address.',
+        'auth/weak-password':        'PIN too short (min 4 digits).',
+      };
+      showMsg('suMsg', msgs[err.code] || 'Sign up failed. Please try again.', 'error');
+      setLoading('suBtn', false, 'Request Access');
+    }
+  };
+
+  // ── Auth state ────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    const authPage      = document.getElementById('authPage');
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const pendingScreen = document.getElementById('pendingScreen');
+    const appNav        = document.getElementById('appNav');
+
+    if (!user) {
+      authPage.style.display      = '';
+      welcomeScreen.classList.remove('show');
+      pendingScreen.classList.remove('show');
+      appNav.classList.remove('show');
+      return;
+    }
+
+    // User is logged in — hide auth page
+    authPage.style.display = 'none';
+
+    // Load member data
+    const dbRef = ref(db);
+    const snap  = await get(child(dbRef, `adminConfig/members/${user.uid}`));
+    const member = snap.exists() ? snap.val() : null;
+    const isAdmin   = await get(child(dbRef, `adminConfig/admins/${user.uid}`));
+    const adminUser = isAdmin.exists() && isAdmin.val() === true;
+
+    // Nav
+    appNav.classList.add('show');
+    document.getElementById('navUser').textContent = member?.displayName || user.email;
+    if (adminUser) document.getElementById('adminLink').style.display = '';
+
+    // Sign out
+    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+
+    // Show appropriate screen
+    if (member?.approved || adminUser) {
+      document.getElementById('welcomeHeading').textContent =
+        `Welcome back, ${member?.displayName?.split(' ')[0] || 'friend'}!`;
+      welcomeScreen.classList.add('show');
+      pendingScreen.classList.remove('show');
+    } else {
+      welcomeScreen.classList.remove('show');
+      pendingScreen.classList.add('show');
+    }
+  });
+</script>
+
+</body>
+</html>
