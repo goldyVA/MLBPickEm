@@ -1061,17 +1061,12 @@
       subtitle = `Day ${day} · free pass used on day ${myState.freePassDay}`;
     }
 
-    const usedAbbrevs = new Set(Object.values(usedTeams));
-    const canPick     = canPickNew; // already computed above
+    const usedAbbrevs       = new Set(Object.values(usedTeams));
+    const currentPickLocked = todayPick ? teamGameStarted(todayPick) : false;
+    const canChange         = myState.alive && !!todayPick && !currentPickLocked;
+    const canPick           = myState.alive && !todayPick && !locked;
 
     let pickHTML = '';
-
-    // Can they change their pick?
-    // Yes if: they have a pick AND that pick's game hasn't started AND they're alive
-    const currentPickLocked = todayPick ? teamGameStarted(todayPick) : false;
-    const canChange = myState.alive && todayPick && !currentPickLocked;
-    // canPick is already defined below, but we need canChange here first
-    const canPickNew = myState.alive && !todayPick && !locked;
 
     if (todayPick) {
       const resultLabel = pickResult
