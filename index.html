@@ -430,6 +430,133 @@
       .hero-stats { gap: 20px; }
       .auth-panel { padding: 36px 24px; }
     }
+
+    /* ── Hamburger + Drawer (index.html) ────── */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 36px; height: 36px;
+      background: transparent;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      width: 18px; height: 2px;
+      background: var(--ink);
+      border-radius: 2px;
+      transition: all .2s ease;
+    }
+    .hamburger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-drawer {
+      position: fixed;
+      top: 0; right: 0;
+      width: 280px;
+      height: 100dvh;
+      background: var(--white);
+      z-index: 300;
+      transform: translateX(100%);
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+    }
+    .mobile-drawer.open { transform: translateX(0); }
+
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 299;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .28s ease;
+    }
+    .drawer-overlay.show { opacity: 1; pointer-events: all; }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 58px;
+      border-bottom: 1px solid var(--cream-dark);
+      flex-shrink: 0;
+    }
+    .drawer-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--navy);
+    }
+    .drawer-close {
+      width: 32px; height: 32px;
+      border: none;
+      background: var(--cream);
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--ink-light);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .drawer-user {
+      padding: 12px 20px;
+      font-size: 13px;
+      color: var(--ink-faint);
+      border-bottom: 1px solid var(--cream-dark);
+      background: var(--cream);
+    }
+    .drawer-nav {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+    }
+    .drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--ink);
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .drawer-link:hover { background: var(--cream); }
+    .drawer-icon { font-size: 20px; width: 28px; text-align: center; }
+    .drawer-signout {
+      margin: 12px;
+      padding: 13px;
+      background: transparent;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--red);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 720px) {
+      .nav-links  { display: none !important; }
+      .nav-user   { display: none; }
+      .btn-signout { display: none; }
+      .hamburger  { display: flex; }
+    }
+
   </style>
 </head>
 <body>
