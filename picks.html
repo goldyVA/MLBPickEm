@@ -487,11 +487,30 @@
       align-items: center;
       gap: 8px;
       background: var(--cream);
+      border: 1.5px solid transparent;
       border-radius: var(--radius-sm);
       padding: 8px 14px;
       font-size: 14px;
       font-weight: 600;
       color: var(--ink);
+      transition: background .2s, border-color .2s;
+    }
+
+    .s-current-pick.pick-win {
+      background: #EFF6F2;
+      border-color: #A8D5B5;
+      color: #1D6A3E;
+    }
+
+    .s-current-pick.pick-loss {
+      background: #FDF0EF;
+      border-color: #F0C4C0;
+      color: var(--red);
+    }
+
+    .s-current-pick.pick-pending {
+      background: var(--cream);
+      border-color: var(--cream-dark);
     }
 
     .s-current-pick img { width: 26px; height: 26px; object-fit: contain; }
@@ -1937,7 +1956,7 @@ const NAV_STYLES = `
       pickHTML = `
         <div class="s-pick-row">
           <span class="s-pick-label">Today's survivor pick:</span>
-          <div class="s-current-pick">
+          <div class="s-current-pick ${pickResult ? 'pick-' + pickResult.result : 'pick-pending'}">
             <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
             ${team?.name || todayPick}
           </div>
