@@ -402,6 +402,29 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+
+    .member-score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 20px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 0 6px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .member-score.has-score {
+      background: #D4EDDA;
+      color: #155724;
+    }
+    .member-score.zero {
+      background: var(--cream-dark);
+      color: var(--ink-faint);
+    }
+
     /* ── Mobile ──────────────────────────────── */
     @media (max-width: 600px) {
   
@@ -1163,8 +1186,11 @@ const NAV_STYLES = `
       }
     });
 
-    // Sort: current user first, then alphabetical
+    // Sort: by correct desc, then current user first on ties, then alpha
     members.sort((a, b) => {
+      const aC = memberTotals[a.uid]?.correct ?? 0;
+      const bC = memberTotals[b.uid]?.correct ?? 0;
+      if (bC !== aC) return bC - aC;
       if (a.uid === currentUser.uid) return -1;
       if (b.uid === currentUser.uid) return 1;
       return a.displayName.localeCompare(b.displayName);
@@ -1334,10 +1360,17 @@ const NAV_STYLES = `
       // Member name cell
       const nameTd = document.createElement('td');
       nameTd.className = 'member-cell';
+      const { correct: mCorrect, total: mTotal } = memberTotals[member.uid];
+      const scoreLabel = mTotal > 0
+        ? `<span class="member-score has-score">${mCorrect}/${mTotal}</span>`
+        : finalGames.length > 0
+          ? `<span class="member-score zero">0/${finalGames.length > 0 ? finalGames.filter(g => allPicks[member.uid]?.[g.id]?.teamId).length : 0}</span>`
+          : '';
       nameTd.innerHTML = `
         <div class="member-name">
           ${member.displayName}
           ${member.uid === currentUser.uid ? '<span class="member-you">(you)</span>' : ''}
+          ${scoreLabel}
         </div>
       `;
       row.appendChild(nameTd);
