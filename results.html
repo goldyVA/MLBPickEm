@@ -1186,11 +1186,8 @@ const NAV_STYLES = `
       }
     });
 
-    // Sort: by correct desc, then current user first on ties, then alpha
+    // Sort: current user first, then alphabetical (re-sorted by score inside renderTable)
     members.sort((a, b) => {
-      const aC = memberTotals[a.uid]?.correct ?? 0;
-      const bC = memberTotals[b.uid]?.correct ?? 0;
-      if (bC !== aC) return bC - aC;
       if (a.uid === currentUser.uid) return -1;
       if (b.uid === currentUser.uid) return 1;
       return a.displayName.localeCompare(b.displayName);
@@ -1274,6 +1271,16 @@ const NAV_STYLES = `
       }
       memberTotals[m.uid] = { correct, total };
     }
+
+    // Sort members by correct desc once we have totals
+    members.sort((a, b) => {
+      const aC = memberTotals[a.uid]?.correct ?? 0;
+      const bC = memberTotals[b.uid]?.correct ?? 0;
+      if (bC !== aC) return bC - aC;
+      if (a.uid === currentUser.uid) return -1;
+      if (b.uid === currentUser.uid) return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
 
     // Leaders (among members with at least one final pick)
     if (finalGames.length > 0) {
