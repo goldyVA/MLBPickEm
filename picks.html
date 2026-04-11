@@ -1836,6 +1836,45 @@ const NAV_STYLES = `
     return { abbrev: todayPick, result: 'pending' };
   }
 
+
+
+  // ── Compute survivor status from picks + game results ─────────────────
+  function computeSurvivorStatus(usedTeams, storedFreePassUsed, storedFreePassDay, monthGames, startDay, today) {
+    const now  = new Date();
+    const ym   = today.substring(0, 7);
+    const year = parseInt(ym.split('-')[0]);
+    const mon  = parseInt(ym.split('-')[1]) - 1;
+    const daysInMonth = new Date(year, mon + 1, 0).getDate();
+    let alive = true, eliminatedDay = null, eliminatedReason = null;
+    let freePassUsed = storedFreePassUsed || false;
+    let freePassDay  = storedFreePassDay  || null;
+    let fpAutoApplied = false;
+
+    for (let d = startDay; d <= Math.min(daysInMonth, 30); d++) {
+      const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
+      if (dateStr > today) break;
+      const dayData = monthGames[dateStr];
+      if (!dayData) continue;
+      if (now < dayData.lastStartTime) continue;
+      const pick = (usedTeams || {})[dateStr];
+      if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
+      const game = dayData.games.find(g =>
+        g.homeTeam?.abbrev?.toUpperCase() === pick.toUpperCase() ||
+        g.awayTeam?.abbrev?.toUpperCase() === pick.toUpperCase()
+      );
+      if (!game || game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
+      const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
+      const won = homeWon
+        ? game.homeTeam.abbrev.toUpperCase() === pick.toUpperCase()
+        : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
+      if (!won) {
+        if (!freePassUsed) { freePassUsed = true; freePassDay = d; fpAutoApplied = true; }
+        else { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
+      }
+    }
+    return { alive, eliminatedDay, eliminatedReason, freePassUsed, freePassDay, fpAutoApplied };
+  }
+
   async function loadSurvivorSection(games) {
     const section = document.getElementById('survivorSection');
     const day     = new Date().getDate();
