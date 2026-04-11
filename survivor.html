@@ -1351,15 +1351,18 @@ const NAV_STYLES = `
   // ── Get pick result from a game list ──────────────────────────────────
   function getPickResult(abbrev, games) {
     if (!abbrev || !games?.length) return null;
+    const pick = abbrev.toUpperCase();
     const game = games.find(g =>
-      g.homeTeam?.abbrev?.toUpperCase() === abbrev.toUpperCase() ||
-      g.awayTeam?.abbrev?.toUpperCase() === abbrev.toUpperCase()
+      g.homeTeam?.abbrev?.toUpperCase() === pick ||
+      g.awayTeam?.abbrev?.toUpperCase() === pick
     );
     if (!game) return null;
     if (game.statusName !== 'STATUS_FINAL') return 'pending';
-    const won = game.homeTeam.abbrev.toUpperCase() === abbrev.toUpperCase()
-      ? game.winnerId === game.homeTeam.id
-      : game.winnerId === game.awayTeam.id;
+    if (!game.winnerId) return 'pending';
+    const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
+    const won = homeWon
+      ? game.homeTeam.abbrev.toUpperCase() === pick
+      : game.awayTeam.abbrev.toUpperCase() === pick;
     return won ? 'win' : 'loss';
   }
 
