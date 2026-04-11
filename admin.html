@@ -1973,32 +1973,110 @@ const NAV_STYLES = `
 
 
   // ── Survivor data viewer ──────────────────────────────────────────────
+
+  // ── Compute survivor status from picks + game results ─────────────────
+  function computeSurvivorStatus(usedTeams, storedFreePassUsed, storedFreePassDay, monthGames, startDay, today) {
+    const now  = new Date();
+    const ym   = today.substring(0, 7);
+    const year = parseInt(ym.split('-')[0]);
+    const mon  = parseInt(ym.split('-')[1]) - 1;
+    const daysInMonth = new Date(year, mon + 1, 0).getDate();
+    let alive = true, eliminatedDay = null, eliminatedReason = null;
+    let freePassUsed = storedFreePassUsed || false;
+    let freePassDay  = storedFreePassDay  || null;
+    let fpAutoApplied = false;
+
+    for (let d = startDay; d <= Math.min(daysInMonth, 30); d++) {
+      const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
+      if (dateStr > today) break;
+      const dayData = monthGames[dateStr];
+      if (!dayData) continue;
+      if (now < dayData.lastStartTime) continue;
+      const pick = (usedTeams || {})[dateStr];
+      if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
+      const game = dayData.games.find(g =>
+        g.homeTeam?.abbrev?.toUpperCase() === pick.toUpperCase() ||
+        g.awayTeam?.abbrev?.toUpperCase() === pick.toUpperCase()
+      );
+      if (!game || game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
+      const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
+      const won = homeWon
+        ? game.homeTeam.abbrev.toUpperCase() === pick.toUpperCase()
+        : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
+      if (!won) {
+        if (!freePassUsed) { freePassUsed = true; freePassDay = d; fpAutoApplied = true; }
+        else { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
+      }
+    }
+    return { alive, eliminatedDay, eliminatedReason, freePassUsed, freePassDay, fpAutoApplied };
+  }
+
   async function loadSurvivorData() {
-    const ym        = yearMonthStr();
+    const ym      = yearMonthStr();
+    const today   = todayStr();
+    const now     = new Date();
     const container = document.getElementById('survivorDataContainer');
     document.getElementById('survivorMonth').textContent = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
     container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
 
+    // Load raw survivor data from Firebase
     const snap = await get(ref(db, `survivor/${ym}`));
     const data = snap.exists() ? snap.val() : {};
 
-    const approved = allMembers.filter(m => m.approved);
+    // Load settings
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const startDay = settingsSnap.exists() ? (settingsSnap.val().monthlyStartDay || 1) : 1;
 
+    // Load all month games for computation
+    const monthGames = await adminFetchMonthGames(ym);
+
+    const approved = allMembers.filter(m => m.approved);
     if (approved.length === 0) {
       container.innerHTML = `<div class="state-box"><p>No approved members.</p></div>`;
       return;
     }
 
     const rows = approved.map(m => {
-      const state     = data[m.uid] || { alive: true, freePassUsed: false, usedTeams: {} };
-      const pickCount = Object.keys(state.usedTeams || {}).length;
-      const lastPick  = Object.entries(state.usedTeams || {}).sort((a,b) => b[0].localeCompare(a[0]))[0];
-      return { ...m, state, pickCount, lastPick };
+      const raw      = data[m.uid] || { freePassUsed: false, freePassDay: null, usedTeams: {} };
+      const computed = computeSurvivorStatus(
+        raw.usedTeams, raw.freePassUsed, raw.freePassDay, monthGames, startDay, today
+      );
+
+      // If free pass was auto-applied, write it (own record — but admin can write too)
+      if (computed.fpAutoApplied) {
+        update(ref(db), {
+          [`survivor/${ym}/${m.uid}/freePassUsed`]: true,
+          [`survivor/${ym}/${m.uid}/freePassDay`]:  computed.freePassDay,
+        }).catch(() => {});
+      }
+
+      const pickCount = Object.keys(raw.usedTeams || {}).length;
+      const todayPick = (raw.usedTeams || {})[today];
+      const lastPick  = Object.entries(raw.usedTeams || {}).sort((a,b) => b[0].localeCompare(a[0]))[0];
+
+      // Get today's pick result
+      let todayResult = todayPick ? `${todayPick} (pending)` : '—';
+      if (todayPick && monthGames[today]) {
+        const game = monthGames[today].games.find(g =>
+          g.homeTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase() ||
+          g.awayTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase()
+        );
+        if (game?.statusName === 'STATUS_FINAL' && game.winnerId) {
+          const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
+          const won = homeWon
+            ? game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+            : game.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+          todayResult = won ? `✅ ${todayPick} won` : `❌ ${todayPick} lost`;
+        } else if (game) {
+          todayResult = `⏳ ${todayPick}`;
+        }
+      }
+
+      return { ...m, computed, pickCount, todayResult, lastPick };
     });
 
     rows.sort((a, b) => {
-      if (a.state.alive !== b.state.alive) return a.state.alive ? -1 : 1;
+      if (a.computed.alive !== b.computed.alive) return a.computed.alive ? -1 : 1;
       return b.pickCount - a.pickCount;
     });
 
@@ -2009,24 +2087,54 @@ const NAV_STYLES = `
             <tr>
               <th>Member</th>
               <th>Status</th>
-              <th>Picks Made</th>
+              <th>Picks</th>
               <th>Free Pass</th>
+              <th>Today</th>
               <th>Last Pick</th>
             </tr>
           </thead>
           <tbody>
-            ${rows.map(r => `
-              <tr>
-                <td>${r.displayName || r.email}</td>
-                <td>${r.state.alive ? '✅ Alive' : '💀 Eliminated'}</td>
-                <td>${r.pickCount}</td>
-                <td>${r.state.freePassUsed ? `Used (Day ${r.state.freePassDay || '?'})` : 'Available'}</td>
-                <td>${r.lastPick ? `${r.lastPick[1]} on ${r.lastPick[0]}` : '—'}</td>
-              </tr>
-            `).join('')}
+            ${rows.map(r => {
+              const c = r.computed;
+              let statusText = c.alive ? '✅ Alive' : '💀 Eliminated';
+              if (c.alive && c.freePassUsed) statusText = '🎟️ Alive (FP used)';
+              if (!c.alive && c.eliminatedReason === 'missed') statusText = '💀 Missed pick';
+              const fpText = c.freePassUsed
+                ? `Used (day ${c.freePassDay || '?'})`
+                : '<span style="color:var(--green);font-weight:600">Available</span>';
+              return `
+                <tr>
+                  <td style="font-weight:600">${r.displayName || r.email}</td>
+                  <td>${statusText}</td>
+                  <td>${r.pickCount}</td>
+                  <td>${fpText}</td>
+                  <td>${r.todayResult}</td>
+                  <td style="color:var(--ink-faint)">${r.lastPick ? `${r.lastPick[1]} (${r.lastPick[0]})` : '—'}</td>
+                </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>`;
+  }
+
+  // Fetch all games for a month from ESPN/cache
+  async function adminFetchMonthGames(ym) {
+    const monthGames = {};
+    try {
+      const snap = await get(ref(db, 'games'));
+      if (snap.exists()) {
+        snap.forEach(dateChild => {
+          if (!dateChild.key.startsWith(ym)) return;
+          const games = Object.values(dateChild.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (!games.length) return;
+          monthGames[dateChild.key] = {
+            lastStartTime: new Date(games[games.length-1].startTime),
+            games,
+          };
+        });
+      }
+    } catch (e) { console.warn('adminFetchMonthGames failed:', e); }
+    return monthGames;
   }
 
   // ── Reset survivor ────────────────────────────────────────────────────
