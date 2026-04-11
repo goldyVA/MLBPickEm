@@ -1198,25 +1198,24 @@ const NAV_STYLES = `
 
   // ── Compute standings ─────────────────────────────────────────────────
   function computeStandings(filterType, month, monthlyStartDay, seasonStartDate) {
-    const rows = [];
+    const rows    = [];
+    const now     = new Date();
+    const todayKey   = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const thisMonth  = todayKey.substring(0, 7);
 
     for (const member of allMembers) {
-      let totalPicks   = 0;
-      let totalCorrect = 0;
-      let daysActive   = 0;
+      let totalPicks = 0, totalCorrect = 0, daysActive = 0;
 
       for (const [date, games] of Object.entries(allGames)) {
-        // Filter by month if needed
-        if (filterType === 'month' && !date.startsWith(month)) continue;
-
-        // Monthly start day filter
-        if (filterType === 'month') {
-          const dayNum = parseInt(date.split('-')[2]);
-          if (dayNum < (monthlyStartDay || 1)) continue;
-        }
-
-        // Season start date filter
+        // Tab filter
+        if (filterType === 'today'  && date !== todayKey)          continue;
+        if (filterType === 'month'  && !date.startsWith(thisMonth)) continue;
         if (filterType === 'season' && seasonStartDate && date < seasonStartDate) continue;
+
+        // Monthly start day
+        if (filterType === 'month') {
+          if (parseInt(date.split('-')[2]) < (monthlyStartDay || 1)) continue;
+        }
 
         const dayPicks = allPicks[member.uid]?.[date] || {};
         let dayHasPick = false;
@@ -1225,29 +1224,20 @@ const NAV_STYLES = `
           if (game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
           const pick = dayPicks[gameId]?.teamId;
           if (!pick) continue;
-
           dayHasPick = true;
           totalPicks++;
-          if (didPickWin(pick, game)) totalCorrect++;
+          if (String(pick) === String(game.winnerId)) totalCorrect++;
         }
 
         if (dayHasPick) daysActive++;
       }
 
-      rows.push({
-        uid:          member.uid,
-        displayName:  member.displayName,
-        totalPicks,
-        totalCorrect,
-        daysActive,
-        percentage:   pct(totalCorrect, totalPicks),
-      });
+      rows.push({ uid: member.uid, displayName: member.displayName, totalPicks, totalCorrect, daysActive, percentage: pct(totalCorrect, totalPicks) });
     }
 
-    // Sort: by correct desc, then percentage desc, then name
     rows.sort((a, b) => {
       if (b.totalCorrect !== a.totalCorrect) return b.totalCorrect - a.totalCorrect;
-      if (b.percentage   !== a.percentage)   return b.percentage - a.percentage;
+      if (b.percentage   !== a.percentage)   return b.percentage   - a.percentage;
       return a.displayName.localeCompare(b.displayName);
     });
 
@@ -1263,17 +1253,15 @@ const NAV_STYLES = `
     const podiumEl  = document.getElementById('podium');
 
     // Update subtitle
-    const startNote = filter === 'season' && seasonStartDate
-      ? ` · from ${seasonStartDate}`
-      : filter === 'month' && monthlyStartDay > 1
-        ? ` · from day ${monthlyStartDay}`
-        : '';
+    const _n = new Date();
+    const _tf = _n.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const _mf = _n.toLocaleDateString('en-US',{month:'long',year:'numeric'});
     document.getElementById('standingsSubtitle').textContent =
-      filter === 'season'
-        ? `${currentYear()} season · all final games${startNote}`
-        : `${monthName(month)} · monthly breakdown${startNote}`;
+      filter === 'today'  ? `Today · ${_tf}`
+      : filter === 'month'  ? `${_mf}${monthlyStartDay > 1 ? ` · from day ${monthlyStartDay}` : ''}`
+      : `${currentYear()} season${seasonStartDate ? ` · from ${seasonStartDate}` : ''}`;
 
-    // Season summary chips — show meaningful group-wide stats
+    // Season summary chips — season tab only
     if (filter === 'season') {
       const totalPicks   = rows.reduce((sum, r) => sum + r.totalPicks,   0);
       const totalCorrect = rows.reduce((sum, r) => sum + r.totalCorrect, 0);
