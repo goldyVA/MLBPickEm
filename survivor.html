@@ -1526,7 +1526,9 @@ const NAV_STYLES = `
   // ── Load all month games from Firebase ───────────────────────────────
   async function loadMonthGames(ym) {
     const monthGames = {};
+    const today = todayStr();
     try {
+      // Load cached games for the whole month
       const gamesSnap = await get(ref(db, 'games'));
       if (gamesSnap.exists()) {
         gamesSnap.forEach(dateChild => {
@@ -1539,6 +1541,40 @@ const NAV_STYLES = `
             allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
           };
         });
+      }
+
+      // Always fetch today fresh from ESPN to get current scores/final status
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${today.replace(/-/g,'')}`);
+      const data = await res.json();
+      const freshGames = [];
+      for (const event of (data?.events || [])) {
+        const comp = event.competitions?.[0];
+        if (!comp) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        if (!home || !away) continue;
+        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+        const winnerId   = statusName === 'STATUS_FINAL'
+          ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null)
+          : null;
+        freshGames.push({
+          id: event.id, startTime: event.date, statusName,
+          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation },
+          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation },
+          homeScore: home.score ?? null, awayScore: away.score ?? null, winnerId,
+        });
+      }
+      if (freshGames.length) {
+        freshGames.sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+        monthGames[today] = {
+          lastStartTime: new Date(freshGames[freshGames.length-1].startTime),
+          games: freshGames,
+          allFinal: freshGames.every(g => g.statusName === 'STATUS_FINAL'),
+        };
+        // Update Firebase cache with fresh data
+        const cacheObj = {};
+        for (const g of freshGames) cacheObj[g.id] = g;
+        await set(ref(db, `games/${today}`), cacheObj).catch(() => {});
       }
     } catch (e) {
       console.warn('loadMonthGames failed:', e);
