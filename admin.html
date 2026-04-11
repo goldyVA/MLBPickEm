@@ -2120,7 +2120,10 @@ const NAV_STYLES = `
   // Fetch all games for a month from ESPN/cache
   async function adminFetchMonthGames(ym) {
     const monthGames = {};
+    const today = todayStr();
+
     try {
+      // Load cached games for the whole month
       const snap = await get(ref(db, 'games'));
       if (snap.exists()) {
         snap.forEach(dateChild => {
@@ -2132,6 +2135,16 @@ const NAV_STYLES = `
             games,
           };
         });
+      }
+
+      // Always fetch today fresh from ESPN so we get current scores/status
+      const freshGames = await adminFetchGames(today);
+      const freshArr   = Object.values(freshGames).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+      if (freshArr.length) {
+        monthGames[today] = {
+          lastStartTime: new Date(freshArr[freshArr.length-1].startTime),
+          games: freshArr,
+        };
       }
     } catch (e) { console.warn('adminFetchMonthGames failed:', e); }
     return monthGames;
