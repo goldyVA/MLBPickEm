@@ -1893,23 +1893,25 @@ const NAV_STYLES = `
   async function renderLeaderboard(monthGames) {
     const list  = document.getElementById('leaderboardList');
     const today = todayStr();
+    const ym    = yearMonthStr();
+
+    // Reload fresh survivor states from Firebase so we have latest free pass writes
+    const freshSnap = await get(ref(db, `survivor/${ym}`));
+    const freshStates = freshSnap.exists() ? freshSnap.val() : {};
+
     const rows  = await Promise.all(allMembers.map(async m => {
-      const raw   = allStates[m.uid] || { freePassUsed: false, freePassDay: null, usedTeams: {} };
+      // Use freshStates first, fall back to allStates
+      const raw   = freshStates[m.uid] || allStates[m.uid] || { freePassUsed: false, freePassDay: null, usedTeams: {} };
       const computed = computeSurvivorStatus(
         raw.usedTeams, raw.freePassUsed, raw.freePassDay,
         monthGames || {}, survivorStartDay, today
       );
-      // If free pass was auto-applied and user is current user, write to Firebase
+      // Write free pass to Firebase if auto-applied (only for current user — strict rules)
       if (computed.fpAutoApplied && m.uid === currentUser.uid) {
-        const ym2 = yearMonthStr();
         await update(ref(db), {
-          [`survivor/${ym2}/${m.uid}/freePassUsed`]: true,
-          [`survivor/${ym2}/${m.uid}/freePassDay`]:  computed.freePassDay,
+          [`survivor/${ym}/${m.uid}/freePassUsed`]: true,
+          [`survivor/${ym}/${m.uid}/freePassDay`]:  computed.freePassDay,
         }).catch(() => {});
-        // Update local state so other renders see it
-        if (!allStates[m.uid]) allStates[m.uid] = {};
-        allStates[m.uid].freePassUsed = true;
-        allStates[m.uid].freePassDay  = computed.freePassDay;
       }
       const state = { ...raw, ...computed };
       const pickCount = Object.keys(raw.usedTeams || {}).length;
