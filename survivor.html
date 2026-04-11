@@ -1536,6 +1536,41 @@ const NAV_STYLES = `
   }
 
   // ── Load all month games from Firebase ───────────────────────────────
+  async function fetchAndCacheGames(dateStr) {
+    // Fetch a single date from ESPN and cache it
+    try {
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr.replace(/-/g,'')}`);
+      const data = await res.json();
+      const games = [];
+      for (const event of (data?.events || [])) {
+        const comp = event.competitions?.[0];
+        if (!comp) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        if (!home || !away) continue;
+        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+        const winnerId   = statusName === 'STATUS_FINAL'
+          ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null)
+          : null;
+        games.push({
+          id: event.id, startTime: event.date, statusName,
+          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation },
+          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation },
+          homeScore: home.score ?? null, awayScore: away.score ?? null, winnerId,
+        });
+      }
+      if (games.length) {
+        games.sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+        const cacheObj = {};
+        for (const g of games) cacheObj[g.id] = g;
+        await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
+      }
+      return games;
+    } catch (e) {
+      return null;
+    }
+  }
+
   async function loadMonthGames(ym) {
     const monthGames = {};
     const today = todayStr();
@@ -1555,39 +1590,26 @@ const NAV_STYLES = `
         });
       }
 
-      // Always fetch today fresh from ESPN to get current scores/final status
-      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${today.replace(/-/g,'')}`);
-      const data = await res.json();
-      const freshGames = [];
-      for (const event of (data?.events || [])) {
-        const comp = event.competitions?.[0];
-        if (!comp) continue;
-        const home = comp.competitors?.find(c => c.homeAway === 'home');
-        const away = comp.competitors?.find(c => c.homeAway === 'away');
-        if (!home || !away) continue;
-        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
-        const winnerId   = statusName === 'STATUS_FINAL'
-          ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null)
-          : null;
-        freshGames.push({
-          id: event.id, startTime: event.date, statusName,
-          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation },
-          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation },
-          homeScore: home.score ?? null, awayScore: away.score ?? null, winnerId,
-        });
-      }
-      if (freshGames.length) {
-        freshGames.sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
-        monthGames[today] = {
-          lastStartTime: new Date(freshGames[freshGames.length-1].startTime),
-          games: freshGames,
-          allFinal: freshGames.every(g => g.statusName === 'STATUS_FINAL'),
-        };
-        // Update Firebase cache with fresh data
-        const cacheObj = {};
-        for (const g of freshGames) cacheObj[g.id] = g;
-        await set(ref(db, `games/${today}`), cacheObj).catch(() => {});
-      }
+      // Re-fetch any date (today OR past) that isn't fully final yet
+      const datesToRefresh = Object.entries(monthGames)
+        .filter(([date, d]) => !d.allFinal && date <= today)
+        .map(([date]) => date);
+
+      // Always include today even if not cached yet
+      if (!datesToRefresh.includes(today)) datesToRefresh.push(today);
+
+      await Promise.all(datesToRefresh.map(async dateStr => {
+        const fresh = await fetchAndCacheGames(dateStr);
+        if (fresh && fresh.length) {
+          fresh.sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          monthGames[dateStr] = {
+            lastStartTime: new Date(fresh[fresh.length-1].startTime),
+            games: fresh,
+            allFinal: fresh.every(g => g.statusName === 'STATUS_FINAL'),
+          };
+        }
+      }));
+
     } catch (e) {
       console.warn('loadMonthGames failed:', e);
     }
