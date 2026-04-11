@@ -2036,18 +2036,18 @@ const NAV_STYLES = `
       return;
     }
 
-    const rows = approved.map(m => {
+    const rows = await Promise.all(approved.map(async m => {
       const raw      = data[m.uid] || { freePassUsed: false, freePassDay: null, usedTeams: {} };
       const computed = computeSurvivorStatus(
         raw.usedTeams, raw.freePassUsed, raw.freePassDay, monthGames, startDay, today
       );
 
-      // If free pass was auto-applied, write it to Firebase now
+      // If free pass was auto-applied, write it to Firebase now (admin can write any record)
       if (computed.fpAutoApplied) {
         await update(ref(db), {
           [`survivor/${ym}/${m.uid}/freePassUsed`]: true,
           [`survivor/${ym}/${m.uid}/freePassDay`]:  computed.freePassDay,
-        }).catch(e => console.warn('Free pass write failed for', m.uid, e));
+        }).catch(() => {});
       }
 
       const pickCount = Object.keys(raw.usedTeams || {}).length;
@@ -2055,27 +2055,29 @@ const NAV_STYLES = `
       const lastPick  = Object.entries(raw.usedTeams || {}).sort((a,b) => b[0].localeCompare(a[0]))[0];
 
       // Get today's pick result
-      let todayResult = todayPick ? `${todayPick} (no game data)` : '—';
+      let todayResult = '—';
       if (todayPick && monthGames[today]) {
         const game = monthGames[today].games.find(g =>
           g.homeTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase() ||
           g.awayTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase()
         );
-        if (!game) {
-          todayResult = `${todayPick} (game not found)`;
-        } else if (game.statusName === 'STATUS_FINAL' && game.winnerId) {
+        if (game?.statusName === 'STATUS_FINAL' && game.winnerId) {
           const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
           const won = homeWon
             ? game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
             : game.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
           todayResult = won ? `✅ ${todayPick} won` : `❌ ${todayPick} lost`;
+        } else if (game) {
+          todayResult = `⏳ ${todayPick}`;
         } else {
-          todayResult = `⏳ ${todayPick} (${game.statusName?.replace('STATUS_','') || '?'})`;
+          todayResult = todayPick;
         }
+      } else if (todayPick) {
+        todayResult = todayPick;
       }
 
       return { ...m, computed, pickCount, todayResult, lastPick };
-    });
+    }));
 
     rows.sort((a, b) => {
       if (a.computed.alive !== b.computed.alive) return a.computed.alive ? -1 : 1;
