@@ -1081,7 +1081,9 @@
       <div class="data-controls">
         <input type="date" class="data-input" id="picksDate" />
         <button class="btn-load" id="loadPicksBtn">Load</button>
+        <button class="btn-load" id="autoPickBtn" style="background:var(--accent);color:var(--ink)" title="Auto-pick away team for all members who haven't picked yet on this date">🤖 Auto-pick Missing</button>
       </div>
+      <div class="msg" id="autoPickMsg" style="margin-bottom:10px"></div>
       <div id="picksDataContainer">
         <div class="state-box"><p>Select a date and click Load.</p></div>
       </div>
@@ -1915,6 +1917,87 @@ const NAV_STYLES = `
           </tbody>
         </table>
       </div>`;
+  });
+
+
+  // ── Admin auto-pick ───────────────────────────────────────────────────
+  document.getElementById('autoPickBtn').addEventListener('click', async () => {
+    const date = document.getElementById('picksDate').value;
+    const msg  = document.getElementById('autoPickMsg');
+
+    if (!date) {
+      msg.textContent = 'Select a date first.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    const now = new Date();
+    const d   = new Date(date + 'T12:00:00');
+    if (d > now) {
+      msg.textContent = 'Cannot auto-pick a future date.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    if (!confirm(`Auto-pick the away team for all members who haven't picked on ${date}? This cannot be undone.`)) return;
+
+    msg.textContent = 'Running auto-pick…';
+    msg.className = 'msg info show';
+
+    try {
+      // Fetch games for the date
+      const games = await adminFetchGames(date);
+      const gameList = Object.values(games);
+
+      if (gameList.length === 0) {
+        msg.textContent = 'No games found for this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      // Only auto-pick games that have started
+      const lockedGames = gameList.filter(g => new Date(g.startTime) <= now);
+      if (lockedGames.length === 0) {
+        msg.textContent = 'No games have started yet on this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      const approved = allMembers.filter(m => m.approved);
+      let pickedCount = 0;
+
+      await Promise.all(approved.map(async m => {
+        const picksSnap = await get(ref(db, `picks/${m.uid}/${date}`));
+        const existing  = picksSnap.exists() ? picksSnap.val() : {};
+        const updates   = {};
+
+        for (const game of lockedGames) {
+          if (existing[game.id]?.teamId) continue; // already has a pick
+          updates[`picks/${m.uid}/${date}/${game.id}`] = {
+            teamId:   game.awayTeam.id,
+            lockedIn: true,
+            correct:  null,
+            auto:     true,
+          };
+          pickedCount++;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }));
+
+      msg.textContent = `✅ Done! Auto-picked away team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.className = 'msg info show';
+
+      // Reload the picks view
+      document.getElementById('loadPicksBtn').click();
+
+    } catch (e) {
+      console.error(e);
+      msg.textContent = 'Auto-pick failed: ' + e.message;
+      msg.className = 'msg error show';
+    }
   });
 
   // ── Games data viewer ─────────────────────────────────────────────────
