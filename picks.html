@@ -1491,7 +1491,7 @@ const NAV_STYLES = `
               pollInterval = null;
             }
           } catch (e) { console.warn('Poll failed:', e); }
-        }, 5 * 60 * 1000); // every 5 minutes
+        }, 3 * 60 * 1000); // every 3 minutes
       }
     }
   }
@@ -1816,19 +1816,78 @@ const NAV_STYLES = `
 
   async function loadSurvivorSection(games) {
     const section = document.getElementById('survivorSection');
-    const card    = document.getElementById('survivorCard');
     const day     = new Date().getDate();
+    const ym      = yearMonthStr();
+    const today   = todayStr();
 
-    // Don't show on day 31
     if (day === 31) { section.style.display = 'none'; return; }
-
     section.style.display = '';
 
-    const ym   = yearMonthStr();
+    // Load fresh state from Firebase
     const snap = await get(ref(db, `survivor/${ym}/${currentUser.uid}`));
     survivorState = snap.exists() ? snap.val() : {
-      alive: true, freePassUsed: false, freePassDay: null, usedTeams: {}
+      alive: true, freePassUsed: false, freePassDay: null, usedTeams: {}, eliminatedDay: null, eliminatedReason: null
     };
+
+    // ── Settle today's pick if games are final ────────────────────────
+    // Only run if user is alive and has a pick today
+    if (survivorState.alive) {
+      const todayPick = survivorState.usedTeams?.[today];
+      const allTodayFinal = games.every(g => g.statusName === 'STATUS_FINAL');
+
+      if (todayPick && allTodayFinal) {
+        // Find the game the user's team played in
+        const game = games.find(g =>
+          g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ||
+          g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+        );
+
+        if (game && game.statusName === 'STATUS_FINAL' && game.winnerId) {
+          const won = game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+            ? game.winnerId === game.homeTeam.id
+            : game.winnerId === game.awayTeam.id;
+
+          if (!won) {
+            // Team lost
+            if (!survivorState.freePassUsed) {
+              // Auto-apply free pass
+              survivorState.freePassUsed = true;
+              survivorState.freePassDay  = day;
+              await update(ref(db), {
+                [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: true,
+                [`survivor/${ym}/${currentUser.uid}/freePassDay`]:  day,
+              }).catch(e => console.warn('Survivor FP write failed:', e));
+            } else {
+              // Already used free pass — eliminated
+              survivorState.alive          = false;
+              survivorState.eliminatedDay  = day;
+              survivorState.eliminatedReason = 'loss';
+              await update(ref(db), {
+                [`survivor/${ym}/${currentUser.uid}/alive`]:           false,
+                [`survivor/${ym}/${currentUser.uid}/eliminatedDay`]:   day,
+                [`survivor/${ym}/${currentUser.uid}/eliminatedReason`]:'loss',
+              }).catch(e => console.warn('Survivor elim write failed:', e));
+            }
+          }
+          // If won — no state change needed, just re-render
+        }
+      }
+
+      // Check if last game has started and user has no pick — warn them
+      const lastGame = games.sort((a,b) => new Date(a.startTime)-new Date(b.startTime)).slice(-1)[0];
+      const lastStarted = lastGame && new Date() >= new Date(lastGame.startTime);
+      if (lastStarted && !todayPick && allTodayFinal) {
+        // All games done, no pick — eliminate
+        survivorState.alive          = false;
+        survivorState.eliminatedDay  = day;
+        survivorState.eliminatedReason = 'missed';
+        await update(ref(db), {
+          [`survivor/${ym}/${currentUser.uid}/alive`]:           false,
+          [`survivor/${ym}/${currentUser.uid}/eliminatedDay`]:   day,
+          [`survivor/${ym}/${currentUser.uid}/eliminatedReason`]:'missed',
+        }).catch(e => console.warn('Survivor missed write failed:', e));
+      }
+    }
 
     renderSurvivorCard(games);
   }
@@ -1855,8 +1914,14 @@ const NAV_STYLES = `
 
     if (todayPick) {
       const team = MLB_TEAMS.find(t => t.abbrev === todayPick);
-      const resultLabel = pickResult ? { win:'✅ Win', loss:'❌ Loss', pending:'⏳ Pending' }[pickResult.result] : '⏳ Pending';
-      const resultClass = pickResult ? { win:'s-result-win', loss:'s-result-loss', pending:'s-result-pending' }[pickResult.result] : 's-result-pending';
+      // Show survival outcome clearly once result is known
+      const fpUsed = survivorState.freePassUsed && survivorState.freePassDay === new Date().getDate();
+      const resultLabel = pickResult
+        ? { win: '✅ Survived!', loss: fpUsed ? '🎟️ Free Pass Used — Survived!' : '❌ Eliminated', pending: '⏳ Game in progress…' }[pickResult.result]
+        : '⏳ Pending';
+      const resultClass = pickResult
+        ? { win: 's-result-win', loss: fpUsed ? 's-result-win' : 's-result-loss', pending: 's-result-pending' }[pickResult.result]
+        : 's-result-pending';
       pickHTML = `
         <div class="s-pick-row">
           <span class="s-pick-label">Today's survivor pick:</span>
