@@ -207,35 +207,6 @@
     .msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
     .msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
 
-    /* ── Season stats card ───────────────────── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 1px;
-      background: var(--cream-dark);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
-
-    .stat-cell {
-      background: var(--white);
-      padding: 16px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-family: 'DM Serif Display', serif;
-      font-size: 26px;
-      color: var(--navy);
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--ink-faint);
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      margin-top: 4px;
-    }
 
     @media (max-width: 600px) {
   
@@ -509,26 +480,7 @@
     </div>
   </div>
 
-  <!-- Season stats -->
-  <div class="profile-card" id="statsCard" style="display:none">
-    <div class="profile-card-header">Season Stats</div>
-    <div class="profile-card-body" style="padding:0">
-      <div class="stats-grid">
-        <div class="stat-cell">
-          <div class="stat-value" id="statPicks">—</div>
-          <div class="stat-label">Picks Made</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-value" id="statCorrect">—</div>
-          <div class="stat-label">Correct</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-value" id="statPct">—</div>
-          <div class="stat-label">Win %</div>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Change PIN -->
   <div class="profile-card">
@@ -948,42 +900,7 @@ const NAV_STYLES = `
 
 
     // Load season stats
-    loadSeasonStats();
   }
-
-  // ── Season stats ──────────────────────────────────────────────────────
-  async function loadSeasonStats() {
-    const year     = currentYear();
-    const gamesSnap = await get(ref(db, 'games'));
-    const picksSnap = await get(ref(db, `picks/${currentUser.uid}`));
-
-    let totalPicks   = 0;
-    let totalCorrect = 0;
-
-    if (gamesSnap.exists() && picksSnap.exists()) {
-      const allGames = gamesSnap.val();
-      const allPicks = picksSnap.val();
-
-      for (const [date, games] of Object.entries(allGames)) {
-        if (!date.startsWith(String(year))) continue;
-        const dayPicks = allPicks[date] || {};
-        for (const [gameId, game] of Object.entries(games)) {
-          if (game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
-          const pick = dayPicks[gameId]?.teamId;
-          if (!pick) continue;
-          totalPicks++;
-          if (pick === game.winnerId) totalCorrect++;
-        }
-      }
-    }
-
-    const pct = totalPicks > 0 ? Math.round((totalCorrect / totalPicks) * 100) : 0;
-    document.getElementById('statPicks').textContent   = totalPicks;
-    document.getElementById('statCorrect').textContent = totalCorrect;
-    document.getElementById('statPct').textContent     = totalPicks > 0 ? `${pct}%` : '—';
-    document.getElementById('statsCard').style.display = '';
-  }
-
 
 
   // ── Change PIN ────────────────────────────────────────────────────────
