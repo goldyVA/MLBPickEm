@@ -2042,12 +2042,12 @@ const NAV_STYLES = `
         raw.usedTeams, raw.freePassUsed, raw.freePassDay, monthGames, startDay, today
       );
 
-      // If free pass was auto-applied, write it (own record — but admin can write too)
+      // If free pass was auto-applied, write it to Firebase now
       if (computed.fpAutoApplied) {
-        update(ref(db), {
+        await update(ref(db), {
           [`survivor/${ym}/${m.uid}/freePassUsed`]: true,
           [`survivor/${ym}/${m.uid}/freePassDay`]:  computed.freePassDay,
-        }).catch(() => {});
+        }).catch(e => console.warn('Free pass write failed for', m.uid, e));
       }
 
       const pickCount = Object.keys(raw.usedTeams || {}).length;
@@ -2055,20 +2055,22 @@ const NAV_STYLES = `
       const lastPick  = Object.entries(raw.usedTeams || {}).sort((a,b) => b[0].localeCompare(a[0]))[0];
 
       // Get today's pick result
-      let todayResult = todayPick ? `${todayPick} (pending)` : '—';
+      let todayResult = todayPick ? `${todayPick} (no game data)` : '—';
       if (todayPick && monthGames[today]) {
         const game = monthGames[today].games.find(g =>
           g.homeTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase() ||
           g.awayTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase()
         );
-        if (game?.statusName === 'STATUS_FINAL' && game.winnerId) {
+        if (!game) {
+          todayResult = `${todayPick} (game not found)`;
+        } else if (game.statusName === 'STATUS_FINAL' && game.winnerId) {
           const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
           const won = homeWon
             ? game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
             : game.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
           todayResult = won ? `✅ ${todayPick} won` : `❌ ${todayPick} lost`;
-        } else if (game) {
-          todayResult = `⏳ ${todayPick}`;
+        } else {
+          todayResult = `⏳ ${todayPick} (${game.statusName?.replace('STATUS_','') || '?'})`;
         }
       }
 
