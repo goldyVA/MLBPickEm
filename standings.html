@@ -658,16 +658,20 @@
   <!-- Season summary -->
   <div class="summary-row" id="summaryRow" style="display:none">
     <div class="summary-chip">
-      <span class="chip-value" id="sumDays">—</span>
-      <span class="chip-label">Days with games</span>
-    </div>
-    <div class="summary-chip">
-      <span class="chip-value" id="sumTotalGames">—</span>
-      <span class="chip-label">Total games</span>
-    </div>
-    <div class="summary-chip">
       <span class="chip-value" id="sumMembers">—</span>
       <span class="chip-label">Members</span>
+    </div>
+    <div class="summary-chip">
+      <span class="chip-value" id="sumTotalPicks">—</span>
+      <span class="chip-label">Total picks made</span>
+    </div>
+    <div class="summary-chip">
+      <span class="chip-value" id="sumTotalCorrect">—</span>
+      <span class="chip-label">Total correct</span>
+    </div>
+    <div class="summary-chip">
+      <span class="chip-value" id="sumOverallPct">—</span>
+      <span class="chip-label">Group win %</span>
     </div>
   </div>
 
@@ -1248,15 +1252,17 @@ const NAV_STYLES = `
         ? `${currentYear()} season · all final games${startNote}`
         : `${monthName(month)} · monthly breakdown${startNote}`;
 
-    // Season summary chips
+    // Season summary chips — show meaningful group-wide stats
     if (filter === 'season') {
-      const dates = Object.keys(allGames).filter(d => d.startsWith(String(currentYear())));
-      let totalGames = 0;
-      for (const d of dates) totalGames += Object.keys(allGames[d]).length;
-      document.getElementById('sumDays').textContent    = dates.length;
-      document.getElementById('sumTotalGames').textContent = totalGames;
-      document.getElementById('sumMembers').textContent = allMembers.length;
-      document.getElementById('summaryRow').style.display = 'flex';
+      const totalPicks   = rows.reduce((sum, r) => sum + r.totalPicks,   0);
+      const totalCorrect = rows.reduce((sum, r) => sum + r.totalCorrect, 0);
+      const groupPct     = totalPicks > 0 ? Math.round((totalCorrect / totalPicks) * 100) : 0;
+
+      document.getElementById('sumMembers').textContent     = allMembers.length;
+      document.getElementById('sumTotalPicks').textContent  = totalPicks;
+      document.getElementById('sumTotalCorrect').textContent= totalCorrect;
+      document.getElementById('sumOverallPct').textContent  = totalPicks > 0 ? groupPct + '%' : '—';
+      document.getElementById('summaryRow').style.display   = 'flex';
     } else {
       document.getElementById('summaryRow').style.display = 'none';
     }
