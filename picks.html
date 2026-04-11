@@ -312,6 +312,10 @@
       color: var(--ink-light);
       cursor: pointer;
       transition: all .15s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .pick-btn img {
@@ -319,16 +323,32 @@
       object-fit: contain;
     }
 
-    .pick-btn:hover:not(:disabled) {
+    /* Hover only on devices that support it (not touch) */
+    @media (hover: hover) {
+      .pick-btn:hover:not(:disabled) {
+        border-color: var(--navy);
+        color: var(--navy);
+        background: #EEF2F8;
+      }
+    }
+
+    /* Active state works on all devices including touch */
+    .pick-btn:active:not(:disabled) {
       border-color: var(--navy);
       color: var(--navy);
       background: #EEF2F8;
+      transform: scale(.97);
     }
 
     .pick-btn.selected {
       border-color: var(--navy);
       background: var(--navy);
       color: var(--white);
+    }
+
+    .pick-btn.selected:active {
+      background: #152e4a;
+      transform: scale(.97);
     }
 
     .pick-btn:disabled {
