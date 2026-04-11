@@ -2157,37 +2157,58 @@ const NAV_STYLES = `
 
   // ── Reset survivor ────────────────────────────────────────────────────
   // ── Survivor reset (top-level settings) ──────────────────────────────
-  document.getElementById('resetSurvivorBtnTop').addEventListener('click', async () => {
+  // ── Shared survivor reset logic ──────────────────────────────────────
+  async function doSurvivorReset(showToast) {
     const ym  = yearMonthStr();
     const day = new Date().getDate();
-    if (!confirm(`💀 Reset ALL survivor data for ${ym}?\n\nEveryone will be alive again, all picks cleared, and the start day set to today (day ${day}).\n\nThis cannot be undone.`)) return;
+
+    // Delete each member's survivor record individually (admin can write $uid paths)
+    const membersSnap = await get(ref(db, 'adminConfig/members'));
+    const updates = {};
+    if (membersSnap.exists()) {
+      membersSnap.forEach(child => {
+        if (child.val().approved) {
+          updates[`survivor/${ym}/${child.key}`] = null;
+        }
+      });
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await update(ref(db), updates);
+    }
+
+    await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+    document.getElementById('monthlyStartDay').value = day;
+    if (showToast) toast('💀 Survivor reset — everyone is alive again from today!', 'success');
+  }
+
+  document.getElementById('resetSurvivorBtnTop').addEventListener('click', async () => {
+    const day = new Date().getDate();
+    if (!confirm(`💀 Reset ALL survivor data?\n\nEveryone will be alive again, all picks cleared, and the start day set to today (day ${day}).\n\nThis cannot be undone.`)) return;
     try {
-      await remove(ref(db, `survivor/${ym}`));
-      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
-      document.getElementById('monthlyStartDay').value = day;
-      toast('💀 Survivor reset — everyone is alive again from today!', 'success');
+      await doSurvivorReset(true);
       loadSurvivorStats();
     } catch (e) {
-      toast('Failed to reset survivor.', 'error');
+      console.error(e);
+      toast('Failed to reset survivor: ' + e.message, 'error');
     }
   });
 
   document.getElementById('resetSurvivorBtn').addEventListener('click', async () => {
-    const ym  = yearMonthStr();
     const day = new Date().getDate();
-    if (!confirm(`⚠️ Reset ALL survivor data for ${ym}? Everyone will be marked alive again, all picks cleared, and the start day set to today (day ${day}). This cannot be undone.`)) return;
+    if (!confirm(`⚠️ Reset ALL survivor data? Everyone will be marked alive again, all picks cleared, and the start day set to today (day ${day}). This cannot be undone.`)) return;
     try {
-      await remove(ref(db, `survivor/${ym}`));
-      // Set survivor start day to today so past days don't count
-      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
-      document.getElementById('monthlyStartDay').value = day;
+      await doSurvivorReset(false);
       toast('Survivor reset. Everyone is alive again from today.', 'success');
       loadSurvivorData();
       loadSurvivorStats();
     } catch (e) {
-      toast('Failed to reset survivor data.', 'error');
+      console.error(e);
+      toast('Failed to reset survivor: ' + e.message, 'error');
     }
   });
+
+
 
   // ── Auth gate (admin only) ────────────────────────────────────────────
   onAuthStateChanged(auth, async (user) => {
