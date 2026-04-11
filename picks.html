@@ -1796,17 +1796,20 @@ const NAV_STYLES = `
   }
 
   function getSurvivorPickResult(state, games) {
-    const today    = todayStr();
+    const today     = todayStr();
     const todayPick = state.usedTeams?.[today];
     if (!todayPick) return null;
     for (const g of games) {
-      const inGame = g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ||
-                     g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+      const homeAbbrev = g.homeTeam.abbrev.toUpperCase();
+      const awayAbbrev = g.awayTeam.abbrev.toUpperCase();
+      const pick       = todayPick.toUpperCase();
+      const inGame     = homeAbbrev === pick || awayAbbrev === pick;
       if (!inGame) continue;
       if (g.statusName === 'STATUS_FINAL') {
-        const won = g.winnerId === g.homeTeam.id
-          ? g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
-          : g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+        if (!g.winnerId) return { abbrev: todayPick, result: 'pending' };
+        // Use abbrev comparison against winner — check which team won by abbrev
+        const homeWon = String(g.winnerId) === String(g.homeTeam.id);
+        const won     = homeWon ? homeAbbrev === pick : awayAbbrev === pick;
         return { abbrev: todayPick, result: won ? 'win' : 'loss' };
       }
       return { abbrev: todayPick, result: 'pending' };
@@ -1914,13 +1917,22 @@ const NAV_STYLES = `
 
     if (todayPick) {
       const team = MLB_TEAMS.find(t => t.abbrev === todayPick);
-      // Show survival outcome clearly once result is known
-      const fpUsed = survivorState.freePassUsed && survivorState.freePassDay === new Date().getDate();
+      // If result is loss but user is still alive → free pass was used
+      const survivedViaFP = pickResult?.result === 'loss' && state.alive;
+
       const resultLabel = pickResult
-        ? { win: '✅ Survived!', loss: fpUsed ? '🎟️ Free Pass Used — Survived!' : '❌ Eliminated', pending: '⏳ Game in progress…' }[pickResult.result]
+        ? {
+            win:     '✅ Survived!',
+            loss:    survivedViaFP ? '🎟️ Free Pass Used — Still Alive' : '❌ Eliminated',
+            pending: '⏳ Game in progress…'
+          }[pickResult.result]
         : '⏳ Pending';
       const resultClass = pickResult
-        ? { win: 's-result-win', loss: fpUsed ? 's-result-win' : 's-result-loss', pending: 's-result-pending' }[pickResult.result]
+        ? {
+            win:     's-result-win',
+            loss:    's-result-loss',
+            pending: 's-result-pending'
+          }[pickResult.result]
         : 's-result-pending';
       pickHTML = `
         <div class="s-pick-row">
