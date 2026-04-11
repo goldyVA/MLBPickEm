@@ -1792,6 +1792,48 @@ const NAV_STYLES = `
   // ── Picks data viewer ─────────────────────────────────────────────────
   document.getElementById('picksDate').value = todayStr();
 
+  // ── Shared ESPN fetch for admin data viewer ──────────────────────────
+  async function adminFetchGames(date) {
+    // Always fetch live from ESPN, update cache
+    try {
+      const espnDate = date.replace(/-/g, '');
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`);
+      const data = await res.json();
+      const games = {};
+      for (const event of (data?.events || [])) {
+        const comp = event.competitions?.[0];
+        if (!comp) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        if (!home || !away) continue;
+        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+        const winnerId   = statusName === 'STATUS_FINAL'
+          ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null)
+          : null;
+        games[event.id] = {
+          id: event.id,
+          startTime:   event.date,
+          statusName,
+          statusShort: event.status?.type?.shortDetail || '',
+          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName },
+          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName },
+          homeScore: home.score ?? null,
+          awayScore: away.score ?? null,
+          winnerId,
+        };
+      }
+      // Update Firebase cache
+      if (Object.keys(games).length > 0) {
+        await set(ref(db, `games/${date}`), games).catch(() => {});
+      }
+      return games;
+    } catch (e) {
+      // Fall back to Firebase cache
+      const snap = await get(ref(db, `games/${date}`));
+      return snap.exists() ? snap.val() : {};
+    }
+  }
+
   document.getElementById('loadPicksBtn').addEventListener('click', async () => {
     const date      = document.getElementById('picksDate').value;
     const container = document.getElementById('picksDataContainer');
@@ -1799,35 +1841,50 @@ const NAV_STYLES = `
 
     container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
 
-    // Load games for that date
-    const gamesSnap = await get(ref(db, `games/${date}`));
-    const games     = gamesSnap.exists() ? gamesSnap.val() : {};
-
-    // Load picks for all members
+    // Fetch fresh games from ESPN
+    const games   = await adminFetchGames(date);
     const approved = allMembers.filter(m => m.approved);
     const rows = [];
 
     await Promise.all(approved.map(async m => {
-      const snap = await get(ref(db, `picks/${m.uid}/${date}`));
+      const snap  = await get(ref(db, `picks/${m.uid}/${date}`));
       const picks = snap.exists() ? snap.val() : {};
 
       for (const [gameId, game] of Object.entries(games)) {
-        if (game.statusName !== 'STATUS_FINAL') continue;
-        const pick = picks[gameId];
+        const pick     = picks[gameId];
+        const isFinal  = game.statusName === 'STATUS_FINAL';
+        const pickAbbrev = pick?.teamId
+          ? (String(pick.teamId) === String(game.homeTeam?.id) ? game.homeTeam.abbrev : game.awayTeam?.abbrev)
+          : '—';
+        const winnerAbbrev = game.winnerId
+          ? (String(game.winnerId) === String(game.homeTeam?.id) ? game.homeTeam?.abbrev : game.awayTeam?.abbrev)
+          : (isFinal ? '?' : '—');
+        const correct = !pick?.teamId ? 'none'
+          : !isFinal ? 'pending'
+          : String(pick.teamId) === String(game.winnerId) ? 'correct' : 'wrong';
+
         rows.push({
-          member:    m.displayName || m.email,
-          game:      `${game.awayTeam?.abbrev || '?'} @ ${game.homeTeam?.abbrev || '?'}`,
-          picked:    pick?.teamId ? (pick.teamId === game.homeTeam?.id ? game.homeTeam.abbrev : game.awayTeam?.abbrev) : '—',
-          winner:    game.winnerId === game.homeTeam?.id ? game.homeTeam?.abbrev : game.awayTeam?.abbrev,
-          correct:   pick?.teamId ? (pick.teamId === game.winnerId ? 'correct' : 'wrong') : 'pending',
+          member:  m.displayName || m.email,
+          game:    `${game.awayTeam?.abbrev || '?'} @ ${game.homeTeam?.abbrev || '?'}`,
+          time:    game.startTime ? new Date(game.startTime).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '—',
+          status:  game.statusShort || game.statusName?.replace('STATUS_','') || '—',
+          picked:  pickAbbrev,
+          winner:  winnerAbbrev,
+          correct,
         });
       }
     }));
 
+    // Sort by game time then member name
+    rows.sort((a,b) => a.time.localeCompare(b.time) || a.member.localeCompare(b.member));
+
     if (rows.length === 0) {
-      container.innerHTML = `<div class="state-box"><div class="icon">📭</div><p>No final game picks for this date.</p></div>`;
+      container.innerHTML = `<div class="state-box"><div class="icon">📭</div><p>No picks data for this date.</p></div>`;
       return;
     }
+
+    const resultLabel = { correct:'✅ Correct', wrong:'❌ Wrong', pending:'⏳ Pending', none:'— No pick' };
+    const resultClass = { correct:'pick-correct', wrong:'pick-wrong', pending:'pick-pending', none:'' };
 
     container.innerHTML = `
       <div class="data-table-wrap">
@@ -1836,6 +1893,8 @@ const NAV_STYLES = `
             <tr>
               <th>Member</th>
               <th>Game</th>
+              <th>Time</th>
+              <th>Status</th>
               <th>Picked</th>
               <th>Winner</th>
               <th>Result</th>
@@ -1846,9 +1905,11 @@ const NAV_STYLES = `
               <tr>
                 <td>${r.member}</td>
                 <td>${r.game}</td>
+                <td>${r.time}</td>
+                <td>${r.status}</td>
                 <td>${r.picked}</td>
                 <td>${r.winner}</td>
-                <td class="pick-${r.correct}">${{ correct:'✅ Correct', wrong:'❌ Wrong', pending:'⏳ Pending' }[r.correct]}</td>
+                <td class="${resultClass[r.correct]}">${resultLabel[r.correct]}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -1866,11 +1927,11 @@ const NAV_STYLES = `
 
     container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
 
-    const snap  = await get(ref(db, `games/${date}`));
-    const games = snap.exists() ? Object.values(snap.val()) : [];
+    const games = Object.values(await adminFetchGames(date))
+      .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
 
     if (games.length === 0) {
-      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><p>No games cached for this date.</p></div>`;
+      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><p>No games found for this date.</p></div>`;
       return;
     }
 
@@ -1880,7 +1941,7 @@ const NAV_STYLES = `
           <thead>
             <tr>
               <th>Matchup</th>
-              <th>Start Time</th>
+              <th>Time</th>
               <th>Status</th>
               <th>Score</th>
               <th>Winner</th>
@@ -1890,24 +1951,26 @@ const NAV_STYLES = `
             ${games.map(g => {
               const matchup = `${g.awayTeam?.abbrev || '?'} @ ${g.homeTeam?.abbrev || '?'}`;
               const time    = g.startTime ? new Date(g.startTime).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) : '—';
-              const status  = g.statusName?.replace('STATUS_','') || '—';
+              const status  = g.statusShort || g.statusName?.replace('STATUS_','') || '—';
               const score   = (g.awayScore != null && g.homeScore != null) ? `${g.awayScore} – ${g.homeScore}` : '—';
               const winner  = g.winnerId
-                ? (g.winnerId === g.homeTeam?.id ? g.homeTeam?.abbrev : g.awayTeam?.abbrev)
+                ? (String(g.winnerId) === String(g.homeTeam?.id) ? g.homeTeam?.abbrev : g.awayTeam?.abbrev)
                 : '—';
               return `
                 <tr>
                   <td>${matchup}</td>
                   <td>${time}</td>
                   <td>${status}</td>
-                  <td>${score}</td>
-                  <td>${winner}</td>
+                  <td style="font-weight:700">${score}</td>
+                  <td style="font-weight:700">${winner}</td>
                 </tr>`;
             }).join('')}
           </tbody>
         </table>
       </div>`;
   });
+
+
 
   // ── Survivor data viewer ──────────────────────────────────────────────
   async function loadSurvivorData() {
