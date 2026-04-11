@@ -1409,11 +1409,14 @@ const NAV_STYLES = `
         : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
 
       if (!won) {
-        if (!freePassUsed) {
-          console.log(`[Survivor] Day ${d}: ${pick} lost → auto-applying free pass`);
-          freePassUsed = true; freePassDay = d; fpAutoApplied = true;
+        // Free pass saves you if: not yet used, OR it was stored as used on THIS day
+        // (meaning it was written to Firebase when this same loss was processed before)
+        const fpSavesThisDay = !freePassUsed || (freePassUsed && freePassDay === d);
+        if (fpSavesThisDay) {
+          console.log(`[Survivor] Day ${d}: ${pick} lost → free pass saves them (day ${freePassDay})`);
+          freePassUsed = true; freePassDay = d; fpAutoApplied = !storedFreePassUsed;
         } else {
-          console.log(`[Survivor] Day ${d}: ${pick} lost → eliminated (FP already used)`);
+          console.log(`[Survivor] Day ${d}: ${pick} lost → eliminated (FP used on day ${freePassDay})`);
           alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break;
         }
       } else {
