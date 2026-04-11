@@ -855,6 +855,13 @@
     .hamburger  { display: flex; }
   }
 
+
+    /* ── iOS touch fix ───────────────────────────── */
+    button, a, [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
   </style>
 </head>
 <body>
