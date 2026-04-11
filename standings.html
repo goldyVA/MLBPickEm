@@ -1114,43 +1114,55 @@ const NAV_STYLES = `
     // All games (cached in Firebase)
     const gamesSnap = await get(ref(db, 'games'));
     allGames = {};
+    const d2 = new Date();
+    const todayKey = `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+
     if (gamesSnap.exists()) {
       gamesSnap.forEach(dateChild => {
-        // Only include current year
         if (dateChild.key.startsWith(String(currentYear()))) {
           allGames[dateChild.key] = dateChild.val();
         }
       });
     }
 
-    // Refresh today's games live from ESPN so standings reflect finished games
-    try {
-      const d = new Date();
-      const todayKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${todayKey.replace(/-/g,'')}`);
-      const data = await res.json();
-      const todayGames = {};
-      for (const event of (data?.events || [])) {
-        const comp = event.competitions?.[0];
-        if (!comp) continue;
-        const home = comp.competitors?.find(c => c.homeAway === 'home');
-        const away = comp.competitors?.find(c => c.homeAway === 'away');
-        if (!home || !away) continue;
-        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
-        const winnerId   = statusName === 'STATUS_FINAL'
-          ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null) : null;
-        todayGames[event.id] = {
-          id: event.id, startTime: event.date, statusName,
-          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary||'' },
-          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary||'' },
-          winnerId,
-        };
-      }
-      if (Object.keys(todayGames).length > 0) {
-        allGames[todayKey] = todayGames;
-        await set(ref(db, `games/${todayKey}`), todayGames).catch(() => {});
-      }
-    } catch (e) { console.warn('ESPN refresh failed:', e); }
+    // Re-fetch from ESPN any date that isn't fully final (including today)
+    // This ensures past games cached as "in progress" get updated to final
+    async function fetchDateFromESPN(dateStr) {
+      try {
+        const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr.replace(/-/g,'')}`);
+        const data = await res.json();
+        const games = {};
+        for (const event of (data?.events || [])) {
+          const comp = event.competitions?.[0];
+          if (!comp) continue;
+          const home = comp.competitors?.find(c => c.homeAway === 'home');
+          const away = comp.competitors?.find(c => c.homeAway === 'away');
+          if (!home || !away) continue;
+          const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+          const winnerId   = statusName === 'STATUS_FINAL'
+            ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null) : null;
+          games[event.id] = {
+            id: event.id, startTime: event.date, statusName,
+            homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary||'' },
+            awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary||'' },
+            winnerId,
+          };
+        }
+        if (Object.keys(games).length > 0) {
+          allGames[dateStr] = games;
+          await set(ref(db, `games/${dateStr}`), games).catch(() => {});
+        }
+      } catch (e) { console.warn(`ESPN fetch failed for ${dateStr}:`, e); }
+    }
+
+    // Find all dates needing a refresh (not fully final + today always)
+    const datesToRefresh = new Set([todayKey]);
+    for (const [date, games] of Object.entries(allGames)) {
+      const allFinal = Object.values(games).every(g => g.statusName === 'STATUS_FINAL');
+      if (!allFinal && date <= todayKey) datesToRefresh.add(date);
+    }
+
+    await Promise.all([...datesToRefresh].map(fetchDateFromESPN));
 
     // All picks for all members
     allPicks = {};
