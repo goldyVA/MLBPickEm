@@ -2004,7 +2004,8 @@ const NAV_STYLES = `
         ? game.homeTeam.abbrev.toUpperCase() === pick.toUpperCase()
         : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
       if (!won) {
-        if (!freePassUsed) { freePassUsed = true; freePassDay = d; fpAutoApplied = true; }
+        const fpSavesThisDay = !freePassUsed || (freePassUsed && freePassDay === d);
+        if (fpSavesThisDay) { freePassUsed = true; freePassDay = d; fpAutoApplied = !storedFreePassUsed; }
         else { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
       }
     }
