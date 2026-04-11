@@ -1081,7 +1081,8 @@
       <div class="data-controls">
         <input type="date" class="data-input" id="picksDate" />
         <button class="btn-load" id="loadPicksBtn">Load</button>
-        <button class="btn-load" id="autoPickBtn" style="background:var(--accent);color:var(--ink)" title="Auto-pick away team for all members who haven't picked yet on this date">🤖 Auto-pick Missing</button>
+        <button class="btn-load" id="autoPickBtn" style="background:var(--accent);color:var(--ink)" title="Auto-pick away team for locked games only">🤖 Auto-pick Started</button>
+        <button class="btn-load" id="autoPickAllBtn" style="background:var(--navy);color:var(--white)" title="Auto-pick away team for ALL games today including future ones">🤖 Auto-pick All Today</button>
       </div>
       <div class="msg" id="autoPickMsg" style="margin-bottom:10px"></div>
       <div id="picksDataContainer">
@@ -1991,6 +1992,68 @@ const NAV_STYLES = `
       msg.className = 'msg info show';
 
       // Reload the picks view
+      document.getElementById('loadPicksBtn').click();
+
+    } catch (e) {
+      console.error(e);
+      msg.textContent = 'Auto-pick failed: ' + e.message;
+      msg.className = 'msg error show';
+    }
+  });
+
+
+  document.getElementById('autoPickAllBtn').addEventListener('click', async () => {
+    const date = document.getElementById('picksDate').value;
+    const msg  = document.getElementById('autoPickMsg');
+
+    if (!date) {
+      msg.textContent = 'Select a date first.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    if (!confirm(`Auto-pick the away team for ALL games on ${date} for members who haven't picked? Users can still change picks before their game starts.`)) return;
+
+    msg.textContent = 'Running auto-pick for all games…';
+    msg.className = 'msg info show';
+
+    try {
+      const games = await adminFetchGames(date);
+      const gameList = Object.values(games);
+
+      if (gameList.length === 0) {
+        msg.textContent = 'No games found for this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      const approved = allMembers.filter(m => m.approved);
+      let pickedCount = 0;
+
+      await Promise.all(approved.map(async m => {
+        const picksSnap = await get(ref(db, `picks/${m.uid}/${date}`));
+        const existing  = picksSnap.exists() ? picksSnap.val() : {};
+        const updates   = {};
+
+        for (const game of gameList) {
+          if (existing[game.id]?.teamId) continue; // already has a pick
+          updates[`picks/${m.uid}/${date}/${game.id}`] = {
+            teamId:   game.awayTeam.id,
+            lockedIn: true,
+            correct:  null,
+            auto:     true,
+          };
+          pickedCount++;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }));
+
+      msg.textContent = `✅ Done! Auto-picked away team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.className = 'msg info show';
+
       document.getElementById('loadPicksBtn').click();
 
     } catch (e) {
