@@ -1374,22 +1374,14 @@ const NAV_STYLES = `
   }
 
 
-  // ── Compute survivor status from picks + game results ─────────────────
-  // Source of truth: usedTeams + game results. Never reads stored alive field.
-  // Only writes to Firebase when free pass is auto-applied (user's own record).
-  function computeSurvivorStatus(usedTeams, storedFreePassUsed, storedFreePassDay, monthGames, startDay, today) {
+  // ── Compute survivor status ──────────────────────────────────────────
+  function computeSurvivorStatus(usedTeams, freePassUsed, freePassDay, monthGames, startDay, today) {
     const now  = new Date();
     const ym   = today.substring(0, 7);
     const year = parseInt(ym.split('-')[0]);
     const mon  = parseInt(ym.split('-')[1]) - 1;
     const daysInMonth = new Date(year, mon + 1, 0).getDate();
-
-    let alive            = true;
-    let eliminatedDay    = null;
-    let eliminatedReason = null;
-    let freePassUsed     = storedFreePassUsed || false;
-    let freePassDay      = storedFreePassDay  || null;
-    let fpAutoApplied    = false;
+    let alive = true, eliminatedDay = null, eliminatedReason = null;
 
     for (let d = startDay; d <= Math.min(daysInMonth, 30); d++) {
       const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
@@ -1397,78 +1389,38 @@ const NAV_STYLES = `
       const dayData = monthGames[dateStr];
       if (!dayData) continue;
       if (now < dayData.lastStartTime) continue;
-
       const pick = (usedTeams || {})[dateStr];
-
-      if (!pick) {
-        alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break;
-      }
-
+      if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
       const game = dayData.games.find(g =>
         g.homeTeam?.abbrev?.toUpperCase() === pick.toUpperCase() ||
         g.awayTeam?.abbrev?.toUpperCase() === pick.toUpperCase()
       );
       if (!game || game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
-
       const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
       const won = homeWon
         ? game.homeTeam.abbrev.toUpperCase() === pick.toUpperCase()
         : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
-
       if (!won) {
-        // Free pass saves you if: not yet used, OR it was stored as used on THIS day
-        // (meaning it was written to Firebase when this same loss was processed before)
-        const fpSavesThisDay = !freePassUsed || (freePassUsed && freePassDay === d);
-        if (fpSavesThisDay) {
-          console.log(`[Survivor] Day ${d}: ${pick} lost → free pass saves them (day ${freePassDay})`);
-          freePassUsed = true; freePassDay = d; fpAutoApplied = !storedFreePassUsed;
-        } else {
-          console.log(`[Survivor] Day ${d}: ${pick} lost → eliminated (FP used on day ${freePassDay})`);
-          alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break;
-        }
-      } else {
-        console.log(`[Survivor] Day ${d}: ${pick} won ✓`);
+        const fpSaves = freePassUsed && freePassDay === d;
+        if (!fpSaves) { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
       }
     }
-
-    console.log(`[Survivor] Result: alive=${alive} freePassUsed=${freePassUsed} freePassDay=${freePassDay} fpAutoApplied=${fpAutoApplied}`);
-    return { alive, eliminatedDay, eliminatedReason, freePassUsed, freePassDay, fpAutoApplied };
+    return { alive, eliminatedDay, eliminatedReason };
   }
 
-  // ── Apply computed status to myState, writing free pass if auto-applied ─
+
   async function applyComputedStatus(monthGames) {
     const ym    = yearMonthStr();
     const today = todayStr();
     const raw   = allStates[currentUser.uid] || {};
-
     const result = computeSurvivorStatus(
       raw.usedTeams, raw.freePassUsed, raw.freePassDay,
       monthGames, survivorStartDay, today
     );
-
-    // Only write to Firebase if free pass was auto-applied (our own record, allowed)
-    if (result.fpAutoApplied) {
-      await update(ref(db), {
-        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: true,
-        [`survivor/${ym}/${currentUser.uid}/freePassDay`]:  result.freePassDay,
-      }).catch(e => console.warn('Free pass write failed:', e));
-      // Update local raw state so UI reflects it
-      if (!allStates[currentUser.uid]) allStates[currentUser.uid] = {};
-      allStates[currentUser.uid].freePassUsed = true;
-      allStates[currentUser.uid].freePassDay  = result.freePassDay;
-    }
-
-    // Apply computed status to myState (in memory only — alive is computed not stored)
-    myState = {
-      ...(raw),
-      alive:           result.alive,
-      freePassUsed:    result.freePassUsed,
-      freePassDay:     result.freePassDay,
-      eliminatedDay:   result.eliminatedDay,
-      eliminatedReason:result.eliminatedReason,
-    };
+    myState = { ...raw, ...result };
     allStates[currentUser.uid] = myState;
   }
+
 
   // ── Load survivor ─────────────────────────────────────────────────────
   async function loadSurvivor() {
@@ -2093,9 +2045,11 @@ const NAV_STYLES = `
           if (result === 'win')  { wins++;   cellHTML = `<span class="grid-cell gc-win" title="${pick}">${pick}</span>`; }
           else if (result === 'loss') {
             losses++;
+            const fpRequested = state.freePassRequested && fpDateStr === dateStr;
             if (isThisDayFP) {
-              // Show pick but with gold styling + FP indicator — still counts as a loss for display
-              cellHTML = `<span class="grid-cell gc-fp-loss" title="${pick} — loss, free pass used">🎟️${pick}</span>`;
+              cellHTML = `<span class="grid-cell gc-fp-loss" title="${pick} — free pass used">🎟️${pick}</span>`;
+            } else if (fpRequested) {
+              cellHTML = `<span class="grid-cell gc-fp" title="${pick} — free pass requested">⏳${pick}</span>`;
             } else {
               cellHTML = `<span class="grid-cell gc-loss" title="${pick}">${pick}</span>`;
             }
