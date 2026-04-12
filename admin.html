@@ -1817,9 +1817,13 @@ const NAV_STYLES = `
         const away = comp.competitors?.find(c => c.homeAway === 'away');
         if (!home || !away) continue;
         const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
-        const winnerId   = statusName === 'STATUS_FINAL'
-          ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null)
-          : null;
+        let winnerId = null;
+        if (statusName === 'STATUS_FINAL') {
+          if (home.winner) winnerId = String(home.team.id);
+          else if (away.winner) winnerId = String(away.team.id);
+          else if (home.score != null && away.score != null)
+            winnerId = parseInt(home.score) > parseInt(away.score) ? String(home.team.id) : String(away.team.id);
+        }
         games[event.id] = {
           id: event.id,
           startTime:   event.date,
@@ -2192,13 +2196,7 @@ const NAV_STYLES = `
         raw.usedTeams, raw.freePassUsed, raw.freePassDay, monthGames, startDay, today
       );
 
-      // If free pass was auto-applied, write it to Firebase now (admin can write any record)
-      if (computed.fpAutoApplied) {
-        await update(ref(db), {
-          [`survivor/${ym}/${m.uid}/freePassUsed`]: true,
-          [`survivor/${ym}/${m.uid}/freePassDay`]:  computed.freePassDay,
-        }).catch(() => {});
-      }
+
 
       const pickCount = Object.keys(raw.usedTeams || {}).length;
       const todayPick = (raw.usedTeams || {})[today];
