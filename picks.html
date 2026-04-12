@@ -1363,7 +1363,7 @@ const NAV_STYLES = `
   // ── Survivor state ────────────────────────────────────────────────────
   const MLB_TEAMS = [
     { abbrev:'LAA', name:'Angels' },    { abbrev:'HOU', name:'Astros' },
-    { abbrev:'OAK', name:'Athletics' }, { abbrev:'TOR', name:'Blue Jays' },
+    { abbrev:'ATH', name:'Athletics' }, { abbrev:'TOR', name:'Blue Jays' },
     { abbrev:'ATL', name:'Braves' },    { abbrev:'MIL', name:'Brewers' },
     { abbrev:'STL', name:'Cardinals' }, { abbrev:'DET', name:'Tigers' },
     { abbrev:'CLE', name:'Guardians' }, { abbrev:'SF',  name:'Giants' },
@@ -1875,7 +1875,8 @@ const NAV_STYLES = `
 
   // ── Survivor helpers ──────────────────────────────────────────────────
   function espnLogoSurv(abbrev) {
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png`;
+    const slug = abbrev.toUpperCase() === 'ATH' ? 'oak' : abbrev.toLowerCase();
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
   }
 
   function yearMonthStr() {
@@ -2113,7 +2114,7 @@ const NAV_STYLES = `
       const usedSet = new Set(Object.values(state.usedTeams || {}));
       const allTeams = [
         'ARI','ATL','BAL','BOS','CHC','CWS','CIN','CLE','COL','DET',
-        'HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','OAK',
+        'HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','ATH',
         'PHI','PIT','SD','SF','SEA','STL','TB','TEX','TOR','WSH'
       ];
       gridHTML = `
