@@ -549,6 +549,8 @@
       // My state — treat as fresh if no picks
       const myRaw = allStates[currentUser.uid]||{};
       const hasPicks = myRaw.usedTeams && Object.keys(myRaw.usedTeams).length>0;
+      console.log('[Survivor] myRaw from Firebase:', JSON.stringify(myRaw));
+      console.log('[Survivor] hasPicks:', hasPicks, 'survivorStartDay:', survivorStartDay);
       const myBase = hasPicks ? myRaw : { alive:true, freePassUsed:false, freePassRequested:false, freePassDay:null, usedTeams:{} };
 
       // Games
@@ -557,7 +559,9 @@
 
       // Compute my status
       const c = computeStatus(myBase.usedTeams, myBase.freePassUsed, myBase.freePassDay, monthGames, survivorStartDay, today);
+      console.log('[Survivor] computed:', JSON.stringify(c));
       const myState = { ...myBase, ...c };
+      console.log('[Survivor] myState:', JSON.stringify(myState));
 
       // Show
       document.getElementById('loadingState').style.display='none';
