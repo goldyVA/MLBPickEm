@@ -1685,176 +1685,73 @@ const NAV_STYLES = `
 
   // ── Render my status card ─────────────────────────────────────────────
   function renderMyStatus() {
-    const section    = document.getElementById('myStatusSection');
-    const today      = todayStr();
-    const day        = todayDay();
-    const usedTeams  = myState.usedTeams || {};
-    const todayPick  = usedTeams[today];
-    const playing    = teamsPlayingToday();
-    const locked     = survivorPicksLocked();
+    const section   = document.getElementById('myStatusSection');
+    const today     = todayStr();
+    const day       = todayDay();
+    const usedTeams = myState.usedTeams || {};
+    const todayPick = usedTeams[today];
     const pickResult = getPickResult(todayPick, todayGames);
 
-    // Day 31 — never counts
     if (day === 31) {
-      section.innerHTML = `
-        <div class="status-card">
-          <div class="status-top"><div class="status-left">
-            <div class="status-icon">📆</div>
-            <div><div class="status-title">Day 31 — No Pick</div>
-            <div class="status-subtitle">Day 31 never counts. See you tomorrow!</div></div>
-          </div></div>
-        </div>`;
+      section.innerHTML = `<div class="status-card alive">
+        <div class="status-top"><div class="status-left">
+          <div class="status-icon">📆</div>
+          <div><div class="status-title">Day 31 — No Pick</div>
+          <div class="status-subtitle">Day 31 never counts. See you tomorrow!</div></div>
+        </div></div></div>`;
       return;
     }
 
-    // Before start day — not counting yet
     if (day < survivorStartDay) {
-      section.innerHTML = `
-        <div class="status-card">
-          <div class="status-top"><div class="status-left">
-            <div class="status-icon">📅</div>
-            <div><div class="status-title">Survivor Starts Day ${survivorStartDay}</div>
-            <div class="status-subtitle">Picks start counting on day ${survivorStartDay} of the month.</div></div>
-          </div></div>
-        </div>`;
+      section.innerHTML = `<div class="status-card alive">
+        <div class="status-top"><div class="status-left">
+          <div class="status-icon">📅</div>
+          <div><div class="status-title">Survivor Starts Day ${survivorStartDay}</div>
+          <div class="status-subtitle">Picks start counting on day ${survivorStartDay}.</div></div>
+        </div></div></div>`;
       return;
     }
 
-    let cardClass = 'alive';
-    let icon      = '✅';
-    let title     = "You're Alive!";
+    let cardClass = 'alive', icon = '✅', title = "You're Alive!";
     let subtitle  = `Day ${day} · ${Object.keys(usedTeams).length} picks made`;
 
     if (!myState.alive) {
       cardClass = 'dead'; icon = '💀'; title = 'Eliminated';
       const reason = myState.eliminatedReason === 'missed' ? 'missed a pick' : 'team lost';
-      subtitle = myState.eliminatedDay
-        ? `Eliminated day ${myState.eliminatedDay} (${reason})`
-        : 'Better luck next month';
+      subtitle = myState.eliminatedDay ? `Eliminated day ${myState.eliminatedDay} (${reason})` : 'Better luck next month';
     } else if (myState.freePassUsed) {
       cardClass = 'freepass'; icon = '🎟️';
-      title   = 'Alive — Free Pass Used';
-      subtitle = `Day ${day} · free pass used on day ${myState.freePassDay}`;
+      title = 'Alive — Free Pass Used';
+      subtitle = `Free pass used on day ${myState.freePassDay}`;
     }
 
-    const usedAbbrevs       = new Set(Object.values(usedTeams));
-    const currentPickLocked = todayPick ? teamGameStarted(todayPick) : false;
-    const canChange         = myState.alive && !!todayPick && !currentPickLocked;
-    const canPick           = myState.alive && !todayPick && !locked;
-
+    // Today's pick result
     let pickHTML = '';
-
     if (todayPick) {
-      const resultLabel = pickResult
-        ? { win:'✅ Win', loss: myState.freePassRequested ? '⏳ Free pass requested' : myState.freePassUsed ? '🎟️ Free pass saved you' : '❌ Loss', pending:'⏳ Pending' }[pickResult]
+      const resultLabel = pickResult === 'win'  ? '✅ Win'
+        : pickResult === 'loss' ? (myState.freePassUsed && myState.freePassDay === day ? '🎟️ Free pass saved you'
+          : myState.freePassRequested ? '⏳ Free pass requested'
+          : '❌ Loss')
         : '⏳ Pending';
-      const resultClass = pickResult
-        ? { win:'result-win', loss: myState.freePassUsed ? 'result-win' : 'result-loss', pending:'result-pending' }[pickResult]
+      const resultClass = pickResult === 'win' ? 'result-win'
+        : pickResult === 'loss' && !(myState.freePassUsed && myState.freePassDay === day) ? 'result-loss'
         : 'result-pending';
 
-      if (canChange) {
-        // Show current pick + a change option
-        // Build team grid showing only teams whose games haven't started yet (and not already used this month except today's pick)
-        const usedExceptToday = new Set(
-          Object.entries(usedTeams)
-            .filter(([date]) => date !== today)
-            .map(([, abbrev]) => abbrev)
-        );
-        const tilesHTML = MLB_TEAMS.map(team => {
-          const isUsed      = usedExceptToday.has(team.abbrev);
-          const gameStarted = teamGameStarted(team.abbrev);
-          const isCurrent   = team.abbrev === todayPick;
-          const isPlaying   = playing.has(team.abbrev.toUpperCase());
-          // Disable if: used this month (not today) OR their game has already started
-          const disabled = isUsed || gameStarted;
-          return `
-            <div class="team-tile ${disabled ? 'used' : ''} ${isCurrent ? 'selected' : ''}"
-                 data-abbrev="${team.abbrev}" data-name="${team.name}"
-                 title="${isUsed ? 'Already used this month' : gameStarted ? 'Game already started' : ''}"
-                 style="${!isPlaying && !disabled ? 'opacity:.5' : ''}">
-              ${isUsed ? '<span class="used-label">Used</span>' : ''}
-              ${gameStarted && !isUsed ? '<span class="used-label">Started</span>' : ''}
-              <img src="${espnLogo(team.abbrev)}" alt="${team.abbrev}" onerror="this.style.display='none'" />
-              <span class="team-abbrev">${team.abbrev}</span>
-            </div>`;
-        }).join('');
+      const showFPBtn = pickResult === 'loss' && !myState.freePassUsed && !myState.freePassRequested;
+      const fpPending = myState.freePassRequested && !myState.freePassUsed;
 
-        pickHTML = `
-          <div class="pick-section">
-            <div class="pick-section-label">Today's Pick — tap another team to change</div>
-            <div class="current-pick-display" style="margin-bottom:12px">
-              <img src="${espnLogo(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-              <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
-              <span class="current-pick-result ${resultClass}">${resultLabel}</span>
-            </div>
-            <div class="team-grid" id="teamGrid">${tilesHTML}</div>
-            <div class="msg" id="pickMsg"></div>
-            <button class="btn-primary" id="confirmPickBtn" disabled>Change Pick</button>
-          </div>`;
-      } else {
-        // Pick is locked — show result + free pass request if lost
-        const showFPRequest = pickResult === 'loss'
-          && !myState.freePassUsed
-          && !myState.freePassRequested;
-        const fpRequestedMsg = myState.freePassRequested && !myState.freePassUsed
-          ? '<div style="margin-top:10px;font-size:13px;color:#7A5A10;background:#FEF9EE;border:1px solid #F5DFA0;border-radius:8px;padding:10px 14px">⏳ Free pass requested — awaiting admin approval</div>'
-          : '';
-        pickHTML = `
-          <div class="pick-section">
-            <div class="pick-section-label">Today's Pick${currentPickLocked ? ' — 🔒 Locked' : ''}</div>
-            <div class="current-pick-display">
-              <img src="${espnLogo(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-              <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
-              <span class="current-pick-result ${resultClass}">${resultLabel}</span>
-            </div>
-            ${showFPRequest ? `<button class="btn-primary" id="reqFPBtn" style="margin-top:12px;background:#E8A838;border-color:#E8A838;color:#1B1B1B">🎟️ Request Free Pass</button>` : ''}
-            ${fpRequestedMsg}
-          </div>`;
-      }
-    } else if (!myState.alive) {
       pickHTML = `
-        <div class="pick-section">
-          <p style="font-size:14px;color:var(--ink-faint)">
-            ${myState.eliminatedReason === 'missed'
-              ? "You didn't make a pick in time and were eliminated. Free passes cannot be used for missed picks."
-              : "Your team lost and you had no free pass remaining. Better luck next month!"}
-          </p>
-        </div>`;
-    } else if (locked && !todayPick) {
-      // Picks locked and no pick made — they will be eliminated after settlement
-      pickHTML = `
-        <div class="pick-section">
-          <div style="background:#FDF0EF;border:1px solid #F5C6C2;border-radius:8px;padding:12px 16px;font-size:14px;color:var(--red);">
-            ⚠️ Picks are now locked and you haven't picked today. You will be eliminated once today's games settle.
+        <div class="pick-section" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--cream-dark)">
+          <div class="current-pick-display">
+            <img src="${espnLogo(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
+            <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
+            <span class="current-pick-result ${resultClass}">${resultLabel}</span>
           </div>
+          ${showFPBtn ? `<button class="btn-primary" id="reqFPBtn" style="margin-top:12px;background:#E8A838;border-color:#E8A838;color:#1B1B1B;font-size:14px">🎟️ Request Free Pass</button>` : ''}
+          ${fpPending ? `<div style="margin-top:10px;font-size:13px;color:#7A5A10;background:#FEF9EE;border:1px solid #F5DFA0;border-radius:8px;padding:10px 14px">⏳ Free pass requested — awaiting admin approval</div>` : ''}
         </div>`;
-    } else if (canPick) {
-      const tilesHTML = MLB_TEAMS.map(team => {
-        const isUsed    = usedAbbrevs.has(team.abbrev);
-        const gameStarted = teamGameStarted(team.abbrev);
-        const isPlaying = playing.has(team.abbrev.toUpperCase());
-        return `
-          <div class="team-tile ${isUsed ? 'used' : ''}"
-               data-abbrev="${team.abbrev}" data-name="${team.name}"
-               ${isUsed ? 'title="Already used this month"' : ''}
-               style="${!isPlaying && !isUsed ? 'opacity:.5' : ''}">
-            ${isUsed ? '<span class="used-label">Used</span>' : ''}
-            <img src="${espnLogo(team.abbrev)}" alt="${team.abbrev}" onerror="this.style.display='none'" />
-            <span class="team-abbrev">${team.abbrev}</span>
-          </div>`;
-      }).join('');
-      pickHTML = `
-        <div class="pick-section">
-          <div class="pick-section-label">Pick Today's Team — locks when last game starts</div>
-          <div class="team-grid" id="teamGrid">${tilesHTML}</div>
-          <div class="msg" id="pickMsg"></div>
-          <button class="btn-primary" id="confirmPickBtn" disabled>Confirm Pick</button>
-        </div>`;
-    } else {
-      pickHTML = `
-        <div class="pick-section">
-          <p style="font-size:14px;color:var(--ink-faint)">Check back tomorrow for your next pick.</p>
-        </div>`;
+    } else if (myState.alive) {
+      pickHTML = `<div style="margin-top:10px;font-size:13px;color:var(--ink-faint)">Make your pick on the <a href="picks.html" style="color:var(--navy);font-weight:600">My Picks</a> page.</div>`;
     }
 
     // Free pass note
@@ -1876,118 +1773,35 @@ const NAV_STYLES = `
               <div class="status-subtitle">${subtitle}</div>
             </div>
           </div>
-          ${fpNote}
+          <div>${fpNote}</div>
         </div>
         ${pickHTML}
       </div>`;
 
-    if (canPick || canChange) {
-      // Pre-select current pick when changing
-      if (canChange) selectedTeam = todayPick;
-
-      document.getElementById('teamGrid')?.addEventListener('click', e => {
-        const tile = e.target.closest('.team-tile');
-        if (!tile || tile.classList.contains('used')) return;
-        const abbrev = tile.dataset.abbrev;
-        document.querySelectorAll('.team-tile').forEach(t => t.classList.remove('selected'));
-        if (selectedTeam === abbrev && !canChange) {
-          // Toggle off only when making a fresh pick, not when changing
-          selectedTeam = null;
-          document.getElementById('confirmPickBtn').disabled = true;
-        } else {
-          selectedTeam = abbrev;
-          tile.classList.add('selected');
-          // Enable confirm only if selection differs from current pick
-          document.getElementById('confirmPickBtn').disabled = canChange && abbrev === todayPick;
+    // Wire FP request button
+    const reqBtn = document.getElementById('reqFPBtn');
+    if (reqBtn) {
+      reqBtn.addEventListener('click', async () => {
+        reqBtn.disabled = true; reqBtn.textContent = 'Requesting…';
+        const ym  = yearMonthStr();
+        const day2 = todayDay();
+        try {
+          await update(ref(db), {
+            [`survivor/${ym}/${currentUser.uid}/freePassRequested`]: true,
+            [`survivor/${ym}/${currentUser.uid}/freePassDay`]: day2,
+          });
+          myState.freePassRequested = true;
+          myState.freePassDay = day2;
+          allStates[currentUser.uid] = myState;
+          renderMyStatus();
+        } catch(e) {
+          reqBtn.disabled = false;
+          reqBtn.textContent = '🎟️ Request Free Pass';
         }
       });
-      document.getElementById('confirmPickBtn')?.addEventListener('click', confirmPick);
     }
   }
 
-  // ── Confirm pick (also handles changing) ─────────────────────────────
-  async function confirmPick() {
-    if (!selectedTeam) return;
-    const today      = todayStr();
-    const ym         = yearMonthStr();
-    const currentPick = myState.usedTeams?.[today];
-
-    // Safety checks
-    if (teamGameStarted(selectedTeam)) {
-      const msg = document.getElementById('pickMsg');
-      if (msg) { msg.textContent = 'That team\'s game has already started. Pick another.'; msg.className = 'msg error show'; }
-      return;
-    }
-    if (currentPick && teamGameStarted(currentPick)) {
-      const msg = document.getElementById('pickMsg');
-      if (msg) { msg.textContent = 'Your current pick\'s game has already started — it\'s locked in.'; msg.className = 'msg error show'; }
-      return;
-    }
-
-    const btn = document.getElementById('confirmPickBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
-    try {
-      const updatedTeams = { ...(myState.usedTeams || {}), [today]: selectedTeam };
-      await update(ref(db), {
-        [`survivor/${ym}/${currentUser.uid}/usedTeams`]:    updatedTeams,
-        [`survivor/${ym}/${currentUser.uid}/alive`]:        myState.alive,
-        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: myState.freePassUsed,
-      });
-      myState.usedTeams = updatedTeams;
-      allStates[currentUser.uid] = myState;
-      selectedTeam = null;
-      const monthGames = await loadMonthGames(ym);
-      renderMyStatus();
-      renderHistory(monthGames);
-      await renderLeaderboard(monthGames);
-      renderMonthlyGrid(monthGames);
-    } catch (err) {
-      const msg = document.getElementById('pickMsg');
-      if (msg) { msg.textContent = 'Failed to save. Try again.'; msg.className = 'msg error show'; }
-      btn.disabled = false; btn.textContent = 'Confirm Pick';
-    }
-  }
-
-  // ── Render history ────────────────────────────────────────────────────
-  function renderHistory(monthGames) {
-    const list      = document.getElementById('historyList');
-    const usedTeams = myState.usedTeams || {};
-    const entries   = Object.entries(usedTeams).sort((a,b) => b[0].localeCompare(a[0]));
-    const today     = todayStr();
-
-    if (entries.length === 0) {
-      list.innerHTML = `<div style="padding:20px 18px;font-size:13px;color:var(--ink-faint)">No picks yet this month.</div>`;
-      return;
-    }
-
-    list.innerHTML = entries.map(([date, abbrev]) => {
-      const team    = MLB_TEAMS.find(t => t.abbrev === abbrev);
-      const dayData = monthGames?.[date];
-      const isFPDay = myState.freePassDay && date === `${yearMonthStr()}-${String(myState.freePassDay).padStart(2,'0')}`;
-
-      let resultClass = 'history-pending';
-      let resultLabel = 'Pending';
-
-      if (isFPDay && myState.freePassUsed) {
-        resultClass = 'history-freepass'; resultLabel = '🎟️ Free Pass';
-      } else if (dayData) {
-        const r = getPickResult(abbrev, date === today ? todayGames : dayData.games);
-        if (r === 'win')     { resultClass = 'history-win';  resultLabel = 'Win ✅'; }
-        if (r === 'loss')    { resultClass = 'history-loss'; resultLabel = 'Loss ❌'; }
-        if (r === 'pending') { resultClass = 'history-pending'; resultLabel = 'Pending ⏳'; }
-      }
-
-      return `
-        <div class="history-row">
-          <span class="history-date">${formatDate(date)}</span>
-          <div class="history-team">
-            <img src="${espnLogo(abbrev)}" alt="${abbrev}" onerror="this.style.display='none'" />
-            ${team?.name || abbrev}
-          </div>
-          <span class="history-result ${resultClass}">${resultLabel}</span>
-        </div>`;
-    }).join('');
-  }
 
   // ── Render leaderboard ────────────────────────────────────────────────
   async function renderLeaderboard(monthGames) {
