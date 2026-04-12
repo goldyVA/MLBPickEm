@@ -2069,21 +2069,21 @@ const NAV_STYLES = `
               new Date() >= new Date(g.startTime)
             );
             const disabled = used || started || !playing;
-            return `<button class="team-tile${used ? ' used' : ''}${started ? ' started' : ''}"
+            return `<button class="s-team-tile${used ? ' s-used' : ''}${started && !used ? ' s-started' : ''}"
               data-abbrev="${abbrev}" ${disabled ? 'disabled' : ''}
               title="${used ? 'Already used' : started ? 'Game started' : !playing ? 'Not playing today' : abbrev}">
               <img src="https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png"
                    onerror="this.style.display='none'" />
               <span>${abbrev}</span>
-              ${used ? '<span class="tile-badge used-badge">✓</span>' : ''}
-              ${started && !used ? '<span class="tile-badge">🔒</span>' : ''}
+              ${used ? '<span class="s-tile-badge">✓</span>' : ''}
+              ${started && !used ? '<span class="s-tile-badge">🔒</span>' : ''}
             </button>`;
           }).join('')}
         </div>
         <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
           <span id="sSelectedLabel" class="s-selected-label"></span>
           <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
-          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.team-tile.selected').forEach(b=>b.classList.remove('selected'))">Cancel</button>
+          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.s-team-tile.s-selected').forEach(b=>b.classList.remove('s-selected'))">Cancel</button>
         </div>
         <div class="s-msg" id="sMsg"></div>`;
     }
@@ -2129,10 +2129,10 @@ const NAV_STYLES = `
 
     // Wire team grid
     if (state.alive && !todayPick) {
-      document.querySelectorAll('.team-tile:not([disabled])').forEach(btn => {
+      document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.team-tile').forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
+          document.querySelectorAll('.s-team-tile').forEach(b => b.classList.remove('s-selected'));
+          btn.classList.add('s-selected');
           survivorSelected = btn.dataset.abbrev;
           const confirmRow = document.getElementById('sPickConfirmRow');
           const label = document.getElementById('sSelectedLabel');
