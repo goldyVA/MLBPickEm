@@ -1224,7 +1224,10 @@ const NAV_STYLES = `
       const statusName  = event.status?.type?.name || 'STATUS_SCHEDULED';
       let winnerId = null;
       if (statusName === 'STATUS_FINAL') {
-        winnerId = home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null;
+        if (home.winner) winnerId = String(home.team.id);
+        else if (away.winner) winnerId = String(away.team.id);
+        else if (home.score != null && away.score != null)
+          winnerId = parseInt(home.score) > parseInt(away.score) ? String(home.team.id) : String(away.team.id);
       }
       games.push({
         id:        event.id,
