@@ -1500,13 +1500,24 @@ const NAV_STYLES = `
       membersSnap.forEach(c => { if (c.val().approved) allMembers.push({ uid: c.key, ...c.val() }); });
     }
 
-    // Load all survivor states
+    // Load all survivor states fresh from Firebase
     const survivorSnap = await get(ref(db, `survivor/${ym}`));
-    allStates = survivorSnap.exists() ? survivorSnap.val() : {};
+    allStates = {};
+    if (survivorSnap.exists()) {
+      survivorSnap.forEach(child => {
+        const val = child.val();
+        // Only include records with actual pick data (null records from reset are excluded)
+        if (val && typeof val === 'object') {
+          allStates[child.key] = val;
+        }
+      });
+    }
 
-    myState = allStates[currentUser.uid] || {
-      alive: true, freePassUsed: false, freePassDay: null, usedTeams: {}, eliminatedDay: null, eliminatedReason: null,
-    };
+    // Initialize myState — if no record or empty usedTeams, start fresh
+    const myRecord = allStates[currentUser.uid];
+    myState = (myRecord && myRecord.usedTeams && Object.keys(myRecord.usedTeams).length > 0)
+      ? myRecord
+      : { alive: true, freePassUsed: false, freePassRequested: false, freePassDay: null, usedTeams: {}, eliminatedDay: null, eliminatedReason: null };
 
     // Load today's games
     await loadTodayGames();
