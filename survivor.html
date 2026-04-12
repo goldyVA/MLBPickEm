@@ -1891,18 +1891,14 @@ const NAV_STYLES = `
     const freshSnap = await get(ref(db, `survivor/${ym}`));
     const freshStates = freshSnap.exists() ? freshSnap.val() : {};
 
-    console.log('[Survivor] monthGames keys:', Object.keys(monthGames || {}));
     const todayKey = todayStr();
     if (monthGames?.[todayKey]) {
-      console.log('[Survivor] Today games:', monthGames[todayKey].games.map(g => `${g.awayTeam.abbrev}@${g.homeTeam.abbrev} status=${g.statusName} winner=${g.winnerId}`));
     } else {
-      console.log('[Survivor] No today games in monthGames!');
     }
 
     const rows  = await Promise.all(allMembers.map(async m => {
       // Use freshStates first, fall back to allStates
       const raw   = freshStates[m.uid] || allStates[m.uid] || { freePassUsed: false, freePassDay: null, usedTeams: {} };
-      console.log(`[Survivor] ${m.displayName}: usedTeams=`, JSON.stringify(raw.usedTeams), 'freePassUsed=', raw.freePassUsed);
       const computed = computeSurvivorStatus(
         raw.usedTeams, raw.freePassUsed, raw.freePassDay,
         monthGames || {}, survivorStartDay, today
