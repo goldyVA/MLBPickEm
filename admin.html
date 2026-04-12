@@ -2217,6 +2217,18 @@ const NAV_STYLES = `
 
   // ── Survivor data viewer ──────────────────────────────────────────────
 
+  function normalizeAbbrev(a) {
+    const s = (a||'').toUpperCase();
+    if (s==='CHW') return 'CWS';
+    if (s==='KCR') return 'KC';
+    if (s==='SDP') return 'SD';
+    if (s==='SFG') return 'SF';
+    if (s==='TBR') return 'TB';
+    if (s==='WSN') return 'WSH';
+    if (s==='OAK') return 'ATH';
+    return s;
+  }
+
   function computeSurvivorStatus(usedTeams, freePassUsed, freePassDay, monthGames, startDay, today) {
     const now  = new Date();
     const ym   = today.substring(0, 7);
