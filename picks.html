@@ -1875,7 +1875,8 @@ const NAV_STYLES = `
 
   // ── Survivor helpers ──────────────────────────────────────────────────
   function espnLogoSurv(abbrev) {
-    const slug = abbrev.toUpperCase() === 'ATH' ? 'oak' : abbrev.toLowerCase();
+    const a = abbrev.toUpperCase();
+    const slug = a === 'ATH' ? 'oak' : a === 'CHW' ? 'cws' : abbrev.toLowerCase();
     return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
   }
 
@@ -1898,15 +1899,15 @@ const NAV_STYLES = `
     const todayPick = state.usedTeams?.[today];
     if (!todayPick) return null;
     for (const g of games) {
-      const homeAbbrev = g.homeTeam.abbrev.toUpperCase();
-      const awayAbbrev = g.awayTeam.abbrev.toUpperCase();
-      const pick       = todayPick.toUpperCase();
+      const homeAbbrev = normalizeAbbrev(g.homeTeam.abbrev);
+      const awayAbbrev = normalizeAbbrev(g.awayTeam.abbrev);
+      const pick       = normalizeAbbrev(todayPick);
       const inGame     = homeAbbrev === pick || awayAbbrev === pick;
       if (!inGame) continue;
       if (g.statusName === 'STATUS_FINAL') {
         if (!g.winnerId) return { abbrev: todayPick, result: 'pending' };
         const homeWon = String(g.winnerId) === String(g.homeTeam.id);
-        const won     = homeWon ? homeAbbrev === pick : awayAbbrev === pick;
+        const won     = homeWon ? normalizeAbbrev(g.homeTeam.abbrev) === pick : normalizeAbbrev(g.awayTeam.abbrev) === pick;
         return { abbrev: todayPick, result: won ? 'win' : 'loss' };
       }
       return { abbrev: todayPick, result: 'pending' };
@@ -1915,6 +1916,17 @@ const NAV_STYLES = `
   }
 
 
+
+  function normalizeAbbrev(a) {
+    const abbrev = (a || '').toUpperCase();
+    if (abbrev === 'CHW') return 'CWS';
+    if (abbrev === 'KCR') return 'KC';
+    if (abbrev === 'SDP') return 'SD';
+    if (abbrev === 'SFG') return 'SF';
+    if (abbrev === 'TBR') return 'TB';
+    if (abbrev === 'WSN') return 'WSH';
+    return abbrev;
+  }
 
   // ── Compute survivor status ──────────────────────────────────────────
   // Free pass must be explicitly approved by admin — no auto-apply.
@@ -1937,15 +1949,16 @@ const NAV_STYLES = `
       if (now < dayData.lastStartTime) continue;
       const pick = (usedTeams || {})[dateStr];
       if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
+      const normPick = normalizeAbbrev(pick);
       const game = dayData.games.find(g =>
-        g.homeTeam?.abbrev?.toUpperCase() === pick.toUpperCase() ||
-        g.awayTeam?.abbrev?.toUpperCase() === pick.toUpperCase()
+        normalizeAbbrev(g.homeTeam?.abbrev) === normPick ||
+        normalizeAbbrev(g.awayTeam?.abbrev) === normPick
       );
       if (!game || game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
       const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
       const won = homeWon
-        ? game.homeTeam.abbrev.toUpperCase() === pick.toUpperCase()
-        : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
+        ? normalizeAbbrev(game.homeTeam.abbrev) === normPick
+        : normalizeAbbrev(game.awayTeam.abbrev) === normPick;
       if (!won) {
         const fpSaves = freePassUsed && freePassDay === d;
         if (!fpSaves) { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
