@@ -862,6 +862,32 @@
       touch-action: manipulation;
     }
 
+
+    .nav-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 100px;
+      background: var(--red);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 0 4px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .drawer-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 100px;
+      padding: 1px 7px;
+    }
+
   </style>
 </head>
 <body>
@@ -958,7 +984,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
 
       <div class="nav-links" id="navLinks">
         ${pages.map(p => `
-          <a href="${p.href}" class="nav-link${p.href === activePage ? ' active' : ''}">
+          <a href="${p.href}" class="nav-link${p.href === activePage ? ' active' : ''}" ${p.href === 'admin.html' ? 'id="adminLink"' : ''}>
             ${p.label}
           </a>
         `).join('')}
@@ -982,7 +1008,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       ${userName ? `<div class="drawer-user">${userName}</div>` : ''}
       <nav class="drawer-nav">
         ${pages.map(p => `
-          <a href="${p.href}" class="drawer-link${p.href === activePage ? ' active' : ''}">
+          <a href="${p.href}" class="drawer-link${p.href === activePage ? ' active' : ''}" ${p.href === 'admin.html' ? 'id="drawerAdminLink"' : ''}>
             <span class="drawer-icon">${p.icon}</span>
             ${p.label}
           </a>
@@ -1272,6 +1298,35 @@ const NAV_STYLES = `
   }
 `;
 
+
+  // ── Check pending free pass requests and badge Admin nav ─────────────
+  async function checkPendingFPRequests() {
+    try {
+      const ym   = yearMonthStr();
+      const snap = await get(ref(db, `survivor/${ym}`));
+      if (!snap.exists()) return;
+      let count = 0;
+      snap.forEach(child => {
+        const s = child.val();
+        if (s.freePassRequested && !s.freePassUsed) count++;
+      });
+      // Update both desktop and mobile admin links
+      ['adminLink', 'drawerAdminLink'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        // Remove existing badge
+        el.querySelectorAll('.nav-badge,.drawer-badge').forEach(b => b.remove());
+        if (count > 0) {
+          const isDrawer = id === 'drawerAdminLink';
+          const badge = document.createElement('span');
+          badge.className = isDrawer ? 'drawer-badge' : 'nav-badge';
+          badge.textContent = count;
+          el.appendChild(badge);
+        }
+      });
+    } catch(e) { /* silent */ }
+  }
+
   const firebaseConfig = {
     apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
     authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
@@ -1382,6 +1437,11 @@ const NAV_STYLES = `
     const mon  = parseInt(ym.split('-')[1]) - 1;
     const daysInMonth = new Date(year, mon + 1, 0).getDate();
     let alive = true, eliminatedDay = null, eliminatedReason = null;
+
+    // No picks at all — definitely alive (fresh start or reset)
+    if (!usedTeams || Object.keys(usedTeams).length === 0) {
+      return { alive: true, eliminatedDay: null, eliminatedReason: null };
+    }
 
     for (let d = startDay; d <= Math.min(daysInMonth, 30); d++) {
       const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
