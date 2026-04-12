@@ -2322,8 +2322,6 @@ const NAV_STYLES = `
 
       return { ...m, computed, raw, pickCount, todayResult, lastPick };
     }));
-
-    }));
     } catch(err) {
       console.error('loadSurvivorData error:', err);
       container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><p>Failed to load: ${err.message}</p></div>`;
