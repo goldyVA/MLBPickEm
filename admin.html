@@ -1988,6 +1988,37 @@ const NAV_STYLES = `
 
 
   // ── Admin auto-pick ───────────────────────────────────────────────────
+
+  // ── Pick the worse team (worse record = more losses relative to wins) ──
+  function pickWorseTeam(game) {
+    // Parse record string like "3-5" into wins/losses
+    function parseRecord(rec) {
+      if (!rec) return null;
+      const parts = rec.split('-').map(Number);
+      if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+      return { wins: parts[0], losses: parts[1] };
+    }
+    function winPct(rec) {
+      if (!rec) return null;
+      const total = rec.wins + rec.losses;
+      return total === 0 ? 0.5 : rec.wins / total;
+    }
+
+    const homeRec = parseRecord(game.homeTeam?.record);
+    const awayRec = parseRecord(game.awayTeam?.record);
+    const homePct = winPct(homeRec);
+    const awayPct = winPct(awayRec);
+
+    // If we have records for both, pick the one with lower win pct
+    if (homePct !== null && awayPct !== null) {
+      if (homePct < awayPct) return game.homeTeam.id;  // home is worse
+      if (awayPct < homePct) return game.awayTeam.id;  // away is worse
+      // Tied record — fall through to away team default
+    }
+    // No records or tied — default to away team
+    return game.awayTeam.id;
+  }
+
   document.getElementById('autoPickBtn').addEventListener('click', async () => {
     const date = document.getElementById('picksDate').value;
     const msg  = document.getElementById('autoPickMsg');
@@ -2006,7 +2037,7 @@ const NAV_STYLES = `
       return;
     }
 
-    if (!confirm(`Auto-pick the away team for all members who haven't picked on ${date}? This cannot be undone.`)) return;
+    if (!confirm(`Auto-pick the worse record team (or away team if tied) for all members who haven't picked on ${date}? This cannot be undone.`)) return;
 
     msg.textContent = 'Running auto-pick…';
     msg.className = 'msg info show';
@@ -2041,7 +2072,7 @@ const NAV_STYLES = `
         for (const game of lockedGames) {
           if (existing[game.id]?.teamId) continue; // already has a pick
           updates[`picks/${m.uid}/${date}/${game.id}`] = {
-            teamId:   game.awayTeam.id,
+            teamId:   pickWorseTeam(game),
             lockedIn: true,
             correct:  null,
             auto:     true,
@@ -2054,7 +2085,7 @@ const NAV_STYLES = `
         }
       }));
 
-      msg.textContent = `✅ Done! Auto-picked away team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.textContent = `✅ Done! Auto-picked worse record team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
       msg.className = 'msg info show';
 
       // Reload the picks view
@@ -2078,7 +2109,7 @@ const NAV_STYLES = `
       return;
     }
 
-    if (!confirm(`Auto-pick the away team for ALL games on ${date} for members who haven't picked? Users can still change picks before their game starts.`)) return;
+    if (!confirm(`Auto-pick the worse record team (or away team if tied) for ALL games on ${date} for members who haven't picked? Users can still change picks before their game starts.`)) return;
 
     msg.textContent = 'Running auto-pick for all games…';
     msg.className = 'msg info show';
@@ -2104,7 +2135,7 @@ const NAV_STYLES = `
         for (const game of gameList) {
           if (existing[game.id]?.teamId) continue; // already has a pick
           updates[`picks/${m.uid}/${date}/${game.id}`] = {
-            teamId:   game.awayTeam.id,
+            teamId:   pickWorseTeam(game),
             lockedIn: true,
             correct:  null,
             auto:     true,
@@ -2117,7 +2148,7 @@ const NAV_STYLES = `
         }
       }));
 
-      msg.textContent = `✅ Done! Auto-picked away team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.textContent = `✅ Done! Auto-picked worse record team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
       msg.className = 'msg info show';
 
       document.getElementById('loadPicksBtn').click();
