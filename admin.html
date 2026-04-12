@@ -2127,17 +2127,13 @@ const NAV_STYLES = `
 
   // ── Survivor data viewer ──────────────────────────────────────────────
 
-  // ── Compute survivor status from picks + game results ─────────────────
-  function computeSurvivorStatus(usedTeams, storedFreePassUsed, storedFreePassDay, monthGames, startDay, today) {
+  function computeSurvivorStatus(usedTeams, freePassUsed, freePassDay, monthGames, startDay, today) {
     const now  = new Date();
     const ym   = today.substring(0, 7);
     const year = parseInt(ym.split('-')[0]);
     const mon  = parseInt(ym.split('-')[1]) - 1;
     const daysInMonth = new Date(year, mon + 1, 0).getDate();
     let alive = true, eliminatedDay = null, eliminatedReason = null;
-    let freePassUsed = storedFreePassUsed || false;
-    let freePassDay  = storedFreePassDay  || null;
-    let fpAutoApplied = false;
 
     for (let d = startDay; d <= Math.min(daysInMonth, 30); d++) {
       const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
@@ -2157,13 +2153,13 @@ const NAV_STYLES = `
         ? game.homeTeam.abbrev.toUpperCase() === pick.toUpperCase()
         : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
       if (!won) {
-        const fpSavesThisDay = !freePassUsed || (freePassUsed && freePassDay === d);
-        if (fpSavesThisDay) { freePassUsed = true; freePassDay = d; fpAutoApplied = !storedFreePassUsed; }
-        else { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
+        const fpSaves = freePassUsed && freePassDay === d;
+        if (!fpSaves) { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
       }
     }
-    return { alive, eliminatedDay, eliminatedReason, freePassUsed, freePassDay, fpAutoApplied };
+    return { alive, eliminatedDay, eliminatedReason };
   }
+
 
   async function loadSurvivorData() {
     const ym      = yearMonthStr();
@@ -2230,7 +2226,7 @@ const NAV_STYLES = `
         todayResult = todayPick;
       }
 
-      return { ...m, computed, pickCount, todayResult, lastPick };
+      return { ...m, computed, raw, pickCount, todayResult, lastPick };
     }));
 
     rows.sort((a, b) => {
@@ -2238,7 +2234,22 @@ const NAV_STYLES = `
       return b.pickCount - a.pickCount;
     });
 
-    container.innerHTML = `
+    // Show pending requests first
+    const pendingRequests = rows.filter(r => r.raw.freePassRequested && !r.raw.freePassUsed);
+    const pendingHTML = pendingRequests.length > 0 ? `
+      <div style="margin-bottom:16px;padding:14px 16px;background:#FEF9EE;border:1.5px solid #F5DFA0;border-radius:var(--radius);font-size:14px">
+        <strong style="color:#7A5A10">⏳ Pending Free Pass Requests (${pendingRequests.length})</strong>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+          ${pendingRequests.map(r => `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span><strong>${r.displayName || r.email}</strong> — lost on day ${r.raw.freePassDay || '?'} (pick: ${(r.raw.usedTeams || {})[ym + '-' + String(r.raw.freePassDay).padStart(2,'0')] || '?'})</span>
+              <button class="btn-load" onclick="approveFreePass('${r.uid}')" style="padding:6px 14px;font-size:13px;background:var(--green);color:white;border:none">✅ Approve</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : '';
+
+    container.innerHTML = pendingHTML + `
       <div class="data-table-wrap">
         <table>
           <thead>
@@ -2255,11 +2266,10 @@ const NAV_STYLES = `
             ${rows.map(r => {
               const c = r.computed;
               let statusText = c.alive ? '✅ Alive' : '💀 Eliminated';
-              if (c.alive && c.freePassUsed) statusText = '🎟️ Alive (FP used)';
               if (!c.alive && c.eliminatedReason === 'missed') statusText = '💀 Missed pick';
-              const fpText = c.freePassUsed
-                ? `Used (day ${c.freePassDay || '?'})`
-                : '<span style="color:var(--green);font-weight:600">Available</span>';
+              let fpText = '<span style="color:var(--green);font-weight:600">Available</span>';
+              if (r.raw.freePassUsed)       fpText = `🎟️ Used (day ${r.raw.freePassDay || '?'})`;
+              else if (r.raw.freePassRequested) fpText = `<span style="color:#7A5A10">⏳ Requested (day ${r.raw.freePassDay || '?'})</span>`;
               return `
                 <tr>
                   <td style="font-weight:600">${r.displayName || r.email}</td>
@@ -2310,6 +2320,28 @@ const NAV_STYLES = `
 
   // ── Reset survivor ────────────────────────────────────────────────────
   // ── Survivor reset (top-level settings) ──────────────────────────────
+
+  // ── Approve free pass ─────────────────────────────────────────────────
+  window.approveFreePass = async function(uid) {
+    const ym  = yearMonthStr();
+    const snap = await get(ref(db, `survivor/${ym}/${uid}`));
+    const state = snap.exists() ? snap.val() : {};
+    const day = state.freePassDay;
+    if (!day) { toast('No free pass day found.', 'error'); return; }
+    try {
+      await update(ref(db), {
+        [`survivor/${ym}/${uid}/freePassUsed`]:      true,
+        [`survivor/${ym}/${uid}/freePassRequested`]: false,
+        [`survivor/${ym}/${uid}/freePassDay`]:       day,
+      });
+      toast(`✅ Free pass approved for day ${day}!`, 'success');
+      loadSurvivorData();
+    } catch(e) {
+      console.error(e);
+      toast('Failed to approve free pass: ' + e.message, 'error');
+    }
+  };
+
   // ── Shared survivor reset logic ──────────────────────────────────────
   async function doSurvivorReset(showToast) {
     const ym  = yearMonthStr();
