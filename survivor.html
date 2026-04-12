@@ -1836,12 +1836,14 @@ const NAV_STYLES = `
         </div>`;
     }
 
-    // Free pass note — never show as a button; it applies automatically on loss
+    // Free pass note
     const fpNote = myState.freePassUsed
       ? `<span style="font-size:13px;color:var(--ink-faint)">🎟️ Free pass used (day ${myState.freePassDay})</span>`
-      : myState.alive
-        ? `<span style="font-size:13px;color:var(--green)">🎟️ Free pass available — auto-applies on your first loss</span>`
-        : '';
+      : myState.freePassRequested
+        ? `<span style="font-size:13px;color:#7A5A10">⏳ Free pass requested — awaiting approval</span>`
+        : myState.alive
+          ? `<span style="font-size:13px;color:var(--green)">🎟️ Free pass available — request after a loss</span>`
+          : '';
 
     section.innerHTML = `
       <div class="status-card ${cardClass}">
