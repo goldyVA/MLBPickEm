@@ -1550,14 +1550,24 @@ const NAV_STYLES = `
       }
 
       // Re-fetch any date (today OR past) that isn't fully final yet
-      const datesToRefresh = Object.entries(monthGames)
+      // Build list of dates to refresh:
+      // 1. Any cached date that isn't fully final
+      // 2. Any date in the month range with NO cache entry (might have games we don't know about)
+      // 3. Always today
+      const datesToRefresh = new Set([today]);
+      // Add non-final cached dates
+      Object.entries(monthGames)
         .filter(([date, d]) => !d.allFinal && date <= today)
-        .map(([date]) => date);
+        .forEach(([date]) => datesToRefresh.add(date));
+      // Add recent uncached dates (last 3 days) in case they had games
+      for (let i = 1; i <= 3; i++) {
+        const d2 = new Date();
+        d2.setDate(d2.getDate() - i);
+        const dk = `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+        if (dk >= `${ym}-01` && !monthGames[dk]) datesToRefresh.add(dk);
+      }
 
-      // Always include today even if not cached yet
-      if (!datesToRefresh.includes(today)) datesToRefresh.push(today);
-
-      await Promise.all(datesToRefresh.map(async dateStr => {
+      await Promise.all([...datesToRefresh].map(async dateStr => {
         const fresh = await fetchAndCacheGames(dateStr);
         if (fresh && fresh.length) {
           fresh.sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
@@ -1648,10 +1658,10 @@ const NAV_STYLES = `
 
     if (todayPick) {
       const resultLabel = pickResult
-        ? { win:'✅ Win', loss:'❌ Loss', pending:'⏳ Pending' }[pickResult]
+        ? { win:'✅ Win', loss: myState.freePassRequested ? '⏳ Free pass requested' : myState.freePassUsed ? '🎟️ Free pass saved you' : '❌ Loss', pending:'⏳ Pending' }[pickResult]
         : '⏳ Pending';
       const resultClass = pickResult
-        ? { win:'result-win', loss:'result-loss', pending:'result-pending' }[pickResult]
+        ? { win:'result-win', loss: myState.freePassUsed ? 'result-win' : 'result-loss', pending:'result-pending' }[pickResult]
         : 'result-pending';
 
       if (canChange) {
@@ -1694,7 +1704,13 @@ const NAV_STYLES = `
             <button class="btn-primary" id="confirmPickBtn" disabled>Change Pick</button>
           </div>`;
       } else {
-        // Pick is locked — just show it
+        // Pick is locked — show result + free pass request if lost
+        const showFPRequest = pickResult === 'loss'
+          && !myState.freePassUsed
+          && !myState.freePassRequested;
+        const fpRequestedMsg = myState.freePassRequested && !myState.freePassUsed
+          ? '<div style="margin-top:10px;font-size:13px;color:#7A5A10;background:#FEF9EE;border:1px solid #F5DFA0;border-radius:8px;padding:10px 14px">⏳ Free pass requested — awaiting admin approval</div>'
+          : '';
         pickHTML = `
           <div class="pick-section">
             <div class="pick-section-label">Today's Pick${currentPickLocked ? ' — 🔒 Locked' : ''}</div>
@@ -1703,6 +1719,8 @@ const NAV_STYLES = `
               <span class="current-pick-name">${MLB_TEAMS.find(t=>t.abbrev===todayPick)?.name || todayPick}</span>
               <span class="current-pick-result ${resultClass}">${resultLabel}</span>
             </div>
+            ${showFPRequest ? `<button class="btn-primary" id="reqFPBtn" style="margin-top:12px;background:#E8A838;border-color:#E8A838;color:#1B1B1B">🎟️ Request Free Pass</button>` : ''}
+            ${fpRequestedMsg}
           </div>`;
       }
     } else if (!myState.alive) {
