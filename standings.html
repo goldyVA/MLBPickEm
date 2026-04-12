@@ -1162,11 +1162,20 @@ const NAV_STYLES = `
       } catch (e) { console.warn(`ESPN fetch failed for ${dateStr}:`, e); }
     }
 
-    // Find all dates needing a refresh (not fully final + today always)
+    // Find all dates needing a refresh:
+    // 1. Today always
+    // 2. Any cached non-final date
+    // 3. Last 3 days even if uncached (may have games not in Firebase yet)
     const datesToRefresh = new Set([todayKey]);
     for (const [date, games] of Object.entries(allGames)) {
       const allFinal = Object.values(games).every(g => g.statusName === 'STATUS_FINAL');
       if (!allFinal && date <= todayKey) datesToRefresh.add(date);
+    }
+    for (let i = 1; i <= 3; i++) {
+      const d3 = new Date();
+      d3.setDate(d3.getDate() - i);
+      const dk = `${d3.getFullYear()}-${String(d3.getMonth()+1).padStart(2,'0')}-${String(d3.getDate()).padStart(2,'0')}`;
+      if (!allGames[dk]) datesToRefresh.add(dk);
     }
 
     await Promise.all([...datesToRefresh].map(fetchDateFromESPN));
