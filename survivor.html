@@ -1508,9 +1508,16 @@ const NAV_STYLES = `
         const away = comp.competitors?.find(c => c.homeAway === 'away');
         if (!home || !away) continue;
         const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
-        const winnerId   = statusName === 'STATUS_FINAL'
-          ? (home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null)
-          : null;
+        let winnerId = null;
+        if (statusName === 'STATUS_FINAL') {
+          if (home.winner) winnerId = String(home.team.id);
+          else if (away.winner) winnerId = String(away.team.id);
+          else if (home.score != null && away.score != null) {
+            // Fall back to score comparison
+            winnerId = parseInt(home.score) > parseInt(away.score)
+              ? String(home.team.id) : String(away.team.id);
+          }
+        }
         games.push({
           id: event.id, startTime: event.date, statusName,
           homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation },
@@ -1921,13 +1928,6 @@ const NAV_STYLES = `
         raw.usedTeams, raw.freePassUsed, raw.freePassDay,
         monthGames || {}, survivorStartDay, today
       );
-      // Write free pass to Firebase if auto-applied (only for current user — strict rules)
-      if (computed.fpAutoApplied && m.uid === currentUser.uid) {
-        await update(ref(db), {
-          [`survivor/${ym}/${m.uid}/freePassUsed`]: true,
-          [`survivor/${ym}/${m.uid}/freePassDay`]:  computed.freePassDay,
-        }).catch(() => {});
-      }
       const state = { ...raw, ...computed };
       const pickCount = Object.keys(raw.usedTeams || {}).length;
       return { ...m, state, pickCount };
