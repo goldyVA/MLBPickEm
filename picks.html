@@ -1838,21 +1838,26 @@ const NAV_STYLES = `
     const today     = todayStr();
     const todayPick = state.usedTeams?.[today];
     if (!todayPick) return null;
+    console.log('[SurvivorResult] Looking for pick:', todayPick, 'in', games.length, 'games');
     for (const g of games) {
       const homeAbbrev = g.homeTeam.abbrev.toUpperCase();
       const awayAbbrev = g.awayTeam.abbrev.toUpperCase();
       const pick       = todayPick.toUpperCase();
       const inGame     = homeAbbrev === pick || awayAbbrev === pick;
       if (!inGame) continue;
+      console.log('[SurvivorResult] Found game:', homeAbbrev, 'vs', awayAbbrev, 'status:', g.statusName, 'winnerId:', g.winnerId, 'homeId:', g.homeTeam.id, 'awayId:', g.awayTeam.id);
       if (g.statusName === 'STATUS_FINAL') {
         if (!g.winnerId) return { abbrev: todayPick, result: 'pending' };
-        // Use abbrev comparison against winner — check which team won by abbrev
         const homeWon = String(g.winnerId) === String(g.homeTeam.id);
         const won     = homeWon ? homeAbbrev === pick : awayAbbrev === pick;
+        console.log('[SurvivorResult] homeWon:', homeWon, 'won:', won);
         return { abbrev: todayPick, result: won ? 'win' : 'loss' };
       }
+      console.log('[SurvivorResult] Game not final yet');
       return { abbrev: todayPick, result: 'pending' };
     }
+    console.log('[SurvivorResult] Game not found in games array — abbrev mismatch?');
+    console.log('[SurvivorResult] All game abbrevs:', games.map(g => `${g.awayTeam.abbrev}@${g.homeTeam.abbrev} (${g.statusName})`));
     return { abbrev: todayPick, result: 'pending' };
   }
 
