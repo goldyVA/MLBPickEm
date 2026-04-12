@@ -1415,7 +1415,10 @@ const NAV_STYLES = `
       // Winner
       let winnerId = null;
       if (statusName === 'STATUS_FINAL') {
-        winnerId = home.winner ? String(home.team.id) : away.winner ? String(away.team.id) : null;
+        if (home.winner) winnerId = String(home.team.id);
+        else if (away.winner) winnerId = String(away.team.id);
+        else if (home.score != null && away.score != null)
+          winnerId = parseInt(home.score) > parseInt(away.score) ? String(home.team.id) : String(away.team.id);
       }
 
       games.push({
@@ -2169,24 +2172,7 @@ const NAV_STYLES = `
     }
   }
 
-  async function useSurvivorFreePass() {
-    const ym = yearMonthStr();
-    const day = new Date().getDate();
-    if (!confirm('Use your free pass? This cannot be undone.')) return;
-    try {
-      await update(ref(db), {
-        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: true,
-        [`survivor/${ym}/${currentUser.uid}/freePassDay`]:  day,
-        [`survivor/${ym}/${currentUser.uid}/alive`]:        true,
-      });
-      survivorState.freePassUsed = true;
-      survivorState.freePassDay  = day;
-      survivorState.alive        = true;
-      renderSurvivorCard(Object.values(gamesCache));
-    } catch (err) {
-      alert('Failed to use free pass. Please try again.');
-    }
-  }
+
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
