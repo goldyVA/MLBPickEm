@@ -2116,11 +2116,14 @@ const NAV_STYLES = `
           // Free pass used on a day with no pick (shouldn't happen now but just in case)
           cellHTML = `<span class="grid-cell gc-fp" title="Free pass">🎟️</span>`;
         } else if (!pick) {
-          // No pick — show as loss (eliminated)
-          if (dateStr < today && dayUnlocked) {
+          // No pick for this day
+          const hasAnyPicks = Object.keys(usedTeams).length > 0;
+          if (dateStr < today && dayUnlocked && hasAnyPicks) {
+            // Only show as missed if they actually made picks this period
             cellHTML = `<span class="grid-cell gc-loss" title="No pick — eliminated">✗</span>`;
             losses++;
           } else {
+            // No picks at all (fresh reset) or future — show blank
             cellHTML = `<span class="gc-none">—</span>`;
           }
         } else if (!dayUnlocked) {
