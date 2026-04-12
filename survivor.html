@@ -1385,7 +1385,8 @@ const NAV_STYLES = `
   }
 
   function espnLogo(abbrev) {
-    const slug = abbrev.toUpperCase() === 'ATH' ? 'oak' : abbrev.toLowerCase();
+    const a = abbrev.toUpperCase();
+    const slug = a === 'ATH' ? 'oak' : a === 'CHW' ? 'cws' : abbrev.toLowerCase();
     return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
   }
 
@@ -1414,10 +1415,10 @@ const NAV_STYLES = `
   // ── Get pick result from a game list ──────────────────────────────────
   function getPickResult(abbrev, games) {
     if (!abbrev || !games?.length) return null;
-    const pick = abbrev.toUpperCase();
+    const pick = normalizeAbbrev(abbrev);
     const game = games.find(g =>
-      g.homeTeam?.abbrev?.toUpperCase() === pick ||
-      g.awayTeam?.abbrev?.toUpperCase() === pick
+      normalizeAbbrev(g.homeTeam?.abbrev) === pick ||
+      normalizeAbbrev(g.awayTeam?.abbrev) === pick
     );
     if (!game) return null;
     if (game.statusName !== 'STATUS_FINAL') return 'pending';
@@ -1649,11 +1650,24 @@ const NAV_STYLES = `
   }
 
   // ── Teams playing today ───────────────────────────────────────────────
+  // Normalize ESPN abbreviation variations to our team list abbrevs
+  function normalizeAbbrev(a) {
+    const abbrev = (a || '').toUpperCase();
+    if (abbrev === 'CHW') return 'CWS';
+    if (abbrev === 'KCR') return 'KC';
+    if (abbrev === 'SDP') return 'SD';
+    if (abbrev === 'SFG') return 'SF';
+    if (abbrev === 'TBR') return 'TB';
+    if (abbrev === 'WSN') return 'WSH';
+    if (abbrev === 'ARI' || abbrev === 'ARZ') return 'ARI';
+    return abbrev;
+  }
+
   function teamsPlayingToday() {
     const s = new Set();
     for (const g of todayGames) {
-      s.add(g.homeTeam.abbrev.toUpperCase());
-      s.add(g.awayTeam.abbrev.toUpperCase());
+      s.add(normalizeAbbrev(g.homeTeam.abbrev));
+      s.add(normalizeAbbrev(g.awayTeam.abbrev));
     }
     return s;
   }
