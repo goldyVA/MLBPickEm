@@ -464,27 +464,24 @@
     const now   = new Date();
     const [yr,mo] = ym.split('-').map(Number);
     const dim = new Date(yr, mo, 0).getDate();
-    // Find the earliest day any member has a pick — don't show days before that
-    let gridStartDay = survivorStartDay;
-    for (const m of members) {
-      const ut = allStates[m.uid]?.usedTeams || {};
-      const pickDays = Object.keys(ut).map(ds => parseInt(ds.split('-')[2]));
-      if (pickDays.length > 0) {
-        gridStartDay = Math.min(gridStartDay, ...pickDays);
-      }
-    }
-    // But never go earlier than survivorStartDay
-    gridStartDay = Math.max(survivorStartDay, gridStartDay);
-
-    const days = [];
-    for (let d=gridStartDay; d<=Math.min(dim,30); d++)
-      days.push({ d, ds:`${ym}-${String(d).padStart(2,'0')}` });
-
     const members = [...allMembers].sort((a,b)=>{
       if(a.uid===currentUser.uid) return -1;
       if(b.uid===currentUser.uid) return 1;
       return (a.displayName||'').localeCompare(b.displayName||'');
     });
+
+    // Start grid from earliest actual pick day across all members
+    let gridStartDay = survivorStartDay;
+    for (const m of members) {
+      const ut = allStates[m.uid]?.usedTeams || {};
+      const pickDays = Object.keys(ut).map(ds => parseInt(ds.split('-')[2]));
+      if (pickDays.length > 0) gridStartDay = Math.min(gridStartDay, ...pickDays);
+    }
+    gridStartDay = Math.max(survivorStartDay, gridStartDay);
+
+    const days = [];
+    for (let d=gridStartDay; d<=Math.min(dim,30); d++)
+      days.push({ d, ds:`${ym}-${String(d).padStart(2,'0')}` });
 
     const t = document.createElement('table'); t.className='mgrid';
     const thead = t.createTHead(); const hr = thead.insertRow();
