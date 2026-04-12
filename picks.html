@@ -1858,17 +1858,15 @@ const NAV_STYLES = `
 
 
 
-  // ── Compute survivor status from picks + game results ─────────────────
-  function computeSurvivorStatus(usedTeams, storedFreePassUsed, storedFreePassDay, monthGames, startDay, today) {
+  // ── Compute survivor status ──────────────────────────────────────────
+  // Free pass must be explicitly approved by admin — no auto-apply.
+  function computeSurvivorStatus(usedTeams, freePassUsed, freePassDay, monthGames, startDay, today) {
     const now  = new Date();
     const ym   = today.substring(0, 7);
     const year = parseInt(ym.split('-')[0]);
     const mon  = parseInt(ym.split('-')[1]) - 1;
     const daysInMonth = new Date(year, mon + 1, 0).getDate();
     let alive = true, eliminatedDay = null, eliminatedReason = null;
-    let freePassUsed = storedFreePassUsed || false;
-    let freePassDay  = storedFreePassDay  || null;
-    let fpAutoApplied = false;
 
     for (let d = startDay; d <= Math.min(daysInMonth, 30); d++) {
       const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
@@ -1888,12 +1886,13 @@ const NAV_STYLES = `
         ? game.homeTeam.abbrev.toUpperCase() === pick.toUpperCase()
         : game.awayTeam.abbrev.toUpperCase() === pick.toUpperCase();
       if (!won) {
-        if (!freePassUsed) { freePassUsed = true; freePassDay = d; fpAutoApplied = true; }
-        else { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
+        const fpSaves = freePassUsed && freePassDay === d;
+        if (!fpSaves) { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
       }
     }
-    return { alive, eliminatedDay, eliminatedReason, freePassUsed, freePassDay, fpAutoApplied };
+    return { alive, eliminatedDay, eliminatedReason };
   }
+
 
   async function loadSurvivorSection(games) {
     const section = document.getElementById('survivorSection');
@@ -1904,188 +1903,245 @@ const NAV_STYLES = `
     if (day === 31) { section.style.display = 'none'; return; }
     section.style.display = '';
 
-    // Load fresh state from Firebase
+    // Load fresh state
     const snap = await get(ref(db, `survivor/${ym}/${currentUser.uid}`));
     survivorState = snap.exists() ? snap.val() : {
-      alive: true, freePassUsed: false, freePassDay: null, usedTeams: {}, eliminatedDay: null, eliminatedReason: null
+      alive: true, freePassUsed: false, freePassRequested: false,
+      freePassDay: null, usedTeams: {}
     };
 
-    // ── Settle today's pick if games are final ────────────────────────
-    // Only run if user is alive and has a pick today
-    if (survivorState.alive) {
-      const todayPick = survivorState.usedTeams?.[today];
-      const allTodayFinal = games.every(g => g.statusName === 'STATUS_FINAL');
+    // Load settings for startDay
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const startDay = settingsSnap.exists() ? (settingsSnap.val().monthlyStartDay || 1) : 1;
 
-      if (todayPick && allTodayFinal) {
-        // Find the game the user's team played in
-        const game = games.find(g =>
-          g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ||
-          g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
-        );
+    // Build monthGames from today's games for compute
+    const todayData = {
+      lastStartTime: games.length ? new Date(games[games.length-1].startTime) : new Date(0),
+      games,
+    };
+    const monthGamesForCompute = { [today]: todayData };
 
-        if (game && game.statusName === 'STATUS_FINAL' && game.winnerId) {
-          const won = game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
-            ? game.winnerId === game.homeTeam.id
-            : game.winnerId === game.awayTeam.id;
-
-          if (!won) {
-            // Team lost
-            if (!survivorState.freePassUsed) {
-              // Auto-apply free pass
-              survivorState.freePassUsed = true;
-              survivorState.freePassDay  = day;
-              await update(ref(db), {
-                [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: true,
-                [`survivor/${ym}/${currentUser.uid}/freePassDay`]:  day,
-              }).catch(e => console.warn('Survivor FP write failed:', e));
-            } else {
-              // Already used free pass — eliminated
-              survivorState.alive          = false;
-              survivorState.eliminatedDay  = day;
-              survivorState.eliminatedReason = 'loss';
-              await update(ref(db), {
-                [`survivor/${ym}/${currentUser.uid}/alive`]:           false,
-                [`survivor/${ym}/${currentUser.uid}/eliminatedDay`]:   day,
-                [`survivor/${ym}/${currentUser.uid}/eliminatedReason`]:'loss',
-              }).catch(e => console.warn('Survivor elim write failed:', e));
-            }
-          }
-          // If won — no state change needed, just re-render
-        }
+    // Load past month games too so compute works for past days
+    try {
+      const gSnap = await get(ref(db, 'games'));
+      if (gSnap.exists()) {
+        gSnap.forEach(dc => {
+          if (!dc.key.startsWith(ym) || dc.key === today) return;
+          const gs = Object.values(dc.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (!gs.length) return;
+          monthGamesForCompute[dc.key] = {
+            lastStartTime: new Date(gs[gs.length-1].startTime),
+            games: gs,
+          };
+        });
       }
+    } catch(e) {}
 
-      // Check if last game has started and user has no pick — warn them
-      const lastGame = games.sort((a,b) => new Date(a.startTime)-new Date(b.startTime)).slice(-1)[0];
-      const lastStarted = lastGame && new Date() >= new Date(lastGame.startTime);
-      if (lastStarted && !todayPick && allTodayFinal) {
-        // All games done, no pick — eliminate
-        survivorState.alive          = false;
-        survivorState.eliminatedDay  = day;
-        survivorState.eliminatedReason = 'missed';
-        await update(ref(db), {
-          [`survivor/${ym}/${currentUser.uid}/alive`]:           false,
-          [`survivor/${ym}/${currentUser.uid}/eliminatedDay`]:   day,
-          [`survivor/${ym}/${currentUser.uid}/eliminatedReason`]:'missed',
-        }).catch(e => console.warn('Survivor missed write failed:', e));
-      }
-    }
+    const raw = survivorState;
+    const computed = computeSurvivorStatus(
+      raw.usedTeams, raw.freePassUsed, raw.freePassDay,
+      monthGamesForCompute, startDay, today
+    );
+    survivorState = { ...raw, ...computed };
 
     renderSurvivorCard(games);
   }
 
+
   function renderSurvivorCard(games) {
-    const card    = document.getElementById('survivorCard');
-    const today   = todayStr();
-    const state   = survivorState;
+    const card      = document.getElementById('survivorCard');
+    const today     = todayStr();
+    const state     = survivorState;
     const todayPick = state.usedTeams?.[today];
-    const usedSet   = new Set(Object.values(state.usedTeams || {}));
     const playing   = teamsPlayingToday(games);
+
+    // Determine pick result for today
     const pickResult = getSurvivorPickResult(state, games);
 
-    // Card class
+    // Card header state
     let cardClass = 's-alive';
-    let icon = '✅'; let title = 'Alive'; let sub = `Day ${new Date().getDate()} · pick a team below`;
-    if (!state.alive) { cardClass = 's-dead'; icon = '💀'; title = 'Eliminated'; sub = 'Better luck next month'; }
-    else if (state.freePassUsed) { cardClass = 's-freepass'; icon = '🎟️'; title = 'Alive — Free Pass Used'; sub = `Day ${new Date().getDate()}`; }
+    let icon = '✅';
+    let title = 'Alive';
+    let sub = `Day ${new Date().getDate()} · pick a team below`;
+
+    if (!state.alive) {
+      cardClass = 's-dead'; icon = '💀';
+      title = 'Eliminated';
+      sub = state.eliminatedReason === 'missed' ? 'Missed a pick' : 'Team lost';
+    } else if (state.freePassUsed) {
+      cardClass = 's-freepass'; icon = '🎟️';
+      title = 'Alive — Free Pass Used';
+      sub = `Day ${state.freePassDay}`;
+    }
 
     card.className = `survivor-status-card ${cardClass}`;
 
-    // Pick result display
+    // Build pick result display
     let pickHTML = '';
 
     if (todayPick) {
-      const team = MLB_TEAMS.find(t => t.abbrev === todayPick);
-      // If result is loss but user is still alive → free pass was used
-      const survivedViaFP = pickResult?.result === 'loss' && state.alive;
+      const team = games.find(g =>
+        g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ||
+        g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+      );
 
-      const resultLabel = pickResult
-        ? {
-            win:     '✅ Survived!',
-            loss:    survivedViaFP ? '🎟️ Free Pass Used — Still Alive' : '❌ Eliminated',
-            pending: '⏳ Game in progress…'
-          }[pickResult.result]
-        : '⏳ Pending';
-      const resultClass = pickResult
-        ? {
-            win:     's-result-win',
-            loss:    's-result-loss',
-            pending: 's-result-pending'
-          }[pickResult.result]
-        : 's-result-pending';
+      // Determine chip style
+      const chipClass = pickResult?.result === 'win'  ? 'pick-win'
+                      : pickResult?.result === 'loss' ? 'pick-loss'
+                      : 'pick-pending';
+
+      // Result label
+      let resultLabel = '⏳ Game in progress…';
+      let resultClass = 's-result-pending';
+
+      if (pickResult?.result === 'win') {
+        resultLabel = '✅ Survived!';
+        resultClass = 's-result-win';
+      } else if (pickResult?.result === 'loss') {
+        if (state.freePassUsed && state.freePassDay === new Date().getDate()) {
+          resultLabel = '🎟️ Free Pass Used — Still Alive';
+          resultClass = 's-result-loss';
+        } else if (state.freePassRequested) {
+          resultLabel = '⏳ Free pass requested — awaiting approval';
+          resultClass = 's-result-pending';
+        } else {
+          resultLabel = '❌ Team lost';
+          resultClass = 's-result-loss';
+        }
+      }
+
+      // Show request button if: loss today, no FP used, no FP requested yet
+      const showRequestBtn = pickResult?.result === 'loss'
+        && !state.freePassUsed
+        && !state.freePassRequested;
+
       pickHTML = `
         <div class="s-pick-row">
           <span class="s-pick-label">Today's survivor pick:</span>
-          <div class="s-current-pick ${pickResult ? 'pick-' + pickResult.result : 'pick-pending'}">
+          <div class="s-current-pick ${chipClass}">
             <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-            ${team?.name || todayPick}
+            ${team ? (team.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ? team.homeTeam.abbrev : team.awayTeam.abbrev) : todayPick}
           </div>
           <span class="${resultClass}">${resultLabel}</span>
+          ${showRequestBtn ? `
+            <button class="s-freepass-btn" id="requestFPBtn" style="margin-top:8px">
+              🎟️ Request Free Pass
+            </button>
+          ` : ''}
         </div>`;
     } else if (!state.alive) {
-      const fpAvail = !state.freePassUsed;
       pickHTML = `
         <div class="s-pick-row">
           <span style="font-size:13px;color:var(--ink-faint)">You've been eliminated.</span>
-          ${fpAvail ? `<button class="s-freepass-btn" id="sFreePassBtn">🎟️ Use Free Pass to Rejoin</button>` : ''}
         </div>`;
     } else {
-      // Build team grid
-      const tiles = MLB_TEAMS.map(team => {
-        const isUsed    = usedSet.has(team.abbrev);
-        const isPlaying = playing.has(team.abbrev.toUpperCase());
-        return `
-          <div class="s-team-tile ${isUsed ? 's-used' : ''}"
-               data-abbrev="${team.abbrev}"
-               ${isUsed ? 'title="Already used this month"' : ''}
-               style="${!isPlaying && !isUsed ? 'opacity:.5' : ''}">
-            ${isUsed ? '<div class="s-used-dot"></div>' : ''}
-            <img src="${espnLogoSurv(team.abbrev)}" alt="${team.abbrev}" onerror="this.style.display='none'" />
-            ${team.abbrev}
-          </div>`;
-      }).join('');
+      // No pick yet — show team selector
+      const ym      = yearMonthStr();
+      const usedSet = new Set(Object.values(state.usedTeams || {}));
+      const allLocked = games.length > 0 && games.every(g => new Date() >= new Date(g.startTime));
 
-      const fpAvail = state.alive && !state.freePassUsed;
-      pickHTML = `
-        <div class="s-pick-row" style="margin-bottom:4px">
-          <span class="s-pick-label">Pick today's survivor team:</span>
-          ${fpAvail ? `<button class="s-freepass-btn" id="sFreePassBtn">🎟️ Use Free Pass</button>` : '<span style="font-size:12px;color:var(--ink-faint)">🎟️ Free pass used</span>'}
+      if (allLocked) {
+        pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ All games have started — no pick made today.</span></div>`;
+      } else {
+        pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--ink-faint)">Select a team below to make your survivor pick.</span></div>`;
+      }
+    }
+
+    // Build team grid for picking (only if alive and no pick yet today)
+    let gridHTML = '';
+    if (state.alive && !todayPick) {
+      const usedSet = new Set(Object.values(state.usedTeams || {}));
+      const allTeams = [
+        'ARI','ATL','BAL','BOS','CHC','CWS','CIN','CLE','COL','DET',
+        'HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','OAK',
+        'PHI','PIT','SD','SF','SEA','STL','TB','TEX','TOR','WSH'
+      ];
+      gridHTML = `
+        <div class="s-team-grid" id="sTeamGrid">
+          ${allTeams.map(abbrev => {
+            const used    = usedSet.has(abbrev);
+            const playing = games.some(g =>
+              g.homeTeam.abbrev.toUpperCase() === abbrev.toUpperCase() ||
+              g.awayTeam.abbrev.toUpperCase() === abbrev.toUpperCase()
+            );
+            const started = games.some(g =>
+              (g.homeTeam.abbrev.toUpperCase() === abbrev.toUpperCase() ||
+               g.awayTeam.abbrev.toUpperCase() === abbrev.toUpperCase()) &&
+              new Date() >= new Date(g.startTime)
+            );
+            const disabled = used || started || !playing;
+            return `<button class="team-tile${used ? ' used' : ''}${started ? ' started' : ''}"
+              data-abbrev="${abbrev}" ${disabled ? 'disabled' : ''}
+              title="${used ? 'Already used' : started ? 'Game started' : !playing ? 'Not playing today' : abbrev}">
+              <img src="https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png"
+                   onerror="this.style.display='none'" />
+              <span>${abbrev}</span>
+              ${used ? '<span class="tile-badge used-badge">✓</span>' : ''}
+              ${started && !used ? '<span class="tile-badge">🔒</span>' : ''}
+            </button>`;
+          }).join('')}
         </div>
-        <div class="s-team-grid" id="sTeamGrid">${tiles}</div>
-        <div class="s-msg" id="sMsg"></div>
-        <button class="s-confirm-btn" id="sConfirmBtn" disabled>Confirm Survivor Pick</button>`;
+        <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
+          <span id="sSelectedLabel" class="s-selected-label"></span>
+          <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
+          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.team-tile.selected').forEach(b=>b.classList.remove('selected'))">Cancel</button>
+        </div>
+        <div class="s-msg" id="sMsg"></div>`;
     }
 
     card.innerHTML = `
-      <div class="s-top">
-        <div class="s-top-left">
-          <div class="s-icon">${icon}</div>
-          <div>
-            <div class="s-title">${title}</div>
-            <div class="s-sub">${sub}</div>
-          </div>
+      <div class="s-status-header">
+        <span class="s-icon">${icon}</span>
+        <div>
+          <div class="s-title">${title}</div>
+          <div class="s-sub">${sub}</div>
         </div>
       </div>
-      ${pickHTML}`;
+      ${pickHTML}
+      ${gridHTML}
+    `;
 
-    // Bind team grid
-    document.getElementById('sTeamGrid')?.addEventListener('click', e => {
-      const tile = e.target.closest('.s-team-tile');
-      if (!tile || tile.classList.contains('s-used')) return;
-      const abbrev = tile.dataset.abbrev;
-      document.querySelectorAll('.s-team-tile').forEach(t => t.classList.remove('s-selected'));
-      if (survivorSelected === abbrev) {
-        survivorSelected = null;
-        document.getElementById('sConfirmBtn').disabled = true;
-      } else {
-        survivorSelected = abbrev;
-        tile.classList.add('s-selected');
-        document.getElementById('sConfirmBtn').disabled = false;
-      }
-    });
+    // Wire request FP button
+    const reqBtn = document.getElementById('requestFPBtn');
+    if (reqBtn) {
+      reqBtn.addEventListener('click', async () => {
+        reqBtn.disabled = true;
+        reqBtn.textContent = 'Requesting…';
+        const ym = yearMonthStr();
+        const day = new Date().getDate();
+        try {
+          await update(ref(db), {
+            [`survivor/${ym}/${currentUser.uid}/freePassRequested`]: true,
+            [`survivor/${ym}/${currentUser.uid}/freePassDay`]: day,
+          });
+          survivorState.freePassRequested = true;
+          survivorState.freePassDay = day;
+          renderSurvivorCard(games);
+        } catch(e) {
+          reqBtn.disabled = false;
+          reqBtn.textContent = '🎟️ Request Free Pass';
+          console.error('FP request failed:', e);
+        }
+      });
+    }
 
-    document.getElementById('sConfirmBtn')?.addEventListener('click', confirmSurvivorPick);
-    document.getElementById('sFreePassBtn')?.addEventListener('click', useSurvivorFreePass);
+    // Wire team grid
+    if (state.alive && !todayPick) {
+      document.querySelectorAll('.team-tile:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.team-tile').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          survivorSelected = btn.dataset.abbrev;
+          const confirmRow = document.getElementById('sPickConfirmRow');
+          const label = document.getElementById('sSelectedLabel');
+          if (confirmRow) confirmRow.style.display = 'flex';
+          if (label) label.textContent = `Pick: ${survivorSelected}`;
+        });
+      });
+      document.getElementById('sConfirmBtn')?.addEventListener('click', confirmSurvivorPick);
+    }
   }
+
 
   async function confirmSurvivorPick() {
     if (!survivorSelected) return;
