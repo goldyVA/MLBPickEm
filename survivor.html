@@ -1351,7 +1351,7 @@ const NAV_STYLES = `
 
   const MLB_TEAMS = [
     { abbrev:'LAA', name:'Angels' },    { abbrev:'HOU', name:'Astros' },
-    { abbrev:'OAK', name:'Athletics' }, { abbrev:'TOR', name:'Blue Jays' },
+    { abbrev:'ATH', name:'Athletics' }, { abbrev:'TOR', name:'Blue Jays' },
     { abbrev:'ATL', name:'Braves' },    { abbrev:'MIL', name:'Brewers' },
     { abbrev:'STL', name:'Cardinals' }, { abbrev:'DET', name:'Tigers' },
     { abbrev:'CLE', name:'Guardians' }, { abbrev:'SF',  name:'Giants' },
@@ -1385,7 +1385,8 @@ const NAV_STYLES = `
   }
 
   function espnLogo(abbrev) {
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png`;
+    const slug = abbrev.toUpperCase() === 'ATH' ? 'oak' : abbrev.toLowerCase();
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
   }
 
   function formatDate(dateStr) {
@@ -1526,11 +1527,6 @@ const NAV_STYLES = `
   // ── Load today's games ────────────────────────────────────────────────
   async function loadTodayGames() {
     const today = todayStr();
-    const snap  = await get(ref(db, `games/${today}`));
-    if (snap.exists()) {
-      todayGames = Object.values(snap.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
-      return;
-    }
     try {
       const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${today.replace(/-/g,'')}`);
       const data = await res.json();
