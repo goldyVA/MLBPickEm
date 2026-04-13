@@ -607,6 +607,22 @@
     .s-confirm-btn:hover  { background: #152e4a; }
     .s-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
 
+    .s-cancel-btn {
+      padding: 8px 16px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    @media (hover: hover) { .s-cancel-btn:hover { border-color: var(--red); color: var(--red); } }
+    .s-cancel-btn:active { border-color: var(--red); color: var(--red); }
+
     .s-freepass-btn {
       padding: 8px 16px;
       border: 1.5px solid var(--accent);
