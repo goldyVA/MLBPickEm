@@ -590,32 +590,47 @@
       background: var(--ink-faint);
     }
 
-    .s-confirm-btn {
+    .s-confirm-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-top: 14px;
-      padding: 10px 22px;
+      flex-wrap: wrap;
+    }
+
+    .s-selected-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--navy);
+      flex: 1;
+    }
+
+    .s-confirm-btn {
+      padding: 9px 20px;
       background: var(--navy);
       color: var(--white);
-      border: none;
+      border: 1.5px solid var(--navy);
       border-radius: var(--radius-sm);
       font-family: inherit;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: background .15s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
-
-    .s-confirm-btn:hover  { background: #152e4a; }
+    @media (hover: hover) { .s-confirm-btn:hover { background: #152e4a; border-color: #152e4a; } }
+    .s-confirm-btn:active { background: #152e4a; }
     .s-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
 
     .s-cancel-btn {
-      padding: 8px 16px;
+      padding: 9px 20px;
+      background: transparent;
+      color: var(--ink-light);
       border: 1.5px solid var(--cream-dark);
       border-radius: var(--radius-sm);
-      background: transparent;
       font-family: inherit;
       font-size: 14px;
-      font-weight: 500;
-      color: var(--ink-light);
+      font-weight: 600;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
