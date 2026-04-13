@@ -1884,8 +1884,8 @@ const NAV_STYLES = `
           startTime:   event.date,
           statusName,
           statusShort: event.status?.type?.shortDetail || '',
-          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName },
-          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName },
+          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
+          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
           homeScore: home.score ?? null,
           awayScore: away.score ?? null,
           winnerId,
@@ -1989,33 +1989,28 @@ const NAV_STYLES = `
 
   // ── Admin auto-pick ───────────────────────────────────────────────────
 
-  // ── Pick the worse team (worse record = more losses relative to wins) ──
+  // ── Pick the worse team (worse win % = pick them; tied = pick away) ────
   function pickWorseTeam(game) {
-    // Parse record string like "3-5" into wins/losses
-    function parseRecord(rec) {
+    function parseWinPct(rec) {
       if (!rec) return null;
+      // Record format: "3-5" or "3-5-1" (wins-losses-ties)
       const parts = rec.split('-').map(Number);
       if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
-      return { wins: parts[0], losses: parts[1] };
-    }
-    function winPct(rec) {
-      if (!rec) return null;
-      const total = rec.wins + rec.losses;
-      return total === 0 ? 0.5 : rec.wins / total;
+      const total = parts[0] + parts[1];
+      return total === 0 ? 0.5 : parts[0] / total;
     }
 
-    const homeRec = parseRecord(game.homeTeam?.record);
-    const awayRec = parseRecord(game.awayTeam?.record);
-    const homePct = winPct(homeRec);
-    const awayPct = winPct(awayRec);
+    const homePct = parseWinPct(game.homeTeam?.record);
+    const awayPct = parseWinPct(game.awayTeam?.record);
 
-    // If we have records for both, pick the one with lower win pct
+    console.log(`[AutoPick] ${game.awayTeam?.abbrev}(${game.awayTeam?.record}=${awayPct?.toFixed(3)}) @ ${game.homeTeam?.abbrev}(${game.homeTeam?.record}=${homePct?.toFixed(3)})`);
+
     if (homePct !== null && awayPct !== null) {
-      if (homePct < awayPct) return game.homeTeam.id;  // home is worse
-      if (awayPct < homePct) return game.awayTeam.id;  // away is worse
-      // Tied record — fall through to away team default
+      if (homePct < awayPct) { console.log(`  → ${game.homeTeam.abbrev} (home worse)`); return game.homeTeam.id; }
+      if (awayPct < homePct) { console.log(`  → ${game.awayTeam.abbrev} (away worse)`); return game.awayTeam.id; }
     }
-    // No records or tied — default to away team
+    // Tied or no records — pick away team
+    console.log(`  → ${game.awayTeam.abbrev} (tied/default away)`);
     return game.awayTeam.id;
   }
 
