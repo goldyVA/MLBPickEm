@@ -2250,8 +2250,8 @@ const NAV_STYLES = `
       });
     }
 
-    // Wire team grid
-    if (state.alive && !todayPick) {
+    // Wire team grid — show if alive and grid is visible (no pick OR pick's game not started)
+    if (showGrid) {
       document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.s-team-tile').forEach(b => b.classList.remove('s-selected'));
