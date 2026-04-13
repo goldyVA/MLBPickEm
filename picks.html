@@ -2095,8 +2095,15 @@ const NAV_STYLES = `
                       : pickResult?.result === 'loss' ? 'pick-loss'
                       : 'pick-pending';
 
-      // Result label
-      let resultLabel = '⏳ Game in progress…';
+      // Check if the picked team's game has started
+      const pickGame = games.find(g =>
+        normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(todayPick) ||
+        normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(todayPick)
+      );
+      const pickGameStarted = pickGame && new Date() >= new Date(pickGame.startTime);
+
+      // Result label — only say "in progress" if game has actually started
+      let resultLabel = pickGameStarted ? '⏳ Game in progress…' : '🔓 Pick locked in — game not started yet';
       let resultClass = 's-result-pending';
 
       if (pickResult?.result === 'win') {
@@ -2115,6 +2122,9 @@ const NAV_STYLES = `
         }
       }
 
+      // Show change option if game hasn't started yet
+      const canChangePick = !pickGameStarted && state.alive;
+
       // Show request button if: loss today, no FP used, no FP requested yet
       const showRequestBtn = pickResult?.result === 'loss'
         && !state.freePassUsed
@@ -2122,10 +2132,10 @@ const NAV_STYLES = `
 
       pickHTML = `
         <div class="s-pick-row">
-          <span class="s-pick-label">Today's survivor pick:</span>
+          <span class="s-pick-label">Today's survivor pick:${canChangePick ? ' <span style="font-size:12px;color:var(--ink-faint);font-weight:400">(tap team below to change)</span>' : ''}</span>
           <div class="s-current-pick ${chipClass}">
             <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-            ${team ? (team.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ? team.homeTeam.abbrev : team.awayTeam.abbrev) : todayPick}
+            ${normalizeAbbrev(todayPick)}
           </div>
           <span class="${resultClass}">${resultLabel}</span>
           ${showRequestBtn ? `
@@ -2152,9 +2162,16 @@ const NAV_STYLES = `
       }
     }
 
-    // Build team grid for picking (only if alive and no pick yet today)
+    // Build team grid for picking (alive and either no pick, or pick's game hasn't started)
     let gridHTML = '';
-    if (state.alive && !todayPick) {
+    const showGrid = state.alive && (!todayPick || !(() => {
+      const pg = games.find(g =>
+        normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(todayPick) ||
+        normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(todayPick)
+      );
+      return pg && new Date() >= new Date(pg.startTime);
+    })());
+    if (showGrid) {
       const usedSet = new Set(Object.values(state.usedTeams || {}));
       const allTeams = [
         'ARI','ATL','BAL','BOS','CHC','CWS','CIN','CLE','COL','DET',
