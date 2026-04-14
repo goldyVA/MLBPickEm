@@ -2058,121 +2058,130 @@ const NAV_STYLES = `
     const today     = todayStr();
     const state     = survivorState;
     const todayPick = state.usedTeams?.[today];
-    const playing   = teamsPlayingToday(games);
+    const day       = new Date().getDate();
 
     // Determine pick result for today
     const pickResult = getSurvivorPickResult(state, games);
 
-    // Card header state
-    let cardClass = 's-alive';
-    let icon = '✅';
-    let title = 'Alive';
-    let sub = `Day ${new Date().getDate()} · pick a team below`;
+    // ── Determine exact status ────────────────────────────────────────
+    // alive: computed (from computeSurvivorStatus via loadSurvivorSection)
+    // lostToday: pick exists and game is final and they lost
+    // fpRequested: requested but not yet approved
+    // fpUsed: approved and used
+    // canPick: alive AND (no pick yet, OR pick's game hasn't started) AND no pending loss
+    const lostToday = pickResult?.result === 'loss';
+    const fpUsed    = state.freePassUsed;
+    const fpReq     = state.freePassRequested && !state.freePassUsed;
 
-    if (!state.alive) {
-      cardClass = 's-dead'; icon = '💀';
-      title = 'Eliminated';
-      sub = state.eliminatedReason === 'missed' ? 'Missed a pick' : 'Team lost';
-    } else if (state.freePassUsed) {
+    // A user can pick if:
+    // 1. They are alive (computed)
+    // 2. They haven't lost today (or if they lost, their free pass was approved)
+    // 3. Their current pick's game hasn't started yet (or they have no pick)
+    const pickGame = todayPick ? games.find(g =>
+      normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(todayPick) ||
+      normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(todayPick)
+    ) : null;
+    const pickGameStarted = pickGame ? new Date() >= new Date(pickGame.startTime) : false;
+    const anyGameStarted  = games.some(g => new Date() >= new Date(g.startTime));
+
+    // Blocking conditions
+    const blockedByLoss    = lostToday && !fpUsed; // lost today, FP not approved yet
+    const blockedByElim    = !state.alive;          // eliminated (missed day or used FP and lost again)
+
+    const canPick = state.alive
+      && !blockedByLoss
+      && !anyGameStarted === false // at least check game start
+      && (() => {
+        if (todayPick) return !pickGameStarted; // can change if game not started
+        return !anyGameStarted; // can pick if no games started yet
+      })();
+
+    // ── Card header ───────────────────────────────────────────────────
+    let cardClass = 's-alive', icon = '✅', title = 'Alive';
+    let sub = `Day ${day}`;
+
+    if (blockedByElim) {
+      cardClass = 's-dead'; icon = '💀'; title = 'Eliminated';
+      sub = state.eliminatedReason === 'missed' ? `Missed pick on day ${state.eliminatedDay}` : `Lost on day ${state.eliminatedDay}`;
+    } else if (fpUsed) {
       cardClass = 's-freepass'; icon = '🎟️';
       title = 'Alive — Free Pass Used';
-      sub = `Day ${state.freePassDay}`;
+      sub = `Free pass used on day ${state.freePassDay}`;
+    } else if (blockedByLoss) {
+      cardClass = 's-dead'; icon = '❌';
+      title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
+      sub = `Day ${day} · awaiting admin approval`;
     }
 
     card.className = `survivor-status-card ${cardClass}`;
 
-    // Build pick result display
+    // ── Pick display ──────────────────────────────────────────────────
     let pickHTML = '';
 
-    if (todayPick) {
-      const team = games.find(g =>
-        g.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase() ||
-        g.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
-      );
+    if (blockedByElim) {
+      // Eliminated — show why, no grid
+      pickHTML = `
+        <div class="s-pick-row">
+          <span style="font-size:13px;color:var(--ink-faint)">
+            ${state.eliminatedReason === 'missed'
+              ? '⚠️ You missed a pick and have been eliminated.'
+              : '⚠️ Your team lost and you have no free pass remaining.'}
+          </span>
+        </div>`;
 
-      // Determine chip style
-      const chipClass = pickResult?.result === 'win'  ? 'pick-win'
+    } else if (blockedByLoss) {
+      // Lost today — show pick result and FP request button, no grid
+      const chipClass = 'pick-loss';
+      const showReqBtn = !fpReq;
+      pickHTML = `
+        <div class="s-pick-row">
+          <span class="s-pick-label">Today's pick:</span>
+          <div class="s-current-pick ${chipClass}">
+            <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
+            ${normalizeAbbrev(todayPick)}
+          </div>
+          <span class="s-result-loss">❌ Team lost</span>
+        </div>
+        ${showReqBtn ? `<button class="s-freepass-btn" id="requestFPBtn" style="margin-top:8px">🎟️ Request Free Pass</button>` : ''}
+        ${fpReq ? `<div class="s-msg show info" style="margin-top:8px">⏳ Free pass requested — awaiting admin approval. You cannot pick until approved.</div>` : ''}`;
+
+    } else if (todayPick) {
+      // Has a pick, not blocked — show it with change option if game not started
+      const chipClass = pickResult?.result === 'win' ? 'pick-win'
                       : pickResult?.result === 'loss' ? 'pick-loss'
                       : 'pick-pending';
-
-      // Check if the picked team's game has started
-      const pickGame = games.find(g =>
-        normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(todayPick) ||
-        normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(todayPick)
-      );
-      const pickGameStarted = pickGame && new Date() >= new Date(pickGame.startTime);
-
-      // Result label — only say "in progress" if game has actually started
-      let resultLabel = pickGameStarted ? '⏳ Game in progress…' : '🔓 Pick locked in — game not started yet';
-      let resultClass = 's-result-pending';
-
-      if (pickResult?.result === 'win') {
-        resultLabel = '✅ Survived!';
-        resultClass = 's-result-win';
-      } else if (pickResult?.result === 'loss') {
-        if (state.freePassUsed && state.freePassDay === new Date().getDate()) {
-          resultLabel = '🎟️ Free Pass Used — Still Alive';
-          resultClass = 's-result-loss';
-        } else if (state.freePassRequested) {
-          resultLabel = '⏳ Free pass requested — awaiting approval';
-          resultClass = 's-result-pending';
-        } else {
-          resultLabel = '❌ Team lost';
-          resultClass = 's-result-loss';
-        }
-      }
-
-      // Show change option if game hasn't started yet
-      const canChangePick = !pickGameStarted && state.alive;
-
-      // Show request button if: loss today, no FP used, no FP requested yet
-      const showRequestBtn = pickResult?.result === 'loss'
-        && !state.freePassUsed
-        && !state.freePassRequested;
+      const resultLabel = pickResult?.result === 'win' ? '✅ Survived!'
+        : pickGameStarted ? '⏳ Game in progress…'
+        : '🔓 Pick saved — game not started yet';
+      const resultClass = pickResult?.result === 'win' ? 's-result-win' : 's-result-pending';
 
       pickHTML = `
         <div class="s-pick-row">
-          <span class="s-pick-label">Today's survivor pick:${canChangePick ? ' <span style="font-size:12px;color:var(--ink-faint);font-weight:400">(tap team below to change)</span>' : ''}</span>
+          <span class="s-pick-label">Today's survivor pick:${canPick ? ' <span style="font-size:12px;color:var(--ink-faint);font-weight:400">(tap team below to change)</span>' : ''}</span>
           <div class="s-current-pick ${chipClass}">
             <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
             ${normalizeAbbrev(todayPick)}
           </div>
           <span class="${resultClass}">${resultLabel}</span>
-          ${showRequestBtn ? `
-            <button class="s-freepass-btn" id="requestFPBtn" style="margin-top:8px">
-              🎟️ Request Free Pass
-            </button>
-          ` : ''}
         </div>`;
-    } else if (!state.alive) {
-      pickHTML = `
-        <div class="s-pick-row">
-          <span style="font-size:13px;color:var(--ink-faint)">You've been eliminated.</span>
-        </div>`;
-    } else {
-      // No pick yet — show team selector
-      const ym      = yearMonthStr();
-      const usedSet = new Set(Object.values(state.usedTeams || {}));
-      const allLocked = games.length > 0 && games.every(g => new Date() >= new Date(g.startTime));
 
-      if (allLocked) {
+    } else {
+      // No pick yet — show prompt or warning
+      if (anyGameStarted && !canPick) {
         pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ All games have started — no pick made today.</span></div>`;
       } else {
-        pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--ink-faint)">Select a team below to make your survivor pick.</span></div>`;
+        pickHTML = `<div class="s-pick-row"><span class="s-pick-label">Pick a team below to stay alive.</span></div>`;
       }
     }
 
-    // Build team grid for picking (alive and either no pick, or pick's game hasn't started)
+    // ── Team grid (only when canPick) ─────────────────────────────────
     let gridHTML = '';
-    const showGrid = state.alive && (!todayPick || !(() => {
-      const pg = games.find(g =>
-        normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(todayPick) ||
-        normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(todayPick)
+    if (canPick) {
+      const usedSet = new Set(
+        Object.entries(state.usedTeams || {})
+          .filter(([date]) => date !== today) // exclude today so they can re-pick same team
+          .map(([, abbrev]) => abbrev)
       );
-      return pg && new Date() >= new Date(pg.startTime);
-    })());
-    if (showGrid) {
-      const usedSet = new Set(Object.values(state.usedTeams || {}));
       const allTeams = [
         'ARI','ATL','BAL','BOS','CHC','CWS','CIN','CLE','COL','DET',
         'HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','ATH',
@@ -2183,20 +2192,21 @@ const NAV_STYLES = `
           ${allTeams.map(abbrev => {
             const used    = usedSet.has(abbrev);
             const playing = games.some(g =>
-              g.homeTeam.abbrev.toUpperCase() === abbrev.toUpperCase() ||
-              g.awayTeam.abbrev.toUpperCase() === abbrev.toUpperCase()
+              normalizeAbbrev(g.homeTeam.abbrev) === abbrev ||
+              normalizeAbbrev(g.awayTeam.abbrev) === abbrev
             );
             const started = games.some(g =>
-              (g.homeTeam.abbrev.toUpperCase() === abbrev.toUpperCase() ||
-               g.awayTeam.abbrev.toUpperCase() === abbrev.toUpperCase()) &&
+              (normalizeAbbrev(g.homeTeam.abbrev) === abbrev ||
+               normalizeAbbrev(g.awayTeam.abbrev) === abbrev) &&
               new Date() >= new Date(g.startTime)
             );
-            const disabled = used || started || !playing;
-            return `<button class="s-team-tile${used ? ' s-used' : ''}${started && !used ? ' s-started' : ''}"
+            const isCurrentPick = normalizeAbbrev(todayPick||'') === abbrev;
+            const disabled = used || started;
+            return `<button class="s-team-tile${used ? ' s-used' : ''}${started && !used ? ' s-started' : ''}${isCurrentPick ? ' s-selected' : ''}"
               data-abbrev="${abbrev}" ${disabled ? 'disabled' : ''}
-              title="${used ? 'Already used' : started ? 'Game started' : !playing ? 'Not playing today' : abbrev}">
-              <img src="https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev.toLowerCase()}.png"
-                   onerror="this.style.display='none'" />
+              title="${used ? 'Already used this month' : started ? 'Game started' : !playing ? 'Not playing today' : abbrev}"
+              style="${!playing && !disabled ? 'opacity:.4' : ''}">
+              <img src="${espnLogoSurv(abbrev)}" onerror="this.style.display='none'" />
               <span>${abbrev}</span>
               ${used ? '<span class="s-tile-badge">✓</span>' : ''}
               ${started && !used ? '<span class="s-tile-badge">🔒</span>' : ''}
@@ -2206,10 +2216,19 @@ const NAV_STYLES = `
         <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
           <span id="sSelectedLabel" class="s-selected-label"></span>
           <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
-          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.s-team-tile.s-selected').forEach(b=>b.classList.remove('s-selected'))">Cancel</button>
+          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.s-team-tile.s-selected').forEach(b=>{if(b.dataset.abbrev!=='${normalizeAbbrev(todayPick||'')}')b.classList.remove('s-selected')})">Cancel</button>
         </div>
         <div class="s-msg" id="sMsg"></div>`;
     }
+
+    // ── FP note ───────────────────────────────────────────────────────
+    const fpNote = fpUsed
+      ? `<span class="s-fp-note">🎟️ Free pass used day ${state.freePassDay}</span>`
+      : fpReq
+        ? `<span class="s-fp-note" style="color:#7A5A10">⏳ Free pass pending</span>`
+        : state.alive
+          ? `<span class="s-fp-note" style="color:var(--green)">🎟️ Free pass available</span>`
+          : '';
 
     card.innerHTML = `
       <div class="s-status-header">
@@ -2220,38 +2239,35 @@ const NAV_STYLES = `
             <div class="s-sub">${sub}</div>
           </div>
         </div>
-        <button onclick="loadSurvivorSection(window._lastSurvivorGames||[])" style="background:none;border:none;font-size:12px;color:var(--ink-faint);cursor:pointer;padding:4px;-webkit-tap-highlight-color:transparent" title="Refresh">↻</button>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${fpNote}
+          <button onclick="loadSurvivorSection(window._lastSurvivorGames||[])" style="background:none;border:none;font-size:12px;color:var(--ink-faint);cursor:pointer;padding:4px">↻</button>
+        </div>
       </div>
       ${pickHTML}
       ${gridHTML}
     `;
 
-    // Wire request FP button
-    const reqBtn = document.getElementById('requestFPBtn');
-    if (reqBtn) {
-      reqBtn.addEventListener('click', async () => {
-        reqBtn.disabled = true;
-        reqBtn.textContent = 'Requesting…';
-        const ym = yearMonthStr();
-        const day = new Date().getDate();
-        try {
-          await update(ref(db), {
-            [`survivor/${ym}/${currentUser.uid}/freePassRequested`]: true,
-            [`survivor/${ym}/${currentUser.uid}/freePassDay`]: day,
-          });
-          survivorState.freePassRequested = true;
-          survivorState.freePassDay = day;
-          renderSurvivorCard(games);
-        } catch(e) {
-          reqBtn.disabled = false;
-          reqBtn.textContent = '🎟️ Request Free Pass';
-          console.error('FP request failed:', e);
-        }
-      });
-    }
+    // Wire FP request button
+    document.getElementById('requestFPBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('requestFPBtn');
+      btn.disabled = true; btn.textContent = 'Requesting…';
+      const ym2 = yearMonthStr();
+      try {
+        await update(ref(db), {
+          [`survivor/${ym2}/${currentUser.uid}/freePassRequested`]: true,
+          [`survivor/${ym2}/${currentUser.uid}/freePassDay`]: day,
+        });
+        survivorState.freePassRequested = true;
+        survivorState.freePassDay = day;
+        renderSurvivorCard(games);
+      } catch(e) {
+        btn.disabled = false; btn.textContent = '🎟️ Request Free Pass';
+      }
+    });
 
-    // Wire team grid — show if alive and grid is visible (no pick OR pick's game not started)
-    if (showGrid) {
+    // Wire team grid clicks
+    if (canPick) {
       document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.s-team-tile').forEach(b => b.classList.remove('s-selected'));
