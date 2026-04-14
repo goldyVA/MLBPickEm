@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin · MLB Pick'em</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -2406,19 +2407,36 @@ const NAV_STYLES = `
           monthGames[dateChild.key] = {
             lastStartTime: new Date(games[games.length-1].startTime),
             games,
+            allFinal: games.every(g => g.statusName === 'STATUS_FINAL' && g.winnerId),
           };
         });
       }
 
-      // Always fetch today fresh from ESPN so we get current scores/status
-      const freshGames = await adminFetchGames(today);
-      const freshArr   = Object.values(freshGames).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
-      if (freshArr.length) {
-        monthGames[today] = {
-          lastStartTime: new Date(freshArr[freshArr.length-1].startTime),
-          games: freshArr,
-        };
+      // Re-fetch today + any past date that isn't fully final + last 3 days in case missing
+      const toRefresh = new Set([today]);
+      for (const [date, d] of Object.entries(monthGames)) {
+        if (!d.allFinal && date <= today) toRefresh.add(date);
       }
+      for (let i = 1; i <= 3; i++) {
+        const d2 = new Date(); d2.setDate(d2.getDate() - i);
+        const dk = `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+        if (dk >= `${ym}-01`) toRefresh.add(dk);
+      }
+
+      await Promise.all([...toRefresh].map(async dateStr => {
+        try {
+          const freshGames = await adminFetchGames(dateStr);
+          const freshArr   = Object.values(freshGames).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (freshArr.length) {
+            monthGames[dateStr] = {
+              lastStartTime: new Date(freshArr[freshArr.length-1].startTime),
+              games: freshArr,
+              allFinal: freshArr.every(g => g.statusName === 'STATUS_FINAL' && g.winnerId),
+            };
+          }
+        } catch(e) {}
+      }));
+
     } catch (e) { console.warn('adminFetchMonthGames failed:', e); }
     return monthGames;
   }
