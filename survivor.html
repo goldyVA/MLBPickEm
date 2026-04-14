@@ -367,13 +367,21 @@
 
     let cardClass='alive', icon='✅', title="You're Alive!";
     let subtitle = `Day ${day} · ${pickCount} pick${pickCount!==1?'s':''} made`;
+    const lostToday = result === 'loss';
+    const fpUsed    = myState.freePassUsed;
+    const fpReq     = myState.freePassRequested && !myState.freePassUsed;
+
     if (!myState.alive) {
       cardClass='dead'; icon='💀'; title='Eliminated';
       const why = myState.eliminatedReason==='missed' ? 'missed a pick' : 'team lost';
       subtitle = myState.eliminatedDay ? `Eliminated day ${myState.eliminatedDay} (${why})` : 'Better luck next month';
-    } else if (myState.freePassUsed) {
+    } else if (fpUsed) {
       cardClass='freepass'; icon='🎟️'; title='Alive — Free Pass Used';
       subtitle = `Free pass used on day ${myState.freePassDay}`;
+    } else if (lostToday && !fpUsed) {
+      cardClass='dead'; icon='❌';
+      title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
+      subtitle = fpReq ? 'Awaiting admin approval' : `Day ${day}`;
     }
 
     const fpNote = myState.freePassUsed
@@ -471,13 +479,15 @@
     });
 
     // Start grid from earliest actual pick day across all members
-    let gridStartDay = survivorStartDay;
+    // If nobody has picks yet, fall back to survivorStartDay
+    const allPickDays = [];
     for (const m of members) {
       const ut = allStates[m.uid]?.usedTeams || {};
-      const pickDays = Object.keys(ut).map(ds => parseInt(ds.split('-')[2]));
-      if (pickDays.length > 0) gridStartDay = Math.min(gridStartDay, ...pickDays);
+      Object.keys(ut).forEach(ds => allPickDays.push(parseInt(ds.split('-')[2])));
     }
-    gridStartDay = Math.max(survivorStartDay, gridStartDay);
+    const gridStartDay = allPickDays.length > 0
+      ? Math.min(...allPickDays)
+      : survivorStartDay;
 
     const days = [];
     for (let d=gridStartDay; d<=Math.min(dim,30); d++)
