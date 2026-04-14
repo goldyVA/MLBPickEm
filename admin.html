@@ -2232,14 +2232,13 @@ const NAV_STYLES = `
     const daysInMonth = new Date(year, mon + 1, 0).getDate();
     let alive = true, eliminatedDay = null, eliminatedReason = null;
 
-    // No picks — alive (fresh start)
-    if (!usedTeams || Object.keys(usedTeams).length === 0) return { alive: true, eliminatedDay: null, eliminatedReason: null };
+    // Effective start: if user has picks, start from their first pick day
+    // (handles post-reset joins). If no picks, start from survivorStartDay.
+    // New users who joined late will be eliminated for missed days.
+    const pickDays = Object.keys(usedTeams||{}).map(ds=>parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
+    const effectiveStart = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
 
-    // Start from user's first pick day so pre-reset gaps don't count
-    const pickDays = Object.keys(usedTeams).map(ds => parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
-    const effectiveStartDay = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
-
-    for (let d = effectiveStartDay; d <= Math.min(daysInMonth, 30); d++) {
+    for (let d = effectiveStart; d <= Math.min(daysInMonth, 30); d++) {
       const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
       if (dateStr > today) break;
       const dayData = monthGames[dateStr];
