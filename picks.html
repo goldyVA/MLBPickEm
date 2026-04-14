@@ -2092,12 +2092,15 @@ const NAV_STYLES = `
     const blockedByLoss    = lostToday && !fpUsed; // lost today, FP not approved yet
     const blockedByElim    = !state.alive;          // eliminated (missed day or used FP and lost again)
 
+    // allGamesStarted = last game has started (survivor picks lock at last game start)
+    const lastGame = [...games].sort((a,b) => new Date(b.startTime)-new Date(a.startTime))[0];
+    const allGamesStarted = lastGame ? new Date() >= new Date(lastGame.startTime) : false;
+
     const canPick = state.alive
       && !blockedByLoss
-      && !anyGameStarted === false // at least check game start
       && (() => {
-        if (todayPick) return !pickGameStarted; // can change if game not started
-        return !anyGameStarted; // can pick if no games started yet
+        if (todayPick) return !pickGameStarted;  // can change if picked team's game not started
+        return !allGamesStarted;                  // can pick until last game starts
       })();
 
     // ── Card header ───────────────────────────────────────────────────
