@@ -9,14 +9,13 @@
   <!-- Social / iMessage preview -->
   <meta property="og:title" content="MLB Pick'em League" />
   <meta property="og:description" content="Pick every game. Beat the group. Daily MLB pick'em with standings and survivor." />
-  <meta property="og:image" content="https://goldyva.github.io/MLBPickEm/preview.png" />
+  <meta property="og:image" content="https://goldyva.github.io/MLBPickEm/preview.svg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:type" content="image/png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://goldyva.github.io/MLBPickEm/" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:image" content="https://goldyva.github.io/MLBPickEm/preview.png" />
+  <meta name="twitter:image" content="https://goldyva.github.io/MLBPickEm/preview.svg" />
   <meta name="apple-mobile-web-app-title" content="Pick'em" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -924,7 +923,31 @@
   };
 
   // ── Auth state ────────────────────────────────────────────────────────
+  // ── iOS Safari fix: if Firebase never calls back, stop spinning ──────
+  // When a tab is backgrounded on iOS, IndexedDB (used by Firebase Auth)
+  // can stall. We give it 5 s then fall back to showing the login form.
+  const overlayEl = document.getElementById('loadingOverlay');
+  const authPageEl = document.getElementById('authPage');
+  let authResolved = false;
+  const authTimeoutId = setTimeout(() => {
+    if (!authResolved) {
+      overlayEl.style.display = 'none';
+      authPageEl.style.display = '';
+    }
+  }, 5000);
+
+  // Also re-trigger a page reload when the tab comes back into focus
+  // after being backgrounded (handles the "open Safari later" case).
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !authResolved) {
+      window.location.reload();
+    }
+  });
+
   onAuthStateChanged(auth, async (user) => {
+    authResolved = true;
+    clearTimeout(authTimeoutId);
+
     const overlay       = document.getElementById('loadingOverlay');
     const authPage      = document.getElementById('authPage');
     const welcomeScreen = document.getElementById('welcomeScreen');
