@@ -250,8 +250,7 @@
 
   // ── Compute status (pure function, no Firebase writes) ────────────────
   function computeStatus(usedTeams, fpUsed, fpDay, monthGames, startDay, today) {
-    if (!usedTeams || Object.keys(usedTeams).length === 0)
-      return { alive:true, eliminatedDay:null, eliminatedReason:null };
+    if (!usedTeams) usedTeams = {};
     const now = new Date();
     const ym  = today.substring(0,7);
     const [yr, mo] = ym.split('-').map(Number);
