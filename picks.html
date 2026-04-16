@@ -1503,13 +1503,14 @@ const NAV_STYLES = `
           || null;
       };
 
-      // Debug: log probables if present (remove once confirmed working)
-      if (comp.probables?.length) {
-        console.log('[ESPN probables]', comp.probables.map(p => ({
-          side: p.homeAway,
-          athlete: p.athlete,
-          displayName: p.displayName,
-        })));
+      // Debug: log full comp keys so we can find where pitcher data lives
+      if (games.length === 0) {  // only log for first game
+        console.log('[ESPN comp keys]', Object.keys(comp));
+        console.log('[ESPN comp.probables]', comp.probables);
+        console.log('[ESPN comp.situation]', comp.situation);
+        console.log('[ESPN home competitor keys]', Object.keys(home));
+        console.log('[ESPN away competitor keys]', Object.keys(away));
+        console.log('[ESPN full comp]', JSON.stringify(comp).substring(0, 2000));
       }
 
       // Score
