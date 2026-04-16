@@ -248,13 +248,8 @@
     .team-pitcher {
       font-size: 11.5px;
       color: var(--ink-light);
-      background: var(--cream);
-      border-radius: 100px;
-      padding: 3px 10px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 130px;
+      margin-top: 2px;
+      line-height: 1.5;
     }
 
     /* Middle VS / score */
@@ -1725,7 +1720,7 @@ const NAV_STYLES = `
           ${logoHtml(game.awayTeam)}
           <div class="team-name">${game.awayTeam.name}</div>
           <div class="team-record">${game.awayTeam.record}</div>
-          ${game.awayPitcher ? `<div class="team-pitcher">🎯 ${game.awayPitcher.name}${game.awayPitcher.record ? ` <span class="pitcher-stat">${game.awayPitcher.record}</span>` : ''}${game.awayPitcher.era ? ` <span class="pitcher-stat">${game.awayPitcher.era} ERA</span>` : ''}</div>` : ''}
+          ${game.awayPitcher ? `<div class="team-pitcher">SP: ${game.awayPitcher.name}${game.awayPitcher.record || game.awayPitcher.era ? `<br><span class="pitcher-stat">${[game.awayPitcher.record, game.awayPitcher.era ? game.awayPitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
         </div>
 
         <div class="card-mid">
@@ -1737,7 +1732,7 @@ const NAV_STYLES = `
           ${logoHtml(game.homeTeam)}
           <div class="team-name">${game.homeTeam.name}</div>
           <div class="team-record">${game.homeTeam.record}</div>
-          ${game.homePitcher ? `<div class="team-pitcher">🎯 ${game.homePitcher.name}${game.homePitcher.record ? ` <span class="pitcher-stat">${game.homePitcher.record}</span>` : ''}${game.homePitcher.era ? ` <span class="pitcher-stat">${game.homePitcher.era} ERA</span>` : ''}</div>` : ''}
+          ${game.homePitcher ? `<div class="team-pitcher">SP: ${game.homePitcher.name}${game.homePitcher.record || game.homePitcher.era ? `<br><span class="pitcher-stat">${[game.homePitcher.record, game.homePitcher.era ? game.homePitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
         </div>
       </div>
 
