@@ -239,6 +239,12 @@
       color: var(--ink-faint);
     }
 
+    .pitcher-stat {
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-weight: 400;
+    }
+
     .team-pitcher {
       font-size: 11.5px;
       color: var(--ink-light);
@@ -1490,28 +1496,24 @@ const NAV_STYLES = `
       const statusName = status?.name || 'STATUS_SCHEDULED';
       const startTime  = event.date;
 
-      // Probable pitchers — ESPN puts these in comp.probables[] pre-game.
-      // The athlete object may be inline or just a $ref (not hydrated).
-      // Try multiple known field paths ESPN uses.
-      const getPitcher = (side) => {
-        const prob = comp.probables?.find(p => p.homeAway === side);
+      // Probable pitchers — ESPN puts these on the competitor object, not comp.
+      // home.probables[] and away.probables[] each contain the starter info.
+      const getPitcherInfo = (competitor) => {
+        const prob = competitor.probables?.[0];
         if (!prob) return null;
-        // Try all known paths ESPN uses for the name
-        return prob.athlete?.shortName
+        const name = prob.athlete?.shortName
           || prob.athlete?.displayName
           || prob.displayName
           || null;
+        if (!name) return null;
+        // Pull W-L and ERA from statistics array if present
+        const stats = prob.statistics || [];
+        const wins   = stats.find(s => s.name === 'wins')?.displayValue;
+        const losses = stats.find(s => s.name === 'losses')?.displayValue;
+        const era    = stats.find(s => s.name === 'ERA' || s.abbreviation === 'ERA')?.displayValue;
+        const record = (wins != null && losses != null) ? `${wins}-${losses}` : null;
+        return { name, record, era };
       };
-
-      // Debug: log full comp keys so we can find where pitcher data lives
-      if (games.length === 0) {  // only log for first game
-        console.log('[ESPN comp keys]', Object.keys(comp));
-        console.log('[ESPN comp.probables]', comp.probables);
-        console.log('[ESPN comp.situation]', comp.situation);
-        console.log('[ESPN home competitor keys]', Object.keys(home));
-        console.log('[ESPN away competitor keys]', Object.keys(away));
-        console.log('[ESPN full comp]', JSON.stringify(comp).substring(0, 2000));
-      }
 
       // Score
       const homeScore = home.score ?? null;
@@ -1533,8 +1535,8 @@ const NAV_STYLES = `
         statusShort: status?.shortDetail || '',
         homeTeam:    { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
         awayTeam:    { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
-        homePitcher: getPitcher('home'),
-        awayPitcher: getPitcher('away'),
+        homePitcher: getPitcherInfo(home),
+        awayPitcher: getPitcherInfo(away),
         homeScore,
         awayScore,
         winnerId,
@@ -1723,7 +1725,7 @@ const NAV_STYLES = `
           ${logoHtml(game.awayTeam)}
           <div class="team-name">${game.awayTeam.name}</div>
           <div class="team-record">${game.awayTeam.record}</div>
-          ${game.awayPitcher ? `<div class="team-pitcher">🎯 ${game.awayPitcher}</div>` : ''}
+          ${game.awayPitcher ? `<div class="team-pitcher">🎯 ${game.awayPitcher.name}${game.awayPitcher.record ? ` <span class="pitcher-stat">${game.awayPitcher.record}</span>` : ''}${game.awayPitcher.era ? ` <span class="pitcher-stat">${game.awayPitcher.era} ERA</span>` : ''}</div>` : ''}
         </div>
 
         <div class="card-mid">
@@ -1735,7 +1737,7 @@ const NAV_STYLES = `
           ${logoHtml(game.homeTeam)}
           <div class="team-name">${game.homeTeam.name}</div>
           <div class="team-record">${game.homeTeam.record}</div>
-          ${game.homePitcher ? `<div class="team-pitcher">🎯 ${game.homePitcher}</div>` : ''}
+          ${game.homePitcher ? `<div class="team-pitcher">🎯 ${game.homePitcher.name}${game.homePitcher.record ? ` <span class="pitcher-stat">${game.homePitcher.record}</span>` : ''}${game.homePitcher.era ? ` <span class="pitcher-stat">${game.homePitcher.era} ERA</span>` : ''}</div>` : ''}
         </div>
       </div>
 
