@@ -324,9 +324,9 @@
       object-fit: contain;
     }
 
-    /* Hover only on devices that support it (not touch), skip already-selected */
+    /* Hover only on devices that support it (not touch) */
     @media (hover: hover) {
-      .pick-btn:hover:not(:disabled):not(.selected) {
+      .pick-btn:hover:not(:disabled) {
         border-color: var(--navy);
         color: var(--navy);
         background: #EEF2F8;
@@ -334,7 +334,7 @@
     }
 
     /* Active state works on all devices including touch */
-    .pick-btn:active:not(:disabled):not(.selected) {
+    .pick-btn:active:not(:disabled) {
       border-color: var(--navy);
       color: var(--navy);
       background: #EEF2F8;
@@ -343,8 +343,8 @@
 
     .pick-btn.selected {
       border-color: var(--navy);
-      background: var(--navy) !important;
-      color: var(--white) !important;
+      background: var(--navy);
+      color: var(--white);
     }
 
     .pick-btn.selected:active {
@@ -1413,6 +1413,7 @@ const NAV_STYLES = `
 
   let survivorState    = null;
   let survivorSelected = null;
+  let monthGamesCache  = {};   // all month games keyed by YYYY-MM-DD, for FP window check
 
   // ── Winner resolution ────────────────────────────────────────────────
   function didPickWin(userPick, game) {
@@ -2046,6 +2047,7 @@ const NAV_STYLES = `
       }
     } catch(e) {}
 
+    monthGamesCache = monthGamesForCompute;  // save for FP window check in renderSurvivorCard
     const raw = survivorState;
     const computed = computeSurvivorStatus(
       raw.usedTeams, raw.freePassUsed, raw.freePassDay,
@@ -2089,8 +2091,25 @@ const NAV_STYLES = `
     const anyGameStarted  = games.some(g => new Date() >= new Date(g.startTime));
 
     // Blocking conditions
-    const blockedByLoss    = lostToday && !fpUsed; // lost today, FP not approved yet
-    const blockedByElim    = !state.alive;          // eliminated (missed day or used FP and lost again)
+    // Check if the free pass request window is still open.
+    // Rule: can request any time before the end of the day AFTER the loss day.
+    // i.e. all games on (eliminatedDay + 1) must not all be final yet.
+    function fpWindowOpen() {
+      if (!state.eliminatedDay) return false;
+      const ym = today.substring(0, 7);
+      const nextDay = state.eliminatedDay + 1;
+      const nextDateStr = `${ym}-${String(nextDay).padStart(2, '0')}`;
+      const nextDayData = monthGamesCache[nextDateStr];
+      if (!nextDayData || !nextDayData.games?.length) return true; // no next day games = window open
+      const allFinal = nextDayData.games.every(g => g.statusName === 'STATUS_FINAL');
+      return !allFinal; // window open as long as not all next-day games are final
+    }
+
+    // lostWithFPAvailable: eliminated for a loss, FP unused/unrequested, AND window still open
+    const lostWithFPAvailable = !state.alive && state.eliminatedReason === 'loss'
+      && !fpUsed && !fpReq && fpWindowOpen();
+    const blockedByLoss    = (lostToday || lostWithFPAvailable) && !fpUsed; // lost, FP not approved yet
+    const blockedByElim    = !state.alive && !lostWithFPAvailable; // truly eliminated (missed pick, or lost with FP window expired)
 
     // allGamesStarted = last game has started (survivor picks lock at last game start)
     const lastGame = [...games].sort((a,b) => new Date(b.startTime)-new Date(a.startTime))[0];
@@ -2117,7 +2136,9 @@ const NAV_STYLES = `
     } else if (blockedByLoss) {
       cardClass = 's-dead'; icon = '❌';
       title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
-      sub = `Day ${day} · awaiting admin approval`;
+      sub = fpReq
+        ? `Day ${state.eliminatedDay || day} · awaiting admin approval`
+        : `Lost on day ${state.eliminatedDay || day} · free pass available`;
     }
 
     card.className = `survivor-status-card ${cardClass}`;
@@ -2132,22 +2153,28 @@ const NAV_STYLES = `
           <span style="font-size:13px;color:var(--ink-faint)">
             ${state.eliminatedReason === 'missed'
               ? '⚠️ You missed a pick and have been eliminated.'
-              : '⚠️ Your team lost and you have no free pass remaining.'}
+              : fpUsed
+                ? '⚠️ Your team lost. Your free pass was already used.'
+                : '⚠️ Your team lost and you have no free pass remaining.'}
           </span>
         </div>`;
 
     } else if (blockedByLoss) {
-      // Lost today — show pick result and FP request button, no grid
-      const chipClass = 'pick-loss';
+      // Lost on today or a past day — show pick result and FP request button, no grid
       const showReqBtn = !fpReq;
+      // For past-day losses, show the losing pick from that day instead of today
+      const losingPick = lostWithFPAvailable
+        ? (state.usedTeams?.[`${today.substring(0,7)}-${String(state.eliminatedDay).padStart(2,'0')}`] || todayPick)
+        : todayPick;
       pickHTML = `
         <div class="s-pick-row">
-          <span class="s-pick-label">Today's pick:</span>
-          <div class="s-current-pick ${chipClass}">
-            <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-            ${normalizeAbbrev(todayPick)}
+          <span class="s-pick-label">${lostWithFPAvailable ? `Day ${state.eliminatedDay} pick:` : "Today's pick:"}</span>
+          ${losingPick ? `
+          <div class="s-current-pick pick-loss">
+            <img src="${espnLogoSurv(losingPick)}" alt="${losingPick}" onerror="this.style.display='none'" />
+            ${normalizeAbbrev(losingPick)}
           </div>
-          <span class="s-result-loss">❌ Team lost</span>
+          <span class="s-result-loss">❌ Team lost</span>` : ''}
         </div>
         ${showReqBtn ? `<button class="s-freepass-btn" id="requestFPBtn" style="margin-top:8px">🎟️ Request Free Pass</button>` : ''}
         ${fpReq ? `<div class="s-msg show info" style="margin-top:8px">⏳ Free pass requested — awaiting admin approval. You cannot pick until approved.</div>` : ''}`;
@@ -2260,13 +2287,15 @@ const NAV_STYLES = `
       const btn = document.getElementById('requestFPBtn');
       btn.disabled = true; btn.textContent = 'Requesting…';
       const ym2 = yearMonthStr();
+      // Use the elimination day for past-day losses, today for same-day losses
+      const fpDay = state.eliminatedDay || day;
       try {
         await update(ref(db), {
           [`survivor/${ym2}/${currentUser.uid}/freePassRequested`]: true,
-          [`survivor/${ym2}/${currentUser.uid}/freePassDay`]: day,
+          [`survivor/${ym2}/${currentUser.uid}/freePassDay`]: fpDay,
         });
         survivorState.freePassRequested = true;
-        survivorState.freePassDay = day;
+        survivorState.freePassDay = fpDay;
         renderSurvivorCard(games);
       } catch(e) {
         btn.disabled = false; btn.textContent = '🎟️ Request Free Pass';
