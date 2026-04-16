@@ -1490,11 +1490,27 @@ const NAV_STYLES = `
       const statusName = status?.name || 'STATUS_SCHEDULED';
       const startTime  = event.date;
 
-      // Pitchers from comp.situation or odds/notes
+      // Probable pitchers — ESPN puts these in comp.probables[] pre-game.
+      // The athlete object may be inline or just a $ref (not hydrated).
+      // Try multiple known field paths ESPN uses.
       const getPitcher = (side) => {
         const prob = comp.probables?.find(p => p.homeAway === side);
-        return prob?.athlete?.shortName || null;
+        if (!prob) return null;
+        // Try all known paths ESPN uses for the name
+        return prob.athlete?.shortName
+          || prob.athlete?.displayName
+          || prob.displayName
+          || null;
       };
+
+      // Debug: log probables if present (remove once confirmed working)
+      if (comp.probables?.length) {
+        console.log('[ESPN probables]', comp.probables.map(p => ({
+          side: p.homeAway,
+          athlete: p.athlete,
+          displayName: p.displayName,
+        })));
+      }
 
       // Score
       const homeScore = home.score ?? null;
