@@ -1501,11 +1501,11 @@ const NAV_STYLES = `
           || null;
         if (!name) return null;
         const stats = prob.statistics || [];
-        const wins   = stats.find(s => s.name === 'wins')?.displayValue;
-        const losses = stats.find(s => s.name === 'losses')?.displayValue;
-        const era    = stats.find(s => s.name === 'ERA' || s.abbreviation === 'ERA')?.displayValue;
+        const wins   = stats.find(s => s.name === 'wins')?.displayValue ?? null;
+        const losses = stats.find(s => s.name === 'losses')?.displayValue ?? null;
+        const era    = stats.find(s => s.name === 'ERA' || s.abbreviation === 'ERA')?.displayValue ?? null;
         const record = (wins != null && losses != null) ? `${wins}-${losses}` : null;
-        return { name, record, era };
+        return { name, record: record ?? null, era };
       };
 
       // Score
