@@ -140,6 +140,79 @@
       margin-top: 3px;
     }
 
+    /* Google link row */
+    .google-link-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0;
+      border-top: 1px solid var(--cream-dark);
+    }
+    .google-link-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .google-link-info strong {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .google-link-info span {
+      font-size: 12px;
+      color: var(--ink-faint);
+    }
+    .google-linked-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #EFF6F2;
+      color: #1D6A3E;
+      border: 1px solid #B8DFCA;
+      border-radius: 100px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .btn-google-link {
+      padding: 8px 16px;
+      border: 1.5px solid #4285F4;
+      border-radius: var(--radius-sm);
+      background: white;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4285F4;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    .btn-google-link:hover { background: #F0F4FF; }
+    .btn-google-link:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-google-unlink {
+      padding: 8px 16px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-faint);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .btn-google-unlink:hover { border-color: var(--red); color: var(--red); }
+
     /* Form fields */
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 
@@ -632,6 +705,24 @@
     </div>
   </div>
 
+  <!-- Sign-in Methods -->
+  <div class="profile-card" id="signInMethodsCard">
+    <div class="profile-card-header">Sign-in Methods</div>
+    <div class="profile-card-body">
+      <div class="google-link-row">
+        <div class="google-link-info">
+          <strong>
+            <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+            Google
+          </strong>
+          <span id="googleLinkStatus">Not connected</span>
+        </div>
+        <div id="googleLinkBtn"></div>
+      </div>
+      <div class="msg" id="googleLinkMsg"></div>
+    </div>
+  </div>
+
   <!-- Change PIN -->
   <div class="profile-card">
     <div class="profile-card-header">Change PIN</div>
@@ -660,7 +751,8 @@
   import { initializeApp }                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut,
            updatePassword, reauthenticateWithCredential,
-           EmailAuthProvider }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+           EmailAuthProvider, GoogleAuthProvider,
+           linkWithPopup, unlink }                    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, get, update }           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 function initNav({ activePage, isAdmin = false, userName = '' }) {
@@ -1078,6 +1170,22 @@ const NAV_STYLES = `
       : '';
 
 
+    // Determine auth providers
+    const isGoogleOnly = memberData.authProvider === 'google';
+    const googleProvider = currentUser.providerData?.find(p => p.providerId === 'google.com');
+    const isGoogleLinked = !!googleProvider;
+    const hasPinAuth = currentUser.providerData?.some(p => p.providerId === 'password');
+
+    // Hide Change PIN section for Google-only users
+    document.querySelectorAll('.profile-card-header').forEach(header => {
+      if (header.textContent.trim() === 'Change PIN') {
+        header.closest('.profile-card').style.display = isGoogleOnly ? 'none' : '';
+      }
+    });
+
+    // Render Google link status
+    renderGoogleLinkStatus(isGoogleLinked, hasPinAuth);
+
     // Reminder toggle
     const reminderToggle = document.getElementById('reminderToggle');
     const toggleState    = document.getElementById('reminderToggleState');
@@ -1107,6 +1215,77 @@ const NAV_STYLES = `
     // Load season stats
   }
 
+
+  // ── Google Link/Unlink ───────────────────────────────────────────────
+  function renderGoogleLinkStatus(isLinked, hasPinAuth) {
+    const statusEl = document.getElementById('googleLinkStatus');
+    const btnEl    = document.getElementById('googleLinkBtn');
+    const googleEmail = currentUser.providerData?.find(p => p.providerId === 'google.com')?.email;
+
+    if (isLinked) {
+      statusEl.innerHTML = `<span class="google-linked-badge">✓ Connected</span> ${googleEmail || ''}`;
+      btnEl.innerHTML = `<span style="font-size:12px;color:var(--ink-faint)">Primary sign-in</span>`;
+    } else {
+      statusEl.textContent = 'Not connected';
+      btnEl.innerHTML = `
+        <button class="btn-google-link" id="linkGoogleBtn">
+          <svg width="14" height="14" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+          Connect Google
+        </button>`;
+      document.getElementById('linkGoogleBtn').addEventListener('click', handleGoogleLink);
+    }
+  }
+
+  async function handleGoogleLink() {
+    const btn = document.getElementById('linkGoogleBtn');
+    const msg = document.getElementById('googleLinkMsg');
+    if (!confirm('Switch to Google sign-in? Your PIN will be removed and you will only be able to sign in with Google going forward.')) return;
+    btn.disabled = true; btn.textContent = 'Connecting…';
+    try {
+      const provider = new GoogleAuthProvider();
+      await linkWithPopup(currentUser, provider);
+      // Remove PIN auth — Google is now the only sign-in method
+      try { await unlink(currentUser, 'password'); } catch(e) { /* already gone */ }
+      // Update member record to reflect Google auth
+      await update(ref(db, `adminConfig/members/${currentUser.uid}`), { authProvider: 'google' });
+      msg.textContent = '✓ Switched to Google sign-in. Your PIN has been removed.';
+      msg.className = 'msg info show';
+      // Hide Change PIN card since they no longer have a PIN
+      document.querySelectorAll('.profile-card-header').forEach(header => {
+        if (header.textContent.trim() === 'Change PIN') {
+          header.closest('.profile-card').style.display = 'none';
+        }
+      });
+      renderGoogleLinkStatus(true, false);
+    } catch (err) {
+      if (err.code === 'auth/popup-closed-by-user') { btn.disabled = false; btn.textContent = 'Connect Google'; return; }
+      if (err.code === 'auth/credential-already-in-use') {
+        msg.textContent = 'That Google account is already linked to a different account.';
+      } else {
+        msg.textContent = 'Failed to connect Google. Try again.';
+      }
+      msg.className = 'msg error show';
+      btn.disabled = false; btn.textContent = 'Connect Google';
+    }
+  }
+
+  async function handleGoogleUnlink() {
+    if (!confirm('Disconnect Google? You will only be able to sign in with your PIN.')) return;
+    const btn = document.getElementById('unlinkGoogleBtn');
+    const msg = document.getElementById('googleLinkMsg');
+    btn.disabled = true; btn.textContent = 'Disconnecting…';
+    try {
+      await unlink(currentUser, 'google.com');
+      msg.textContent = 'Google account disconnected.';
+      msg.className = 'msg info show';
+      setTimeout(() => { msg.className = 'msg'; }, 4000);
+      renderGoogleLinkStatus(false, true);
+    } catch (err) {
+      msg.textContent = 'Failed to disconnect. Try again.';
+      msg.className = 'msg error show';
+      btn.disabled = false; btn.textContent = 'Disconnect';
+    }
+  }
 
   // ── Change PIN ────────────────────────────────────────────────────────
   document.getElementById('changePinBtn').addEventListener('click', async () => {
