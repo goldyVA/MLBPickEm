@@ -1967,7 +1967,12 @@ const NAV_STYLES = `
       if (!dayData) continue;
       if (now < dayData.lastStartTime) continue;
       const pick = (usedTeams || {})[dateStr];
-      if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
+      if (!pick) {
+        // Don't eliminate for today if the user has NO picks at all this month —
+        // this handles a mid-day reset where the user hasn't had a chance to pick yet.
+        if (dateStr === today && pickDays.length === 0) break;
+        alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break;
+      }
       const normPick = normalizeAbbrev(pick);
       const game = dayData.games.find(g =>
         normalizeAbbrev(g.homeTeam?.abbrev) === normPick ||
