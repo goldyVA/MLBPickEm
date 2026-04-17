@@ -2011,6 +2011,7 @@ const NAV_STYLES = `
     // Load settings for startDay
     const settingsSnap = await get(ref(db, 'adminConfig/settings'));
     const startDay = settingsSnap.exists() ? (settingsSnap.val().monthlyStartDay || 1) : 1;
+    console.log('[Survivor] startDay:', startDay, 'usedTeams:', JSON.stringify(survivorState.usedTeams));
 
     // Build monthGames from today's games for compute
     const todayData = {
