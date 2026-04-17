@@ -1570,10 +1570,20 @@ const NAV_STYLES = `
 
     try {
       if (isToday) {
-        // Always fetch live from ESPN for today
-        games = await fetchGamesFromESPN(dateStr);
+        // Always fetch live from ESPN for today, fall back to Firebase cache if ESPN fails
+        try {
+          games = await fetchGamesFromESPN(dateStr);
+        } catch (espnErr) {
+          console.warn('ESPN fetch failed for today, trying Firebase cache:', espnErr);
+          const dbSnap = await get(ref(db, `games/${dateStr}`));
+          if (dbSnap.exists()) {
+            games = Object.values(dbSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+          } else {
+            throw espnErr; // no cache either, surface the error
+          }
+        }
       } else {
-        // Past dates: use cache only if all games are final, otherwise re-fetch
+        // Past/future dates: use cache only if all games are final, otherwise re-fetch
         const dbSnap = await get(ref(db, `games/${dateStr}`));
         const allFinal = dbSnap.exists() &&
           Object.values(dbSnap.val()).every(g => g.statusName === 'STATUS_FINAL');
@@ -1584,8 +1594,8 @@ const NAV_STYLES = `
         }
       }
     } catch (err) {
-      console.error('Failed to load games:', err);
-      container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>Check your connection and try again.</p></div>`;
+      console.error('Failed to load games:', err.message, err);
+      container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>${err.message || 'Check your connection and try again.'}</p></div>`;
       return;
     }
 
