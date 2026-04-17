@@ -1541,6 +1541,18 @@ const NAV_STYLES = `
   // ── Load games ────────────────────────────────────────────────────────
   let pollInterval = null; // polling timer for live games
 
+  // Normalize a game object read from Firebase cache.
+  // Old cache entries had pitcher as a plain string; new ones are {name, record, era}.
+  // This ensures both formats render correctly.
+  function normalizeCachedGame(g) {
+    const normPitcher = (p) => {
+      if (!p) return null;
+      if (typeof p === 'string') return { name: p, record: null, era: null };
+      return p;
+    };
+    return { ...g, homePitcher: normPitcher(g.homePitcher), awayPitcher: normPitcher(g.awayPitcher) };
+  }
+
   async function fetchGamesFromESPN(dateStr) {
     const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateToESPN(dateStr)}`);
     const data = await res.json();
@@ -1577,7 +1589,9 @@ const NAV_STYLES = `
           console.warn('ESPN fetch failed for today, trying Firebase cache:', espnErr);
           const dbSnap = await get(ref(db, `games/${dateStr}`));
           if (dbSnap.exists()) {
-            games = Object.values(dbSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+            games = Object.values(dbSnap.val())
+              .map(g => normalizeCachedGame(g))
+              .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
           } else {
             throw espnErr; // no cache either, surface the error
           }
@@ -1588,7 +1602,9 @@ const NAV_STYLES = `
         const allFinal = dbSnap.exists() &&
           Object.values(dbSnap.val()).every(g => g.statusName === 'STATUS_FINAL');
         if (allFinal) {
-          games = Object.values(dbSnap.val()).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+          games = Object.values(dbSnap.val())
+            .map(g => normalizeCachedGame(g))
+            .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
         } else {
           games = await fetchGamesFromESPN(dateStr);
         }
@@ -1724,7 +1740,7 @@ const NAV_STYLES = `
           ${logoHtml(game.awayTeam)}
           <div class="team-name">${game.awayTeam.name}</div>
           <div class="team-record">${game.awayTeam.record}</div>
-          ${game.awayPitcher ? `<div class="team-pitcher">SP: ${game.awayPitcher.name}${game.awayPitcher.record || game.awayPitcher.era ? `<br><span class="pitcher-stat">${[game.awayPitcher.record, game.awayPitcher.era ? game.awayPitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
+          ${game.awayPitcher ? `<div class="team-pitcher">SP: ${typeof game.awayPitcher === 'object' ? game.awayPitcher.name : game.awayPitcher}${typeof game.awayPitcher === 'object' && (game.awayPitcher.record || game.awayPitcher.era) ? `<br><span class="pitcher-stat">${[game.awayPitcher.record, game.awayPitcher.era ? game.awayPitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
         </div>
 
         <div class="card-mid">
@@ -1736,7 +1752,7 @@ const NAV_STYLES = `
           ${logoHtml(game.homeTeam)}
           <div class="team-name">${game.homeTeam.name}</div>
           <div class="team-record">${game.homeTeam.record}</div>
-          ${game.homePitcher ? `<div class="team-pitcher">SP: ${game.homePitcher.name}${game.homePitcher.record || game.homePitcher.era ? `<br><span class="pitcher-stat">${[game.homePitcher.record, game.homePitcher.era ? game.homePitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
+          ${game.homePitcher ? `<div class="team-pitcher">SP: ${typeof game.homePitcher === 'object' ? game.homePitcher.name : game.homePitcher}${typeof game.homePitcher === 'object' && (game.homePitcher.record || game.homePitcher.era) ? `<br><span class="pitcher-stat">${[game.homePitcher.record, game.homePitcher.era ? game.homePitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
         </div>
       </div>
 
