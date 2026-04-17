@@ -195,6 +195,101 @@
     .btn-primary:active { transform: scale(.98); }
     .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
+    /* Reminder toggle */
+    .reminder-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0;
+      border-top: 1px solid var(--cream-dark);
+    }
+
+    .reminder-label {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .reminder-label strong {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .reminder-label span {
+      font-size: 12px;
+      color: var(--ink-faint);
+      line-height: 1.4;
+    }
+
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .toggle-wrap .toggle-state {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-faint);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--cream-dark);
+      border-radius: 26px;
+      cursor: pointer;
+      transition: background .2s;
+      border: 1.5px solid #d0cdc5;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 50%;
+      transform: translateY(-50%);
+      background: white;
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateY(-50%) translateX(18px);
+    }
+
+    .reminder-saving {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
     /* Messages */
     .msg {
       padding: 11px 14px;
@@ -515,6 +610,27 @@
   </div>
 
 
+
+  <!-- Notifications -->
+  <div class="profile-card">
+    <div class="profile-card-header">Notifications</div>
+    <div class="profile-card-body">
+      <div class="reminder-row">
+        <div class="reminder-label">
+          <strong>📧 Daily pick reminder</strong>
+          <span>Get an email ~1 hour before the first game if you haven't submitted picks yet.</span>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-state" id="reminderToggleState">Off</span>
+          <label class="toggle" aria-label="Toggle pick reminder">
+            <input type="checkbox" id="reminderToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="reminder-saving" id="reminderSaving"></div>
+    </div>
+  </div>
 
   <!-- Change PIN -->
   <div class="profile-card">
@@ -961,6 +1077,32 @@ const NAV_STYLES = `
       ? `Joined ${new Date(memberData.joinedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
       : '';
 
+
+    // Reminder toggle
+    const reminderToggle = document.getElementById('reminderToggle');
+    const toggleState    = document.getElementById('reminderToggleState');
+    const reminderSaving = document.getElementById('reminderSaving');
+
+    reminderToggle.checked    = memberData.pickReminderOptIn === true;
+    toggleState.textContent   = reminderToggle.checked ? 'On' : 'Off';
+    toggleState.style.color   = reminderToggle.checked ? 'var(--navy)' : '';
+
+    reminderToggle.addEventListener('change', async () => {
+      const val = reminderToggle.checked;
+      toggleState.textContent = val ? 'On' : 'Off';
+      toggleState.style.color = val ? 'var(--navy)' : '';
+      reminderSaving.textContent = 'Saving…';
+      try {
+        await update(ref(db, `adminConfig/members/${currentUser.uid}`), { pickReminderOptIn: val });
+        memberData.pickReminderOptIn = val;
+        reminderSaving.textContent = '✓ Saved';
+        setTimeout(() => { reminderSaving.textContent = ''; }, 2000);
+      } catch (e) {
+        reminderToggle.checked  = !val;
+        toggleState.textContent = !val ? 'On' : 'Off';
+        reminderSaving.textContent = 'Failed to save. Try again.';
+      }
+    });
 
     // Load season stats
   }
