@@ -2485,8 +2485,7 @@ const NAV_STYLES = `
       await update(ref(db), updates);
     }
 
-    await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
-    document.getElementById('monthlyStartDay').value = day;
+    await update(ref(db, 'adminConfig/settings'), { survivorStartDay: day });
     if (showToast) toast('💀 Survivor reset — everyone is alive again from today!', 'success');
   }
 
