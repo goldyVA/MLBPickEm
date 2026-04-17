@@ -2008,10 +2008,11 @@ const NAV_STYLES = `
       freePassDay: null, usedTeams: {}
     };
 
-    // Load settings for startDay
+    // Load settings for startDay — survivor uses its own field, separate from standings
     const settingsSnap = await get(ref(db, 'adminConfig/settings'));
-    const startDay = settingsSnap.exists() ? (settingsSnap.val().monthlyStartDay || 1) : 1;
-    console.log('[Survivor] startDay:', startDay, 'usedTeams:', JSON.stringify(survivorState.usedTeams));
+    const settings = settingsSnap.exists() ? settingsSnap.val() : {};
+    const startDay = settings.survivorStartDay || settings.monthlyStartDay || 1;
+
 
     // Build monthGames from today's games for compute
     const todayData = {
