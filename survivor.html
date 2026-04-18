@@ -250,8 +250,7 @@
 
   // ── Compute status (pure function, no Firebase writes) ────────────────
   function computeStatus(usedTeams, fpUsed, fpDay, monthGames, startDay, today) {
-    if (!usedTeams || Object.keys(usedTeams).length === 0)
-      return { alive:true, eliminatedDay:null, eliminatedReason:null };
+    if (!usedTeams) usedTeams = {};
     const now = new Date();
     const ym  = today.substring(0,7);
     const [yr, mo] = ym.split('-').map(Number);
@@ -269,7 +268,11 @@
       const dd = monthGames[ds]; if (!dd) continue;
       if (now < dd.lastStartTime) continue;
       const pick = usedTeams[ds];
-      if (!pick) { alive=false; eliminatedDay=d; eliminatedReason='missed'; break; }
+      if (!pick) {
+        // Don't eliminate for today if user has no picks at all — handles post-reset joins
+        if (ds === today && pickDays.length === 0) break;
+        alive=false; eliminatedDay=d; eliminatedReason='missed'; break;
+      }
       const np = norm(pick);
       const game = dd.games.find(g => norm(g.homeTeam?.abbrev)===np || norm(g.awayTeam?.abbrev)===np);
       if (!game || game.statusName!=='STATUS_FINAL' || !game.winnerId) continue;
@@ -577,7 +580,6 @@
       const myRaw = allStates[currentUser.uid]||{};
       const hasPicks = myRaw.usedTeams && Object.keys(myRaw.usedTeams).length>0;
       console.log('[Survivor] myRaw from Firebase:', JSON.stringify(myRaw));
-      console.log('[Survivor] hasPicks:', hasPicks, 'survivorStartDay:', survivorStartDay);
       const myBase = hasPicks ? myRaw : { alive:true, freePassUsed:false, freePassRequested:false, freePassDay:null, usedTeams:{} };
 
       // Games
