@@ -817,7 +817,8 @@
   import { getAuth, signInWithEmailAndPassword,
            createUserWithEmailAndPassword, sendPasswordResetEmail,
            onAuthStateChanged, signOut,
-           GoogleAuthProvider, signInWithPopup }        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+           GoogleAuthProvider, signInWithPopup,
+           signInWithRedirect, getRedirectResult }      from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, set, get, child }         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -974,48 +975,68 @@
   };
 
   // ── Google Sign-In ───────────────────────────────────────────────────
-  async function handleGoogleSignIn() {
-    try {
-      const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
-      const isOpen = snap.exists() ? snap.val() : false;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      const provider = new GoogleAuthProvider();
-      const cred = await signInWithPopup(auth, provider);
-      const user = cred.user;
+  async function handleGoogleCredential(cred) {
+    const user = cred.user;
+    const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
+    const isOpen = snap.exists() ? snap.val() : false;
 
-      // Check if member already exists
-      const memberSnap = await get(ref(db, `adminConfig/members/${user.uid}`));
-      if (!memberSnap.exists()) {
-        // New user — check registration is open
-        if (!isOpen) {
-          await signOut(auth);
-          showMsg('siMsg', 'Registration is currently closed. Contact the league admin to be added.', 'error');
-          return;
-        }
-        // Create member record
-        const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-        await set(ref(db, `adminConfig/members/${user.uid}`), {
-          email:        user.email,
-          displayName:  user.displayName || user.email.split('@')[0],
-          approved:     true,
-          joinedAt:     new Date().toISOString(),
-          authProvider: 'google',
-        });
-        if (isAdmin) {
-          await set(ref(db, `adminConfig/admins/${user.uid}`), true);
-        }
+    const memberSnap = await get(ref(db, `adminConfig/members/${user.uid}`));
+    if (!memberSnap.exists()) {
+      if (!isOpen) {
+        await signOut(auth);
+        showMsg('siMsg', 'Registration is currently closed. Contact the league admin to be added.', 'error');
+        return;
       }
-      // onAuthStateChanged handles the rest
+      const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      await set(ref(db, `adminConfig/members/${user.uid}`), {
+        email:        user.email,
+        displayName:  user.displayName || user.email.split('@')[0],
+        approved:     true,
+        joinedAt:     new Date().toISOString(),
+        authProvider: 'google',
+      });
+      if (isAdmin) {
+        await set(ref(db, `adminConfig/admins/${user.uid}`), true);
+      }
+    }
+    // onAuthStateChanged handles redirect to app
+  }
+
+  async function handleGoogleSignIn() {
+    const provider = new GoogleAuthProvider();
+    try {
+      if (isMobile) {
+        // On iOS/Android, use redirect (popup is blocked by Safari)
+        await signInWithRedirect(auth, provider);
+        // Page will reload after Google redirects back — result handled below
+      } else {
+        const cred = await signInWithPopup(auth, provider);
+        await handleGoogleCredential(cred);
+      }
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') return;
       if (err.code === 'auth/account-exists-with-different-credential') {
         showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
       } else {
         showMsg('siMsg', 'Google sign-in failed. Please try again.', 'error');
+        console.error(err);
       }
-      console.error(err);
     }
   }
+
+  // Handle redirect result on page load (mobile Google sign-in returns here)
+  getRedirectResult(auth).then(async (cred) => {
+    if (cred) await handleGoogleCredential(cred);
+  }).catch(err => {
+    if (err.code === 'auth/account-exists-with-different-credential') {
+      showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
+    } else if (err.code) {
+      showMsg('siMsg', 'Google sign-in failed. Please try again.', 'error');
+      console.error(err);
+    }
+  });
 
   document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
   document.getElementById('googleSignUpBtn').addEventListener('click', handleGoogleSignIn);
