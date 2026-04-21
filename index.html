@@ -979,6 +979,7 @@
 
   async function handleGoogleCredential(cred) {
     const user = cred.user;
+    console.log('[Google] handleGoogleCredential called for:', user.email);
     const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
     const isOpen = snap.exists() ? snap.val() : false;
 
@@ -1036,8 +1037,10 @@
   let pendingRedirect = true;
 
   getRedirectResult(auth).then(async (cred) => {
+    console.log('[Redirect] getRedirectResult resolved, cred:', cred?.user?.email || 'null');
     if (cred) await handleGoogleCredential(cred);
   }).catch(err => {
+    console.error('[Redirect] getRedirectResult error:', err.code, err.message);
     if (err.code === 'auth/account-exists-with-different-credential') {
       showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
     } else if (err.code) {
@@ -1066,13 +1069,16 @@
   });
 
   onAuthStateChanged(auth, async (user) => {
+    console.log('[Auth] onAuthStateChanged fired, user:', user?.email, 'pendingRedirect:', pendingRedirect);
     // Wait for redirect result to finish before acting
     if (pendingRedirect) {
+      console.log('[Auth] waiting for redirect to resolve...');
       await new Promise(resolve => {
         const check = setInterval(() => {
           if (!pendingRedirect) { clearInterval(check); resolve(); }
         }, 50);
       });
+      console.log('[Auth] redirect resolved, continuing');
     }
     authResolved = true;
     clearTimeout(authTimeoutId);
