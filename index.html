@@ -9,13 +9,14 @@
   <!-- Social / iMessage preview -->
   <meta property="og:title" content="MLB Pick'em League" />
   <meta property="og:description" content="Pick every game. Beat the group. Daily MLB pick'em with standings and survivor." />
-  <meta property="og:image" content="https://goldyva.github.io/MLBPickEm/preview.svg" />
+  <meta property="og:image" content="https://goldyva.github.io/MLBPickEm/preview.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://goldyva.github.io/MLBPickEm/" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:image" content="https://goldyva.github.io/MLBPickEm/preview.svg" />
+  <meta name="twitter:image" content="https://goldyva.github.io/MLBPickEm/preview.png" />
   <meta name="apple-mobile-web-app-title" content="Pick'em" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -570,7 +571,6 @@
     }
 
 
-    /* ── Google sign-in button ──────────────────── */
     .btn-google {
       width: 100%;
       padding: 13px;
@@ -589,12 +589,8 @@
       gap: 10px;
       margin-top: 4px;
     }
-    .btn-google:hover {
-      border-color: #4285F4;
-      box-shadow: var(--shadow-sm);
-    }
+    .btn-google:hover { border-color: #4285F4; box-shadow: var(--shadow-sm); }
     .btn-google:disabled { opacity: .5; cursor: not-allowed; }
-
     .auth-divider {
       display: flex;
       align-items: center;
@@ -603,9 +599,8 @@
       color: var(--ink-faint);
       font-size: 12px;
     }
-    .auth-divider::before,
-    .auth-divider::after {
-      content: '';
+    .auth-divider::before, .auth-divider::after {
+      content: \'\';
       flex: 1;
       height: 1px;
       background: var(--cream-dark);
@@ -669,9 +664,6 @@
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
-<!-- Debug overlay (remove after fixing) -->
-<div id="debugLog" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:9999;white-space:pre-wrap;word-break:break-all"></div>
-
 <!-- Auth page (shown when logged out) -->
 <div class="page" id="authPage" style="display:none">
   <!-- Hero panel -->
@@ -728,10 +720,7 @@
         <div class="msg" id="siMsg"></div>
         <button type="submit" class="btn-primary" id="siBtn">Sign In</button>
         <div class="auth-divider">or</div>
-        <button type="button" class="btn-google" id="googleSignInBtn">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-          Continue with Google
-        </button>
+        <button type="button" class="btn-google" id="googleSignInBtn"><svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg> Continue with Google</button>
       </form>
 
       <!-- Sign Up Form -->
@@ -758,10 +747,7 @@
         <div class="msg" id="suMsg"></div>
         <button type="submit" class="btn-primary" id="suBtn">Request Access</button>
         <div class="auth-divider">or</div>
-        <button type="button" class="btn-google" id="googleSignUpBtn">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-          Continue with Google
-        </button>
+        <button type="button" class="btn-google" id="googleSignUpBtn"><svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg> Continue with Google</button>
       </form>
 
       <div class="auth-footer">
@@ -823,15 +809,6 @@
            GoogleAuthProvider, signInWithPopup,
            signInWithRedirect, getRedirectResult }      from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, set, get, child }         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-
-  // ── On-screen debug logger ──────────────────────────────────────────
-  const dbgEl = document.getElementById('debugLog');
-  dbgEl.style.display = 'block';
-  function dbg(msg) {
-    dbgEl.textContent += msg + '
-';
-    dbgEl.scrollTop = dbgEl.scrollHeight;
-  }
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
@@ -989,18 +966,15 @@
   // ── Google Sign-In ───────────────────────────────────────────────────
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  async function handleGoogleCredential(cred) {
-    const user = cred.user;
-    dbg('[Google] credential for:' + user.email);
+  async function handleGoogleCredential(user) {
     const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
     const isOpen = snap.exists() ? snap.val() : false;
-
     const memberSnap = await get(ref(db, `adminConfig/members/${user.uid}`));
     if (!memberSnap.exists()) {
       if (!isOpen) {
         await signOut(auth);
         showMsg('siMsg', 'Registration is currently closed. Contact the league admin to be added.', 'error');
-        return;
+        return false;
       }
       const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
       await set(ref(db, `adminConfig/members/${user.uid}`), {
@@ -1010,23 +984,19 @@
         joinedAt:     new Date().toISOString(),
         authProvider: 'google',
       });
-      if (isAdmin) {
-        await set(ref(db, `adminConfig/admins/${user.uid}`), true);
-      }
+      if (isAdmin) await set(ref(db, `adminConfig/admins/${user.uid}`), true);
     }
-    // onAuthStateChanged handles redirect to app
+    return true;
   }
 
   async function handleGoogleSignIn() {
     const provider = new GoogleAuthProvider();
     try {
       if (isMobile) {
-        // On iOS/Android, use redirect (popup is blocked by Safari)
         await signInWithRedirect(auth, provider);
-        // Page will reload after Google redirects back — result handled below
       } else {
         const cred = await signInWithPopup(auth, provider);
-        await handleGoogleCredential(cred);
+        await handleGoogleCredential(cred.user);
       }
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') return;
@@ -1034,7 +1004,6 @@
         showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
       } else {
         showMsg('siMsg', 'Google sign-in failed. Please try again.', 'error');
-        console.error(err);
       }
     }
   }
@@ -1043,27 +1012,6 @@
   document.getElementById('googleSignUpBtn').addEventListener('click', handleGoogleSignIn);
 
   // ── Auth state ────────────────────────────────────────────────────────
-  // pendingRedirect: blocks onAuthStateChanged until getRedirectResult resolves.
-  // Without this, onAuthStateChanged fires before the member record is created
-  // on mobile redirect sign-in, causing a flash back to the login screen.
-  let pendingRedirect = true;
-
-  getRedirectResult(auth).then(async (cred) => {
-    dbg('[Redirect] resolved cred:' + (cred?.user?.email||'null'));
-    if (cred) await handleGoogleCredential(cred);
-  }).catch(err => {
-    dbg('[Redirect] error:' + err.code + ' ' + err.message);
-    if (err.code === 'auth/account-exists-with-different-credential') {
-      showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
-    } else if (err.code) {
-      showMsg('siMsg', 'Google sign-in failed. Please try again.', 'error');
-      console.error(err);
-    }
-  }).finally(() => {
-    pendingRedirect = false;
-  });
-
-  // iOS Safari fix: if Firebase never calls back, stop spinning after 5s
   const overlayEl  = document.getElementById('loadingOverlay');
   const authPageEl = document.getElementById('authPage');
   let authResolved = false;
@@ -1080,20 +1028,22 @@
     }
   });
 
+  // On mobile, check for redirect result first, THEN let onAuthStateChanged run.
+  // This ensures member record exists before the auth state handler tries to read it.
+  if (isMobile) {
+    getRedirectResult(auth).then(async (cred) => {
+      if (cred) await handleGoogleCredential(cred.user);
+    }).catch(err => {
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
+      }
+    });
+  }
+
   onAuthStateChanged(auth, async (user) => {
-    dbg('[Auth] fired user:' + (user?.email||'null') + ' pending:' + pendingRedirect);
-    // Wait for redirect result to finish before acting
-    if (pendingRedirect) {
-      dbg('[Auth] waiting for redirect...');
-      await new Promise(resolve => {
-        const check = setInterval(() => {
-          if (!pendingRedirect) { clearInterval(check); resolve(); }
-        }, 50);
-      });
-      dbg('[Auth] redirect resolved');
-    }
     authResolved = true;
     clearTimeout(authTimeoutId);
+
     const overlay       = document.getElementById('loadingOverlay');
     const authPage      = document.getElementById('authPage');
     const welcomeScreen = document.getElementById('welcomeScreen');
