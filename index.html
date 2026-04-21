@@ -964,8 +964,6 @@
   };
 
   // ── Google Sign-In ───────────────────────────────────────────────────
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
   async function handleGoogleCredential(user) {
     const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
     const isOpen = snap.exists() ? snap.val() : false;
@@ -989,23 +987,21 @@
     return true;
   }
 
-  async function handleGoogleSignIn() {
+  function handleGoogleSignIn() {
+    // Open popup synchronously inside the click handler so Safari doesn't block it.
+    // Do NOT await anything before signInWithPopup — any async gap breaks iOS.
     const provider = new GoogleAuthProvider();
-    try {
-      if (isMobile) {
-        await signInWithRedirect(auth, provider);
-      } else {
-        const cred = await signInWithPopup(auth, provider);
-        await handleGoogleCredential(cred.user);
-      }
-    } catch (err) {
-      if (err.code === 'auth/popup-closed-by-user') return;
-      if (err.code === 'auth/account-exists-with-different-credential') {
-        showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
-      } else {
-        showMsg('siMsg', 'Google sign-in failed. Please try again.', 'error');
-      }
-    }
+    signInWithPopup(auth, provider)
+      .then(cred => handleGoogleCredential(cred.user))
+      .catch(err => {
+        if (err.code === 'auth/popup-closed-by-user' ||
+            err.code === 'auth/cancelled-popup-request') return;
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
+        } else {
+          showMsg('siMsg', 'Google sign-in failed. Please try again.', 'error');
+        }
+      });
   }
 
   document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
@@ -1027,18 +1023,6 @@
       window.location.reload();
     }
   });
-
-  // On mobile, check for redirect result first, THEN let onAuthStateChanged run.
-  // This ensures member record exists before the auth state handler tries to read it.
-  if (isMobile) {
-    getRedirectResult(auth).then(async (cred) => {
-      if (cred) await handleGoogleCredential(cred.user);
-    }).catch(err => {
-      if (err.code === 'auth/account-exists-with-different-credential') {
-        showMsg('siMsg', 'An account with that email already exists. Sign in with your PIN, then connect Google from your Profile page.', 'warn');
-      }
-    });
-  }
 
   onAuthStateChanged(auth, async (user) => {
     authResolved = true;
