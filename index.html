@@ -1026,7 +1026,15 @@
     }
   }
 
-  // Handle redirect result on page load (mobile Google sign-in returns here)
+  document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
+  document.getElementById('googleSignUpBtn').addEventListener('click', handleGoogleSignIn);
+
+  // ── Auth state ────────────────────────────────────────────────────────
+  // pendingRedirect: blocks onAuthStateChanged until getRedirectResult resolves.
+  // Without this, onAuthStateChanged fires before the member record is created
+  // on mobile redirect sign-in, causing a flash back to the login screen.
+  let pendingRedirect = true;
+
   getRedirectResult(auth).then(async (cred) => {
     if (cred) await handleGoogleCredential(cred);
   }).catch(err => {
@@ -1036,13 +1044,38 @@
       showMsg('siMsg', 'Google sign-in failed. Please try again.', 'error');
       console.error(err);
     }
+  }).finally(() => {
+    pendingRedirect = false;
   });
 
-  document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
-  document.getElementById('googleSignUpBtn').addEventListener('click', handleGoogleSignIn);
+  // iOS Safari fix: if Firebase never calls back, stop spinning after 5s
+  const overlayEl  = document.getElementById('loadingOverlay');
+  const authPageEl = document.getElementById('authPage');
+  let authResolved = false;
+  const authTimeoutId = setTimeout(() => {
+    if (!authResolved) {
+      overlayEl.style.display = 'none';
+      authPageEl.style.display = '';
+    }
+  }, 5000);
 
-  // ── Auth state ────────────────────────────────────────────────────────
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !authResolved) {
+      window.location.reload();
+    }
+  });
+
   onAuthStateChanged(auth, async (user) => {
+    // Wait for redirect result to finish before acting
+    if (pendingRedirect) {
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (!pendingRedirect) { clearInterval(check); resolve(); }
+        }, 50);
+      });
+    }
+    authResolved = true;
+    clearTimeout(authTimeoutId);
     const overlay       = document.getElementById('loadingOverlay');
     const authPage      = document.getElementById('authPage');
     const welcomeScreen = document.getElementById('welcomeScreen');
