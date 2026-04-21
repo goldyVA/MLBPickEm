@@ -669,6 +669,9 @@
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
+<!-- Debug overlay (remove after fixing) -->
+<div id="debugLog" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:9999;white-space:pre-wrap;word-break:break-all"></div>
+
 <!-- Auth page (shown when logged out) -->
 <div class="page" id="authPage" style="display:none">
   <!-- Hero panel -->
@@ -820,6 +823,21 @@
            GoogleAuthProvider, signInWithPopup,
            signInWithRedirect, getRedirectResult }      from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, set, get, child }         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  // ── On-screen debug logger ──────────────────────────────────────────
+  const dbgEl = document.getElementById('debugLog');
+  dbgEl.style.display = 'block';
+  const _log = console.log.bind(console);
+  const _err = console.error.bind(console);
+  function dbg(...args) {
+    _log(...args);
+    dbgEl.textContent += args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ') + '
+';
+    dbgEl.scrollTop = dbgEl.scrollHeight;
+  }
+  console.log   = dbg;
+  console.error = dbg;
+  console.warn  = dbg;
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
