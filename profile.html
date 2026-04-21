@@ -752,7 +752,8 @@
   import { getAuth, onAuthStateChanged, signOut,
            updatePassword, reauthenticateWithCredential,
            EmailAuthProvider, GoogleAuthProvider,
-           linkWithPopup, unlink }                    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+           linkWithPopup, linkWithRedirect,
+           getRedirectResult, unlink }                from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, get, update }           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 function initNav({ activePage, isAdmin = false, userName = '' }) {
@@ -1272,27 +1273,38 @@ const NAV_STYLES = `
     }
   }
 
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  async function finishGoogleLink() {
+    // Remove PIN auth — Google is now the only sign-in method
+    try { await unlink(currentUser, 'password'); } catch(e) { /* already gone */ }
+    await update(ref(db, `adminConfig/members/${currentUser.uid}`), { authProvider: 'google' });
+    const msg = document.getElementById('googleLinkMsg');
+    if (msg) {
+      msg.textContent = '✓ Switched to Google sign-in. Your PIN has been removed.';
+      msg.className = 'msg info show';
+    }
+    document.querySelectorAll('.profile-card-header').forEach(header => {
+      if (header.textContent.trim() === 'Change PIN') {
+        header.closest('.profile-card').style.display = 'none';
+      }
+    });
+    renderGoogleLinkStatus(true, false);
+  }
+
   async function handleGoogleLink() {
     const btn = document.getElementById('linkGoogleBtn');
     const msg = document.getElementById('googleLinkMsg');
-
     btn.disabled = true; btn.textContent = 'Connecting…';
     try {
       const provider = new GoogleAuthProvider();
-      await linkWithPopup(currentUser, provider);
-      // Remove PIN auth — Google is now the only sign-in method
-      try { await unlink(currentUser, 'password'); } catch(e) { /* already gone */ }
-      // Update member record to reflect Google auth
-      await update(ref(db, `adminConfig/members/${currentUser.uid}`), { authProvider: 'google' });
-      msg.textContent = '✓ Switched to Google sign-in. Your PIN has been removed.';
-      msg.className = 'msg info show';
-      // Hide Change PIN card since they no longer have a PIN
-      document.querySelectorAll('.profile-card-header').forEach(header => {
-        if (header.textContent.trim() === 'Change PIN') {
-          header.closest('.profile-card').style.display = 'none';
-        }
-      });
-      renderGoogleLinkStatus(true, false);
+      if (isMobile) {
+        await linkWithRedirect(currentUser, provider);
+        // Page redirects to Google and back — result handled in getRedirectResult below
+      } else {
+        await linkWithPopup(currentUser, provider);
+        await finishGoogleLink();
+      }
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') { btn.disabled = false; btn.textContent = 'Connect Google'; return; }
       if (err.code === 'auth/credential-already-in-use') {
@@ -1304,6 +1316,13 @@ const NAV_STYLES = `
       btn.disabled = false; btn.textContent = 'Connect Google';
     }
   }
+
+  // Handle redirect result on page load (mobile Google link returns here)
+  getRedirectResult(auth).then(async (cred) => {
+    if (cred) await finishGoogleLink();
+  }).catch(err => {
+    if (err.code) console.error('Redirect link error:', err);
+  });
 
   async function handleGoogleUnlink() {
     if (!confirm('Disconnect Google? You will only be able to sign in with your PIN.')) return;
