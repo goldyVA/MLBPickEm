@@ -662,6 +662,14 @@
     <div style="font-family:DM Sans,sans-serif;font-size:14px;color:#999990">Loading…</div>
   </div>
 </div>
+<script>
+  // If user was previously logged in, hide the overlay immediately and show
+  // the welcome screen skeleton while Firebase confirms in the background.
+  // This makes returning users see content instantly instead of a spinner.
+  if (localStorage.getItem('pickem_authed') === '1') {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+</script>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <!-- Auth page (shown when logged out) -->
@@ -1011,18 +1019,30 @@
   const overlayEl  = document.getElementById('loadingOverlay');
   const authPageEl = document.getElementById('authPage');
   let authResolved = false;
+
+  // Only show login page after timeout if Firebase truly hasn't responded.
+  // Use a longer timeout (15s) and only fall back to login — never force a reload.
+  // A reload could interrupt a valid session rehydrating from IndexedDB.
   const authTimeoutId = setTimeout(() => {
     if (!authResolved) {
       overlayEl.style.display = 'none';
       authPageEl.style.display = '';
     }
-  }, 5000);
+  }, 15000);
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && !authResolved) {
-      window.location.reload();
-    }
-  });
+  // On mobile Safari, if the tab comes back into focus and auth still hasn't
+  // resolved after 3 extra seconds, then reload. This handles the rare case
+  // where IndexedDB stalls while backgrounded.
+  const isMobileSafari = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobileSafari) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && !authResolved) {
+        setTimeout(() => {
+          if (!authResolved) window.location.reload();
+        }, 3000);
+      }
+    });
+  }
 
   onAuthStateChanged(auth, async (user) => {
     authResolved = true;
@@ -1035,7 +1055,8 @@
     const appNav        = document.getElementById('appNav');
 
     if (!user) {
-      // Not logged in — show auth page, hide everything else
+      // Not logged in — clear flag and show auth page
+      localStorage.removeItem('pickem_authed');
       authPage.style.display      = '';
       welcomeScreen.style.display = 'none';
       pendingScreen.style.display = 'none';
@@ -1058,11 +1079,15 @@
     const adminUser = adminSnap.exists() && adminSnap.val() === true;
 
     // Now reveal the right screen all at once
+    localStorage.setItem('pickem_authed', '1');
     overlay.style.display = 'none';
     appNav.style.display  = 'flex';
     document.getElementById('navUser').textContent = member?.displayName || user.email;
     if (adminUser) document.getElementById('adminLink').style.display = '';
-    const _doSignOut = () => signOut(auth);
+    const _doSignOut = () => {
+      localStorage.removeItem('pickem_authed');
+      signOut(auth);
+    };
     document.getElementById('signOutBtn')?.addEventListener('click', _doSignOut);
     document.getElementById('drawerSignOutBtn')?.addEventListener('click', _doSignOut);
 
