@@ -79,35 +79,7 @@
       margin-top: 4px;
     }
 
-    /* ── Stats row ───────────────────────────── */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
-      margin-bottom: 28px;
-    }
 
-    .stat-card {
-      background: var(--white);
-      border: 1.5px solid var(--cream-dark);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .stat-value {
-      font-family: 'DM Serif Display', serif;
-      font-size: 28px;
-      color: var(--navy);
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--ink-faint);
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      margin-top: 4px;
-    }
 
     /* ── Section ─────────────────────────────── */
     .section {
@@ -209,7 +181,7 @@
       white-space: nowrap;
     }
 
-    .pill-pending  { background: #FEF9EE; color: #7A5A10; border: 1px solid #F5DFA0; }
+
     .pill-approved { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
     .pill-admin    { background: #EEF2F8; color: var(--navy); border: 1px solid #C0CEDF; }
 
@@ -972,21 +944,7 @@
     <p>Manage members, review picks, and oversee survivor.</p>
   </div>
 
-  <!-- Stats row -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-value" id="statTotal">—</div>
-      <div class="stat-label">Total Members</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" id="statApproved">—</div>
-      <div class="stat-label">Approved</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" id="statSurvivorAlive">—</div>
-      <div class="stat-label">Survivor Alive</div>
-    </div>
-  </div>
+
 
 
   <!-- ── Registration toggle ── -->
@@ -1578,14 +1536,7 @@ const NAV_STYLES = `
       snap.forEach(child => allMembers.push({ uid: child.key, ...child.val() }));
     }
 
-    // Stats
-    const total    = allMembers.length;
-    const approved = allMembers.filter(m => m.approved).length;
-
-    document.getElementById('statTotal').textContent    = total;
-    document.getElementById('statApproved').textContent = approved;
     renderMembers();
-    loadSurvivorStats();
   }
 
   // ── Render all members ────────────────────────────────────────────────
@@ -1622,38 +1573,14 @@ const NAV_STYLES = `
           <div class="row-actions">
             <button class="btn-edit" onclick="startEditName('${m.uid}')">Rename</button>
             ${m.uid !== currentUser.uid && !m.isAdmin
-              ? `<button class="btn-revoke" onclick="revokeMember('${m.uid}', '${safeName}')">Revoke</button>`
+              ? `<button class="btn-revoke" onclick="revokeMember('${m.uid}', '${safeName}')">Remove</button>`
               : ''}
           </div>
         </div>`;
     }).join('');
   }
 
-  // ── Approve member ────────────────────────────────────────────────────
-  window.approveMember = async function(uid, name) {
-    try {
-      await update(ref(db, `adminConfig/members/${uid}`), { approved: true });
-      const m = allMembers.find(m => m.uid === uid);
-      if (m) m.approved = true;
-      toast(`✅ ${name} approved!`);
-      loadMembers();
-    } catch (e) {
-      toast('Failed to approve member.', 'error');
-    }
-  };
 
-  // ── Deny / remove member ──────────────────────────────────────────────
-  window.denyMember = async function(uid) {
-    if (!confirm('Remove this member request? They will need to sign up again.')) return;
-    try {
-      await remove(ref(db, `adminConfig/members/${uid}`));
-      allMembers = allMembers.filter(m => m.uid !== uid);
-      toast('Member request removed.');
-      loadMembers();
-    } catch (e) {
-      toast('Failed to remove member.', 'error');
-    }
-  };
 
 
   // ── Edit display name ─────────────────────────────────────────────────
@@ -1684,17 +1611,24 @@ const NAV_STYLES = `
     }
   };
 
-  // ── Revoke approval ───────────────────────────────────────────────────
+  // ── Remove member — delete all data ─────────────────────────────────
   window.revokeMember = async function(uid, name) {
-    if (!confirm(`Revoke ${name}'s access? They will no longer be able to make picks.`)) return;
+    if (!confirm(`Remove ${name} completely?\n\nThis will delete their account, all picks, and all survivor data. This cannot be undone.`)) return;
     try {
-      await update(ref(db, `adminConfig/members/${uid}`), { approved: false });
-      const m = allMembers.find(m => m.uid === uid);
-      if (m) m.approved = false;
-      toast(`${name}'s access revoked.`);
-      loadMembers();
+      const ym = yearMonthStr();
+      // Delete all data in parallel
+      await Promise.all([
+        remove(ref(db, `adminConfig/members/${uid}`)),
+        remove(ref(db, `picks/${uid}`)),
+        remove(ref(db, `survivor/${ym}/${uid}`)),
+        remove(ref(db, `standings/${uid}`)),
+      ]);
+      allMembers = allMembers.filter(m => m.uid !== uid);
+      toast(`${name} removed and all data deleted.`);
+      renderMembers();
     } catch (e) {
-      toast('Failed to revoke access.', 'error');
+      console.error(e);
+      toast('Failed to remove member: ' + e.message, 'error');
     }
   };
 
@@ -1830,18 +1764,7 @@ const NAV_STYLES = `
     }
   });
 
-  // ── Survivor stats ────────────────────────────────────────────────────
-  async function loadSurvivorStats() {
-    const ym   = yearMonthStr();
-    const snap = await get(ref(db, `survivor/${ym}`));
-    let alive  = 0;
 
-    if (snap.exists()) {
-      snap.forEach(child => { if (child.val().alive) alive++; });
-    }
-
-    document.getElementById('statSurvivorAlive').textContent = alive;
-  }
 
   // ── Tab switching ─────────────────────────────────────────────────────
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -2485,7 +2408,8 @@ const NAV_STYLES = `
       await update(ref(db), updates);
     }
 
-    await update(ref(db, 'adminConfig/settings'), { survivorStartDay: day });
+    await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+    document.getElementById('monthlyStartDay').value = day;
     if (showToast) toast('💀 Survivor reset — everyone is alive again from today!', 'success');
   }
 
@@ -2494,7 +2418,6 @@ const NAV_STYLES = `
     if (!confirm(`💀 Reset ALL survivor data?\n\nEveryone will be alive again, all picks cleared, and the start day set to today (day ${day}).\n\nThis cannot be undone.`)) return;
     try {
       await doSurvivorReset(true);
-      loadSurvivorStats();
     } catch (e) {
       console.error(e);
       toast('Failed to reset survivor: ' + e.message, 'error');
@@ -2508,7 +2431,6 @@ const NAV_STYLES = `
       await doSurvivorReset(false);
       toast('Survivor reset. Everyone is alive again from today.', 'success');
       loadSurvivorData();
-      loadSurvivorStats();
     } catch (e) {
       console.error(e);
       toast('Failed to reset survivor: ' + e.message, 'error');
@@ -2546,13 +2468,7 @@ const NAV_STYLES = `
       });
     }
 
-    const total    = allMembers.length;
-    const approved = allMembers.filter(m => m.approved).length;
-
-    document.getElementById('statTotal').textContent    = total;
-    document.getElementById('statApproved').textContent = approved;
     renderMembers();
-    loadSurvivorStats();
     loadRegistrationState();
     loadLeagueSettings();
 
