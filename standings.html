@@ -1316,7 +1316,7 @@ const NAV_STYLES = `
         if (dayHasPick) daysActive++;
       }
 
-      rows.push({ uid: member.uid, displayName: member.displayName, totalPicks, totalCorrect, daysActive, percentage: pct(totalCorrect, totalPicks) });
+      rows.push({ uid: member.uid, displayName: member.displayName, donated: member.donated || false, totalPicks, totalCorrect, daysActive, percentage: pct(totalCorrect, totalPicks) });
     }
 
     rows.sort((a, b) => {
@@ -1380,7 +1380,7 @@ const NAV_STYLES = `
       podiumEl.innerHTML = podiumRows.map((r, i) => `
         <div class="podium-card rank-${i+1} ${r.uid === currentUser.uid ? 'is-you' : ''}">
           <div class="podium-medal">${MEDALS[i]}</div>
-          <div class="podium-name">
+          <div class="podium-name" style="${filter === 'season' && !r.donated ? 'color:var(--red)' : ''}">
             ${r.displayName}
             ${r.uid === currentUser.uid ? '<span class="podium-you">(you)</span>' : ''}
           </div>
@@ -1425,7 +1425,7 @@ const NAV_STYLES = `
                   </td>
                   <td>
                     <div class="member-info">
-                      <span class="member-name">
+                      <span class="member-name" style="${filter === 'season' && !r.donated ? 'color:var(--red)' : ''}">
                         ${r.displayName}
                         ${isYou ? '<span class="you-tag">YOU</span>' : ''}
                       </span>
