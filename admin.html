@@ -1596,7 +1596,7 @@ const NAV_STYLES = `
         <div class="member-row" id="member-${m.uid}">
           <div class="member-avatar" style="${m.isAdmin ? 'background:var(--accent);color:var(--ink)' : ''}">${initials(m.displayName || m.email)}</div>
           <div class="member-info">
-            <div class="member-name" id="name-display-${m.uid}">${m.displayName || '—'}</div>
+            <div class="member-name" id="name-display-${m.uid}">${m.displayName || '—'}${m.pickReminderOptIn ? ' <span title="Pick reminders on">🔔</span>' : ''}</div>
             <div class="inline-edit" id="name-edit-${m.uid}" style="display:none">
               <input type="text" id="name-input-${m.uid}" value="${safeName}" />
               <button class="btn-save-name" onclick="saveDisplayName('${m.uid}')">Save</button>
