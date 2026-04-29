@@ -1338,14 +1338,27 @@ const NAV_STYLES = `
       memberTotals[m.uid] = { correct, total };
     }
 
-    // Sort members by correct desc once we have totals
+    // Sort members based on game state:
+    // Before games start: picked first (alphabetical), then unpicked (alphabetical)
+    // After games start: by correct picks desc, then alphabetical for ties
+    const anyGameStarted = games.some(g => gameIsLocked(g.startTime));
+
     members.sort((a, b) => {
-      const aC = memberTotals[a.uid]?.correct ?? 0;
-      const bC = memberTotals[b.uid]?.correct ?? 0;
-      if (bC !== aC) return bC - aC;
-      if (a.uid === currentUser.uid) return -1;
-      if (b.uid === currentUser.uid) return 1;
-      return a.displayName.localeCompare(b.displayName);
+      if (!anyGameStarted) {
+        // Pre-game sort: picked vs unpicked, then alpha within each group
+        const aPickCount = games.filter(g => allPicks[a.uid]?.[g.id]?.teamId).length;
+        const bPickCount = games.filter(g => allPicks[b.uid]?.[g.id]?.teamId).length;
+        const aPicked = aPickCount > 0;
+        const bPicked = bPickCount > 0;
+        if (aPicked !== bPicked) return aPicked ? -1 : 1; // picked first
+        return a.displayName.localeCompare(b.displayName);
+      } else {
+        // Post-game sort: by correct desc, then alpha
+        const aC = memberTotals[a.uid]?.correct ?? 0;
+        const bC = memberTotals[b.uid]?.correct ?? 0;
+        if (bC !== aC) return bC - aC;
+        return a.displayName.localeCompare(b.displayName);
+      }
     });
 
     // Leaders (among members with at least one final pick)
