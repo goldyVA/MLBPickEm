@@ -598,6 +598,42 @@
     }
 
 
+    /* ── Donated toggle ─────────────────────── */
+    .donated-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .donated-yes {
+      background: #EFF6F2;
+      color: #1D6A3E;
+      border-color: #B8DFCA;
+    }
+    .donated-yes:hover {
+      background: #FDF0EF;
+      color: var(--red);
+      border-color: #F0C4C0;
+    }
+    .donated-no {
+      background: #FDF0EF;
+      color: var(--red);
+      border-color: #F0C4C0;
+    }
+    .donated-no:hover {
+      background: #EFF6F2;
+      color: #1D6A3E;
+      border-color: #B8DFCA;
+    }
+
     /* ── Inline name edit ────────────────────── */
     .btn-edit {
       padding: 5px 12px;
@@ -1571,6 +1607,11 @@ const NAV_STYLES = `
           <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
           <span class="status-pill ${m.isAdmin ? 'pill-admin' : 'pill-approved'}">${m.isAdmin ? 'Admin' : 'Member'}</span>
           <div class="row-actions">
+            <button class="donated-btn ${m.donated ? 'donated-yes' : 'donated-no'}"
+              onclick="toggleDonated('${m.uid}', this)"
+              title="${m.donated ? 'Click to mark as not donated' : 'Click to mark as donated'}">
+              ${m.donated ? '✅ Donated' : '❌ Donated'}
+            </button>
             <button class="btn-edit" onclick="startEditName('${m.uid}')">Rename</button>
             ${m.uid !== currentUser.uid && !m.isAdmin
               ? `<button class="btn-revoke" onclick="revokeMember('${m.uid}', '${safeName}')">Remove</button>`
@@ -1608,6 +1649,23 @@ const NAV_STYLES = `
       toast(`✅ Name updated to "${name}"`);
     } catch (e) {
       toast('Failed to update name.', 'error');
+    }
+  };
+
+  // ── Toggle donated ───────────────────────────────────────────────────
+  window.toggleDonated = async function(uid, btn) {
+    const m = allMembers.find(m => m.uid === uid);
+    if (!m) return;
+    const newVal = !m.donated;
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { donated: newVal });
+      m.donated = newVal;
+      btn.className = `donated-btn ${newVal ? 'donated-yes' : 'donated-no'}`;
+      btn.innerHTML = newVal ? '✅ Donated' : '❌ Donated';
+      btn.title = newVal ? 'Click to mark as not donated' : 'Click to mark as donated';
+      toast(newVal ? `✅ ${m.displayName} marked as donated` : `${m.displayName} marked as not donated`);
+    } catch (e) {
+      toast('Failed to update donation status.', 'error');
     }
   };
 
