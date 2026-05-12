@@ -2220,11 +2220,12 @@ const NAV_STYLES = `
     const pickDays = Object.keys(usedTeams||{}).map(ds=>parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
     const effectiveStart = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
 
-    for (let d = effectiveStart; d <= Math.min(daysInMonth, 30); d++) {
+    for (let d = effectiveStart; d <= daysInMonth; d++) {
       const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
       if (dateStr > today) break;
       const dayData = monthGames[dateStr];
-      if (!dayData) continue;
+      if (!dayData || !dayData.games?.length) continue; // no games this day
+      // Deadline = last game start time for this day
       if (now < dayData.lastStartTime) continue;
       const pick = (usedTeams || {})[dateStr];
       if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
@@ -2261,7 +2262,8 @@ const NAV_STYLES = `
 
     // Load settings
     const settingsSnap = await get(ref(db, 'adminConfig/settings'));
-    const startDay = settingsSnap.exists() ? (settingsSnap.val().monthlyStartDay || 1) : 1;
+    const ss_val = settingsSnap.exists() ? settingsSnap.val() : {};
+    const startDay = ss_val.survivorStartDay || ss_val.monthlyStartDay || 1;
 
     // Load all month games for computation
     const monthGames = await adminFetchMonthGames(ym);
