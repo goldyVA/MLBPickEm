@@ -249,6 +249,12 @@
   }
 
   // ── Compute status (pure function, no Firebase writes) ────────────────
+  // Rules:
+  // - Must pick each day by last game's first pitch
+  // - Miss a day (no pick when last game starts) = eliminated, no recourse
+  // - Wrong pick = eliminated, but can request 1 free pass (admin approves)
+  // - Free pass only covers a loss, not a missed day
+  // - Can't reuse a team this month
   function computeStatus(usedTeams, fpUsed, fpDay, monthGames, startDay, today) {
     if (!usedTeams) usedTeams = {};
     const now = new Date();
@@ -257,30 +263,38 @@
     const dim = new Date(yr, mo, 0).getDate();
     let alive=true, eliminatedDay=null, eliminatedReason=null;
 
-    // Find the earliest day they actually made a pick — don't penalize for days before that
-    // This handles the case where survivorStartDay is before the user's first pick (e.g. after a reset)
     const pickDays = Object.keys(usedTeams).map(ds => parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
+    // Effective start: first pick day or survivorStartDay, whichever is later
     const effectiveStartDay = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
 
-    for (let d=effectiveStartDay; d<=Math.min(dim,30); d++) {
+    for (let d=effectiveStartDay; d<=dim; d++) {
       const ds = `${ym}-${String(d).padStart(2,'0')}`;
       if (ds > today) break;
-      const dd = monthGames[ds]; if (!dd) continue;
-      if (now < dd.lastStartTime) continue;
+      const dd = monthGames[ds];
+      if (!dd || !dd.games?.length) continue; // no games this day, skip
+
+      // Deadline = last game's start time for this day
+      const deadline = dd.lastStartTime;
+      if (now < deadline) continue; // deadline not passed yet, no judgment
+
       const pick = usedTeams[ds];
       if (!pick) {
-        // Don't eliminate for today if user has no picks at all — handles post-reset joins
+        // No pick and deadline passed = missed
+        // Exception: today with zero picks = post-reset, give them a chance
         if (ds === today && pickDays.length === 0) break;
-        alive=false; eliminatedDay=d; eliminatedReason='missed'; break;
+        alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break;
       }
+
+      // Has a pick — check if it won
       const np = norm(pick);
       const game = dd.games.find(g => norm(g.homeTeam?.abbrev)===np || norm(g.awayTeam?.abbrev)===np);
       if (!game || game.statusName!=='STATUS_FINAL' || !game.winnerId) continue;
       const homeWon = String(game.winnerId)===String(game.homeTeam?.id);
       const won = homeWon ? norm(game.homeTeam.abbrev)===np : norm(game.awayTeam.abbrev)===np;
       if (!won) {
-        if (fpUsed && Number(fpDay)===d) continue; // FP approved for this day
-        alive=false; eliminatedDay=d; eliminatedReason='loss'; break;
+        // Lost — check if free pass covers this day
+        if (fpUsed && Number(fpDay) === d) continue;
+        alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break;
       }
     }
     return { alive, eliminatedDay, eliminatedReason };
@@ -375,17 +389,35 @@
     const fpUsed    = myState.freePassUsed;
     const fpReq     = myState.freePassRequested && !myState.freePassUsed;
 
-    if (!myState.alive) {
+    // lostWithFP: lost (not missed) and FP not yet used/requested — window to request
+    const lostWithFP = !myState.alive && myState.eliminatedReason === 'loss' && !fpUsed && !fpReq;
+
+    if (!myState.alive && myState.eliminatedReason === 'missed') {
       cardClass='dead'; icon='💀'; title='Eliminated';
-      const why = myState.eliminatedReason==='missed' ? 'missed a pick' : 'team lost';
-      subtitle = myState.eliminatedDay ? `Eliminated day ${myState.eliminatedDay} (${why})` : 'Better luck next month';
+      subtitle = myState.eliminatedDay
+        ? `Missed pick on day ${myState.eliminatedDay} — no recourse`
+        : 'Better luck next month';
+    } else if (!myState.alive && myState.eliminatedReason === 'loss' && !lostWithFP && !fpReq) {
+      // Lost and FP already used or window closed
+      cardClass='dead'; icon='💀'; title='Eliminated';
+      subtitle = myState.eliminatedDay
+        ? `Lost on day ${myState.eliminatedDay}${fpUsed ? ' — free pass already used' : ''}`
+        : 'Better luck next month';
     } else if (fpUsed) {
       cardClass='freepass'; icon='🎟️'; title='Alive — Free Pass Used';
       subtitle = `Free pass used on day ${myState.freePassDay}`;
     } else if (lostToday && !fpUsed) {
       cardClass='dead'; icon='❌';
       title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
-      subtitle = fpReq ? 'Awaiting admin approval' : `Day ${day}`;
+      subtitle = fpReq ? 'Awaiting admin approval' : `Day ${day} — request free pass to stay alive`;
+    } else if (lostWithFP) {
+      // Lost on a past day, FP available to request
+      cardClass='dead'; icon='❌';
+      title = 'Loss — Request Free Pass';
+      subtitle = `Lost on day ${myState.eliminatedDay} — request free pass to stay alive`;
+    } else if (!myState.alive) {
+      cardClass='dead'; icon='💀'; title='Eliminated';
+      subtitle = 'Better luck next month';
     }
 
     const fpNote = myState.freePassUsed
@@ -404,7 +436,7 @@
           ? (myState.freePassUsed && Number(myState.freePassDay)===day ? '🎟️ FP saved you'
             : myState.freePassRequested ? '⏳ FP requested' : '❌ Loss')
           : '⏳ Pending';
-      const showBtn = result==='loss' && myState.alive && !myState.freePassUsed && !myState.freePassRequested;
+      const showBtn = (result==='loss' || lostWithFP) && !myState.freePassUsed && !myState.freePassRequested;
       const showMsg = myState.freePassRequested && !myState.freePassUsed;
       pickHTML = `
         <div class="pick-result-row">
@@ -527,12 +559,21 @@
         const unlocked=dd ? now>=dd.lastStartTime : ds<today;
         const fpDateStr=fpD ? `${ym}-${String(fpD).padStart(2,'0')}` : null;
         let cell='';
+        // deadline = last game start for this day
+        const deadline = dd?.lastStartTime;
+        const deadlinePassed = deadline ? now >= deadline : ds < today;
         if (isFuture) {
           cell=`<span class="gc-future">·</span>`;
         } else if (!pick) {
-          cell = (unlocked && hasPicks) ? `<span class="gc gc-loss" title="No pick">✗</span>` : `<span class="gc-blank">—</span>`;
-          if (unlocked && hasPicks) losses++;
-        } else if (!unlocked) {
+          // No pick — missed if deadline passed and they were active
+          if (deadlinePassed && hasPicks) {
+            cell=`<span class="gc gc-loss" title="Missed pick">✗</span>`;
+            losses++;
+          } else {
+            cell=`<span class="gc-blank">—</span>`;
+          }
+        } else if (!deadlinePassed) {
+          // Pick made but deadline not passed — show locked
           cell=`<span class="gc gc-pending">🔒</span>`;
         } else {
           const r=getPickResult(pick, dd?.games||[]);
@@ -579,7 +620,6 @@
       // My state — treat as fresh if no picks
       const myRaw = allStates[currentUser.uid]||{};
       const hasPicks = myRaw.usedTeams && Object.keys(myRaw.usedTeams).length>0;
-      console.log('[Survivor] myRaw from Firebase:', JSON.stringify(myRaw));
       const myBase = hasPicks ? myRaw : { alive:true, freePassUsed:false, freePassRequested:false, freePassDay:null, usedTeams:{} };
 
       // Games
@@ -589,7 +629,6 @@
       // Compute my status
       const c = computeStatus(myBase.usedTeams, myBase.freePassUsed, myBase.freePassDay, monthGames, survivorStartDay, today);
       const myState = { ...myBase, ...c };
-      console.log('[Survivor] myState:', JSON.stringify(myState));
 
       // Show
       document.getElementById('loadingState').style.display='none';
