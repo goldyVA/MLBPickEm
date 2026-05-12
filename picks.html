@@ -1960,16 +1960,16 @@ const NAV_STYLES = `
     const pickDays = Object.keys(usedTeams||{}).map(ds=>parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
     const effectiveStart = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
 
-    for (let d = effectiveStart; d <= Math.min(daysInMonth, 30); d++) {
+    for (let d = effectiveStart; d <= daysInMonth; d++) {
       const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
       if (dateStr > today) break;
       const dayData = monthGames[dateStr];
-      if (!dayData) continue;
+      if (!dayData || !dayData.games?.length) continue; // no games this day
+      // Deadline = last game start time
       if (now < dayData.lastStartTime) continue;
       const pick = (usedTeams || {})[dateStr];
       if (!pick) {
-        // Don't eliminate for today if the user has NO picks at all this month —
-        // this handles a mid-day reset where the user hasn't had a chance to pick yet.
+        // Don't eliminate for today if no picks at all (post-reset)
         if (dateStr === today && pickDays.length === 0) break;
         alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break;
       }
@@ -2081,31 +2081,30 @@ const NAV_STYLES = `
     const anyGameStarted  = games.some(g => new Date() >= new Date(g.startTime));
 
     // Blocking conditions
-    function fpWindowOpen() {
-      if (!state.eliminatedDay) return false;
-      const ym = today.substring(0, 7);
-      const nextDay = state.eliminatedDay + 1;
-      const nextDateStr = `${ym}-${String(nextDay).padStart(2, '0')}`;
-      const nextDayData = monthGamesCache[nextDateStr];
-      if (!nextDayData || !nextDayData.games?.length) return true;
-      const allFinal = nextDayData.games.every(g => g.statusName === 'STATUS_FINAL');
-      return !allFinal;
-    }
-
-    const lostWithFPAvailable = !state.alive && state.eliminatedReason === 'loss'
-      && !fpUsed && !fpReq && fpWindowOpen();
-    const blockedByLoss    = (lostToday || lostWithFPAvailable) && !fpUsed;
-    const blockedByElim    = !state.alive && !lostWithFPAvailable;
-
-    // allGamesStarted = last game has started (survivor picks lock at last game start)
+    // Deadline = last game start time (picks lock when last game starts)
     const lastGame = [...games].sort((a,b) => new Date(b.startTime)-new Date(a.startTime))[0];
     const allGamesStarted = lastGame ? new Date() >= new Date(lastGame.startTime) : false;
+
+    // lostWithFPAvailable: lost on a past day (or today), FP not used/requested yet
+    // Free pass is ONLY available for a loss, NEVER for a missed day
+    const lostWithFPAvailable = !state.alive && state.eliminatedReason === 'loss'
+      && !fpUsed && !fpReq;
+
+    // blockedByLoss: lost and FP not yet approved (show FP request option)
+    const blockedByLoss = (lostToday || lostWithFPAvailable) && !fpUsed;
+
+    // blockedByElim: truly out with no recourse
+    // - missed a day (never gets FP)
+    // - lost and FP already used
+    // - lost and FP was requested/approved
+    const blockedByElim = !state.alive && !lostWithFPAvailable
+      && !(lostToday && !fpUsed && !fpReq); // don't block same-day loss before FP requested
 
     const canPick = state.alive
       && !blockedByLoss
       && (() => {
-        if (todayPick) return !pickGameStarted;  // can change if picked team's game not started
-        return !allGamesStarted;                  // can pick until last game starts
+        if (todayPick) return !pickGameStarted;  // can change pick if game not started
+        return !allGamesStarted;                  // deadline = last game start
       })();
 
     // ── Card header ───────────────────────────────────────────────────
@@ -2114,7 +2113,11 @@ const NAV_STYLES = `
 
     if (blockedByElim) {
       cardClass = 's-dead'; icon = '💀'; title = 'Eliminated';
-      sub = state.eliminatedReason === 'missed' ? `Missed pick on day ${state.eliminatedDay}` : `Lost on day ${state.eliminatedDay}`;
+      if (state.eliminatedReason === 'missed') {
+        sub = `Missed pick on day ${state.eliminatedDay} — no free pass for missed days`;
+      } else {
+        sub = `Lost on day ${state.eliminatedDay}${fpUsed ? ' — free pass already used' : ''}`;
+      }
     } else if (fpUsed) {
       cardClass = 's-freepass'; icon = '🎟️';
       title = 'Alive — Free Pass Used';
@@ -2138,7 +2141,7 @@ const NAV_STYLES = `
         <div class="s-pick-row">
           <span style="font-size:13px;color:var(--ink-faint)">
             ${state.eliminatedReason === 'missed'
-              ? '⚠️ You missed a pick and have been eliminated.'
+              ? '⚠️ You missed a pick and have been eliminated. Missed days cannot be recovered with a free pass.'
               : fpUsed
                 ? '⚠️ Your team lost. Your free pass was already used.'
                 : '⚠️ Your team lost and you have no free pass remaining.'}
@@ -2201,34 +2204,52 @@ const NAV_STYLES = `
           .filter(([date]) => date !== today) // exclude today so they can re-pick same team
           .map(([, abbrev]) => abbrev)
       );
-      const allTeams = [
-        'ARI','ATL','BAL','BOS','CHC','CWS','CIN','CLE','COL','DET',
-        'HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','ATH',
-        'PHI','PIT','SD','SF','SEA','STL','TB','TEX','TOR','WSH'
-      ];
+      // Build set of teams with doubleheaders today (appear in 2+ games)
+      const teamGameCount = {};
+      for (const g of games) {
+        const ha = normalizeAbbrev(g.homeTeam.abbrev);
+        const aa = normalizeAbbrev(g.awayTeam.abbrev);
+        teamGameCount[ha] = (teamGameCount[ha] || 0) + 1;
+        teamGameCount[aa] = (teamGameCount[aa] || 0) + 1;
+      }
+      const doubleheaderTeams = new Set(Object.keys(teamGameCount).filter(a => teamGameCount[a] > 1));
+
+      // Only show teams playing today
+      const playingTeams = [...new Set(games.flatMap(g => [
+        normalizeAbbrev(g.homeTeam.abbrev),
+        normalizeAbbrev(g.awayTeam.abbrev)
+      ]))].sort();
+
       gridHTML = `
         <div class="s-team-grid" id="sTeamGrid">
-          ${allTeams.map(abbrev => {
-            const used    = usedSet.has(abbrev);
-            const playing = games.some(g =>
-              normalizeAbbrev(g.homeTeam.abbrev) === abbrev ||
-              normalizeAbbrev(g.awayTeam.abbrev) === abbrev
-            );
-            const started = games.some(g =>
+          ${playingTeams.map(abbrev => {
+            const used        = usedSet.has(abbrev);
+            const isDoubleHdr = doubleheaderTeams.has(abbrev);
+            const started     = games.some(g =>
               (normalizeAbbrev(g.homeTeam.abbrev) === abbrev ||
                normalizeAbbrev(g.awayTeam.abbrev) === abbrev) &&
               new Date() >= new Date(g.startTime)
             );
             const isCurrentPick = normalizeAbbrev(todayPick||'') === abbrev;
-            const disabled = used || started;
-            return `<button class="s-team-tile${used ? ' s-used' : ''}${started && !used ? ' s-started' : ''}${isCurrentPick ? ' s-selected' : ''}"
+            // Disabled if: already used this month, game started, or doubleheader
+            const disabled = used || started || isDoubleHdr;
+            let tileClass = 's-team-tile';
+            if (used) tileClass += ' s-used';
+            else if (isDoubleHdr) tileClass += ' s-used'; // gray out same style
+            else if (started) tileClass += ' s-started';
+            if (isCurrentPick) tileClass += ' s-selected';
+            const titleText = used ? 'Already used this month'
+              : isDoubleHdr ? 'Doubleheader — not eligible today'
+              : started ? 'Game already started'
+              : abbrev;
+            return `<button class="${tileClass}"
               data-abbrev="${abbrev}" ${disabled ? 'disabled' : ''}
-              title="${used ? 'Already used this month' : started ? 'Game started' : !playing ? 'Not playing today' : abbrev}"
-              style="${!playing && !disabled ? 'opacity:.4' : ''}">
+              title="${titleText}">
               <img src="${espnLogoSurv(abbrev)}" onerror="this.style.display='none'" />
               <span>${abbrev}</span>
               ${used ? '<span class="s-tile-badge">✓</span>' : ''}
-              ${started && !used ? '<span class="s-tile-badge">🔒</span>' : ''}
+              ${isDoubleHdr && !used ? '<span class="s-tile-badge">2x</span>' : ''}
+              ${started && !used && !isDoubleHdr ? '<span class="s-tile-badge">🔒</span>' : ''}
             </button>`;
           }).join('')}
         </div>
