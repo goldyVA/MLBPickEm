@@ -3,685 +3,2540 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin · NFL Pick Em</title>
+  <title>Admin · MLB Pick'em</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --cream:#F7F5F0; --cream-dark:#EDEAE2;
-      --ink:#1A1A1A; --ink-light:#555550; --ink-faint:#999990;
-      --charcoal:#1E2A38; --red:#C0392B; --green:#27AE60; --accent:#E8A838;
-      --white:#FFFFFF;
-      --shadow-sm:0 1px 3px rgba(0,0,0,.08); --shadow-md:0 4px 16px rgba(0,0,0,.10);
-      --radius:12px; --radius-sm:8px;
+      --cream:       #F7F5F0;
+      --cream-dark:  #EDEAE2;
+      --ink:         #1A1A1A;
+      --ink-light:   #555550;
+      --ink-faint:   #999990;
+      --navy:        #1B3A5C;
+      --red:         #C0392B;
+      --green:       #27AE60;
+      --accent:      #E8A838;
+      --white:       #FFFFFF;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      12px;
+      --radius-sm:   8px;
     }
-    html,body { min-height:100%; font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--ink); }
-    body { padding-top:58px; }
 
-    /* Nav shared */
-    #mainNav { position:fixed; top:0; left:0; right:0; background:var(--white); box-shadow:0 1px 3px rgba(0,0,0,.08); z-index:200; height:58px; }
-    .nav-inner { max-width:1100px; margin:0 auto; padding:0 24px; height:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .nav-logo { font-family:'DM Serif Display',serif; font-size:20px; color:var(--charcoal); text-decoration:none; white-space:nowrap; flex-shrink:0; }
-    .nav-links { display:flex; gap:2px; flex:1; justify-content:center; }
-    .nav-link { padding:6px 12px; border-radius:6px; font-size:14px; font-weight:500; color:var(--ink-light); text-decoration:none; white-space:nowrap; }
-    .nav-link:hover { background:var(--cream); color:var(--ink); }
-    .nav-link.active { background:var(--charcoal); color:var(--white); }
-    .nav-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
-    .nav-user { font-size:13px; color:var(--ink-faint); white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
-    .btn-signout { padding:6px 12px; border:1.5px solid var(--cream-dark); border-radius:6px; background:transparent; font-family:inherit; font-size:13px; font-weight:500; color:var(--ink-light); cursor:pointer; }
-    .btn-signout:hover { border-color:var(--red); color:var(--red); }
-    .hamburger { display:none; flex-direction:column; justify-content:center; align-items:center; gap:5px; width:36px; height:36px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:8px; cursor:pointer; padding:0; flex-shrink:0; }
-    .hamburger span { display:block; width:18px; height:2px; background:var(--ink); border-radius:2px; transition:all .2s; }
-    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg);}
-    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0;}
-    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
-    .mobile-drawer { position:fixed; top:0; right:0; width:280px; height:100dvh; background:var(--white); z-index:300; transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; box-shadow:-4px 0 24px rgba(0,0,0,.12); }
-    .mobile-drawer.open { transform:translateX(0); }
-    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:299; opacity:0; pointer-events:none; transition:opacity .28s; }
-    .drawer-overlay.show { opacity:1; pointer-events:all; }
-    .drawer-header { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:58px; border-bottom:1px solid var(--cream-dark); flex-shrink:0; }
-    .drawer-title { font-family:'DM Serif Display',serif; font-size:20px; color:var(--charcoal); }
-    .drawer-close { width:32px; height:32px; border:none; background:var(--cream); border-radius:8px; font-size:16px; cursor:pointer; color:var(--ink-light); display:flex; align-items:center; justify-content:center; }
-    .drawer-user { padding:12px 20px; font-size:13px; color:var(--ink-faint); border-bottom:1px solid var(--cream-dark); background:var(--cream); }
-    .drawer-nav { flex:1; padding:12px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
-    .drawer-link { display:flex; align-items:center; gap:14px; padding:13px 16px; border-radius:10px; font-size:16px; font-weight:500; color:var(--ink); text-decoration:none; }
-    .drawer-link:hover { background:var(--cream); }
-    .drawer-link.active { background:var(--charcoal); color:var(--white); }
-    .drawer-icon { font-size:20px; width:28px; text-align:center; }
-    .drawer-signout { margin:12px; padding:13px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:10px; font-family:inherit; font-size:15px; font-weight:500; color:var(--red); cursor:pointer; flex-shrink:0; }
-    .drawer-signout:hover { background:#FDF0EF; border-color:var(--red); }
-    button,a,[role=button] { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
-    @media(max-width:720px) { .nav-links{display:none} .nav-user{display:none} .btn-signout{display:none} .hamburger{display:flex} }
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
 
-    /* Page */
-    .page-body { max-width:880px; margin:0 auto; padding:32px 24px 60px; }
-    h1 { font-family:'DM Serif Display',serif; font-size:32px; color:var(--charcoal); margin-bottom:6px; }
-    .page-meta { font-size:14px; color:var(--ink-faint); margin-bottom:32px; }
 
-    /* Admin tabs */
-    .admin-tabs { display:flex; gap:6px; margin-bottom:28px; flex-wrap:wrap; }
-    .atab { padding:8px 16px; border:1.5px solid var(--cream-dark); border-radius:100px; background:var(--white); font-family:inherit; font-size:13px; font-weight:500; color:var(--ink-light); cursor:pointer; transition:all .15s; }
-    .atab:hover { border-color:var(--charcoal); color:var(--charcoal); }
-    .atab.active { background:var(--charcoal); border-color:var(--charcoal); color:var(--white); }
 
-    /* Panel */
-    .panel { display:none; }
-    .panel.active { display:block; }
 
-    /* Section */
-    .section { background:var(--white); border:1.5px solid var(--cream-dark); border-radius:var(--radius); padding:24px; margin-bottom:20px; box-shadow:var(--shadow-sm); }
-    .section-title { font-size:16px; font-weight:700; color:var(--charcoal); margin-bottom:6px; }
-    .section-sub   { font-size:13px; color:var(--ink-faint); margin-bottom:18px; line-height:1.5; }
 
-    /* Toggle row */
-    .toggle-row { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--cream-dark); }
-    .toggle-row:last-child { border-bottom:none; padding-bottom:0; }
-    .toggle-text strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:4px; }
-    .toggle-text span { font-size:13px; color:var(--ink-faint); line-height:1.45; }
-    .toggle { position:relative; width:46px; height:26px; flex-shrink:0; margin-top:2px; }
-    .toggle input { opacity:0; width:0; height:0; position:absolute; }
-    .toggle-slider { position:absolute; inset:0; background:var(--cream-dark); border-radius:100px; cursor:pointer; transition:background .2s; }
-    .toggle-slider::before { content:''; position:absolute; left:3px; top:3px; width:20px; height:20px; border-radius:50%; background:var(--white); transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
-    .toggle input:checked + .toggle-slider { background:var(--charcoal); }
-    .toggle input:checked + .toggle-slider::before { transform:translateX(20px); }
 
-    /* Inputs */
-    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
-    .field label { font-size:13px; font-weight:500; color:var(--ink-light); }
-    .field input,.field select { width:100%; padding:10px 14px; border:1.5px solid var(--cream-dark); border-radius:var(--radius-sm); background:var(--white); font-family:inherit; font-size:14px; color:var(--ink); outline:none; transition:border-color .15s; }
-    .field input:focus,.field select:focus { border-color:var(--charcoal); }
-    .inline-fields { display:flex; gap:12px; flex-wrap:wrap; }
-    .inline-fields .field { flex:1; min-width:160px; }
 
-    /* Buttons */
-    .btn-primary { padding:10px 20px; background:var(--charcoal); color:var(--white); border:none; border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:opacity .15s; }
-    .btn-primary:hover { opacity:.88; }
-    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
-    .btn-secondary { padding:10px 18px; background:transparent; color:var(--ink-light); border:1.5px solid var(--cream-dark); border-radius:var(--radius-sm); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
-    .btn-secondary:hover { border-color:var(--charcoal); color:var(--ink); }
-    .btn-danger { padding:10px 18px; background:transparent; color:var(--red); border:1.5px solid #F0C4C0; border-radius:var(--radius-sm); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
-    .btn-danger:hover { background:#FDF0EF; border-color:var(--red); }
-    .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
 
-    /* Members table */
-    .members-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .members-table th { padding:10px 12px; text-align:left; font-size:11px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; border-bottom:2px solid var(--cream-dark); background:var(--cream); }
-    .members-table td { padding:10px 12px; border-bottom:1px solid var(--cream-dark); vertical-align:middle; }
-    .members-table tr:last-child td { border-bottom:none; }
-    .member-email { color:var(--ink-faint); font-size:12px; display:block; }
-    .badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:100px; }
-    .badge-green   { background:#D4EDDA; color:#155724; }
-    .badge-red     { background:#F8D7DA; color:#721C24; }
-    .badge-yellow  { background:#FEF9EE; color:#7A5A10; }
-    .badge-grey    { background:var(--cream-dark); color:var(--ink-faint); }
-    .action-btns   { display:flex; gap:6px; flex-wrap:wrap; }
-    .mini-btn { padding:5px 10px; border-radius:6px; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid var(--cream-dark); background:var(--white); color:var(--ink-light); transition:all .12s; }
-    .mini-btn:hover { border-color:var(--charcoal); color:var(--charcoal); }
-    .mini-btn.red { border-color:#F0C4C0; color:var(--red); }
-    .mini-btn.red:hover { background:#FDF0EF; }
-    .mini-btn.green { border-color:#B8DFCA; color:var(--green); }
-    .mini-btn.green:hover { background:#EFF8F2; }
 
-    /* Free pass queue */
-    .fp-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid var(--cream-dark); flex-wrap:wrap; }
-    .fp-row:last-child { border-bottom:none; }
-    .fp-name { font-weight:600; font-size:14px; }
-    .fp-week { font-size:12px; color:var(--ink-faint); }
 
-    /* Auto-pick / data viewer */
-    .data-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--cream-dark); font-size:13px; }
-    .data-row:last-child { border-bottom:none; }
-    .data-label { color:var(--ink-light); }
-    .data-val   { font-weight:600; }
 
-    /* Msgs */
-    .msg { display:none; font-size:13px; padding:10px 14px; border-radius:var(--radius-sm); margin-top:12px; }
-    .msg.show { display:block; }
-    .msg.error { background:#FDF0EF; color:var(--red); border:1px solid #F5C6C2; }
-    .msg.info  { background:#EFF8F2; color:#1D6A3E; border:1px solid #B8DFCA; }
-    .msg.warn  { background:#FEF9EE; color:#7A5A10; border:1px solid #F5DFA0; }
 
-    .spinner { width:24px; height:24px; border:3px solid var(--cream-dark); border-top-color:var(--charcoal); border-radius:50%; animation:spin .7s linear infinite; margin:20px auto; }
-    @keyframes spin { to{transform:rotate(360deg)} }
 
-    .empty-state { text-align:center; padding:32px; color:var(--ink-faint); font-size:14px; }
+
+
+
+
+
+
+    /* ── Page body ───────────────────────────── */
+    .page-body {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 82px 24px 48px;
+    }
+
+    /* ── Page header ─────────────────────────── */
+    .page-header {
+      margin-bottom: 28px;
+    }
+
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--navy);
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
+
+
+
+    /* ── Section ─────────────────────────────── */
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--ink);
+    }
+
+    .section-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--red);
+      color: var(--white);
+    }
+
+    .section-badge.zero {
+      background: var(--cream-dark);
+      color: var(--ink-faint);
+    }
+
+    /* ── Cards ───────────────────────────────── */
+    .card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    /* ── Member rows ─────────────────────────── */
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--cream-dark);
+      flex-wrap: wrap;
+    }
+
+    .member-row:last-child { border-bottom: none; }
+
+    .member-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .member-info { flex: 1; min-width: 0; }
+
+    .member-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-email {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-meta {
+      font-size: 12px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+
+    .pill-approved { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+    .pill-admin    { background: #EEF2F8; color: var(--navy); border: 1px solid #C0CEDF; }
+
+    /* Action buttons */
+    .row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .btn-approve {
+      padding: 7px 14px;
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-approve:hover { background: #1E8A4A; }
+
+    .btn-deny {
+      padding: 7px 14px;
+      background: transparent;
+      color: var(--red);
+      border: 1.5px solid #F0C4C0;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-deny:hover { background: var(--red); color: var(--white); border-color: var(--red); }
+
+    .btn-revoke {
+      padding: 7px 14px;
+      background: transparent;
+      color: var(--ink-faint);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-revoke:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Data viewer ─────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      background: var(--cream-dark);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-faint);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .tab-btn.active {
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Date filter for data viewer */
+    .data-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .data-input {
+      padding: 8px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .data-input:focus { border-color: var(--navy); }
+
+    .btn-load {
+      padding: 8px 18px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-load:hover { background: #152e4a; }
+
+    /* Data table */
+    .data-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--cream-dark);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      background: var(--cream);
+      border-bottom: 1.5px solid var(--cream-dark);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--cream-dark);
+      color: var(--ink);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #FAFAF8; }
+
+    .pick-correct { color: var(--green); font-weight: 700; }
+    .pick-wrong   { color: var(--red);   font-weight: 700; }
+    .pick-pending { color: var(--ink-faint); }
+
+    /* ── Survivor admin ──────────────────────── */
+    .survivor-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .btn-danger {
+      padding: 8px 18px;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-danger:hover { background: #A93226; }
+
+    /* ── Toasts ──────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .25s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+
+    /* ── States ──────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--ink-faint);
+    }
+
+    .state-box .icon { font-size: 40px; margin-bottom: 12px; }
+    .state-box p     { font-size: 14px; }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--cream-dark);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+
+    /* ── Registration toggle ─────────────────── */
+    .reg-toggle-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .reg-toggle-card.open  { border-color: #A8D5B5; background: #F4FBF6; }
+    .reg-toggle-card.closed { border-color: #F0C4C0; background: #FDF5F4; }
+
+    .reg-toggle-info { display: flex; align-items: center; gap: 14px; }
+    .reg-toggle-icon { font-size: 28px; }
+    .reg-toggle-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .reg-toggle-sub   { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+    .toggle-switch {
+      position: relative;
+      width: 52px; height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--cream-dark);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 4px; top: 4px;
+      background: var(--white);
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+
+    input:checked + .toggle-slider { background: var(--green); }
+    input:checked + .toggle-slider::before { transform: translateX(24px); }
+
+    /* ── Add member form ─────────────────────── */
+    .add-member-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+
+    .add-member-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 14px;
+    }
+
+    .add-field { display: flex; flex-direction: column; gap: 5px; }
+
+    .add-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .add-field input {
+      padding: 9px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--cream);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .add-field input:focus { border-color: var(--navy); background: var(--white); }
+
+    .btn-add-member {
+      padding: 9px 20px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+      height: 40px;
+    }
+
+    .btn-add-member:hover    { background: #152e4a; }
+    .btn-add-member:disabled { opacity: .5; cursor: not-allowed; }
+
+    .add-member-msg {
+      margin-top: 10px;
+      padding: 9px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      display: none;
+    }
+    .add-member-msg.show  { display: block; }
+    .add-member-msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .add-member-msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+
+
+    /* ── Settings card ───────────────────────── */
+    .settings-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--cream-dark);
+      flex-wrap: wrap;
+    }
+
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-row-info { flex: 1; }
+    .settings-row-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .settings-row-sub   { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+
+    .settings-row-control { display: flex; align-items: center; gap: 10px; }
+
+    .day-input {
+      width: 70px;
+      padding: 8px 10px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: center;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .day-input:focus { border-color: var(--navy); }
+
+    .btn-save-setting {
+      padding: 7px 16px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-save-setting:hover { background: #152e4a; }
+
+    .setting-saved {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 600;
+      display: none;
+    }
+
+
+    /* ── Donated toggle ─────────────────────── */
+    .donated-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .donated-yes {
+      background: #EFF6F2;
+      color: #1D6A3E;
+      border-color: #B8DFCA;
+    }
+    .donated-yes:hover {
+      background: #FDF0EF;
+      color: var(--red);
+      border-color: #F0C4C0;
+    }
+    .donated-no {
+      background: #FDF0EF;
+      color: var(--red);
+      border-color: #F0C4C0;
+    }
+    .donated-no:hover {
+      background: #EFF6F2;
+      color: #1D6A3E;
+      border-color: #B8DFCA;
+    }
+
+    /* ── Inline name edit ────────────────────── */
+    .btn-edit {
+      padding: 5px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-edit:hover { border-color: var(--navy); color: var(--navy); }
+
+    .inline-edit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .inline-edit input {
+      padding: 5px 10px;
+      border: 1.5px solid var(--navy);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      width: 180px;
+    }
+
+    .btn-save-name {
+      padding: 5px 12px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel-name {
+      padding: 5px 10px;
+      background: transparent;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-faint);
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .nav-links  { display: none; }
+      .member-row { flex-direction: column; align-items: flex-start; }
+      .row-actions { width: 100%; }
+    }
+
+  /* ── Nav base ─────────────────────────────── */
+  #mainNav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--white);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    z-index: 200;
+    height: 58px;
+  }
+
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .nav-link {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+
+  .nav-link:hover  { background: var(--cream); color: var(--ink); }
+  .nav-link.active { background: var(--navy); color: var(--white); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .nav-user {
+    font-size: 13px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .btn-signout {
+    padding: 6px 12px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 6px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-light);
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+  }
+
+  .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── Hamburger ────────────────────────────── */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--ink);
+    border-radius: 2px;
+    transition: all .2s ease;
+  }
+
+  .hamburger[aria-expanded="true"] span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .hamburger[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger[aria-expanded="true"] span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* ── Mobile drawer ────────────────────────── */
+  .mobile-drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: 280px;
+    height: 100dvh;
+    background: var(--white);
+    z-index: 300;
+    transform: translateX(100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 24px rgba(0,0,0,.12);
+  }
+
+  .mobile-drawer.open { transform: translateX(0); }
+
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 299;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .28s ease;
+  }
+
+  .drawer-overlay.show { opacity: 1; pointer-events: all; }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 58px;
+    border-bottom: 1px solid var(--cream-dark);
+    flex-shrink: 0;
+  }
+
+  .drawer-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+  }
+
+  .drawer-close {
+    width: 32px; height: 32px;
+    border: none;
+    background: var(--cream);
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--ink-light);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+
+  .drawer-close:hover { background: var(--cream-dark); }
+
+  .drawer-user {
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--cream-dark);
+    background: var(--cream);
+  }
+
+  .drawer-nav {
+    flex: 1;
+    padding: 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  .drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    transition: background .15s;
+  }
+
+  .drawer-link:hover  { background: var(--cream); }
+  .drawer-link.active { background: var(--navy); color: var(--white); }
+
+  .drawer-icon { font-size: 20px; width: 28px; text-align: center; }
+
+  .drawer-signout {
+    margin: 12px;
+    padding: 13px;
+    background: transparent;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--red);
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    flex-shrink: 0;
+  }
+
+  .drawer-signout:hover { background: #FDF0EF; border-color: var(--red); }
+
+  /* ── Responsive breakpoint ────────────────── */
+  @media (max-width: 720px) {
+    .nav-links  { display: none; }
+    .nav-user   { display: none; }
+    .btn-signout { display: none; }
+    .hamburger  { display: flex; }
+  }
+
+
+    /* ── iOS touch fix ───────────────────────────── */
+    button, a, [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+
+    .nav-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 100px;
+      background: var(--red);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 0 4px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .drawer-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 100px;
+      padding: 1px 7px;
+    }
+
   </style>
 </head>
 <body>
 
 <nav id="mainNav"></nav>
-<div class="mobile-drawer" id="mobileDrawer">
-  <div class="drawer-header">
-    <span class="drawer-title">🏈 NFL Pick Em</span>
-    <button class="drawer-close" id="drawerClose">✕</button>
-  </div>
-  <div class="drawer-user" id="drawerUser"></div>
-  <nav class="drawer-nav" id="drawerNav"></nav>
-  <button class="drawer-signout" id="drawerSignOutBtn">Sign out</button>
-</div>
-<div class="drawer-overlay" id="drawerOverlay"></div>
 
 <div class="page-body">
-  <h1>⚙️ Admin</h1>
-  <div class="page-meta">League administration — only visible to you</div>
 
-  <div class="admin-tabs">
-    <button class="atab active" data-panel="members">Members</button>
-    <button class="atab" data-panel="settings">Settings</button>
-    <button class="atab" data-panel="survivor">Survivor</button>
-    <button class="atab" data-panel="tools">Tools</button>
+  <div class="page-header">
+    <h1>Admin Panel</h1>
+    <p>Manage members, review picks, and oversee survivor.</p>
   </div>
 
-  <!-- ── Members panel ── -->
-  <div class="panel active" id="panel-members">
-    <div class="section">
-      <div class="section-title">League Members</div>
-      <div class="section-sub">Toggle donation status, remove members, or view their email.</div>
-      <div id="membersTableWrap"><div class="spinner"></div></div>
-      <div class="msg" id="membersMsg"></div>
-    </div>
 
-    <div class="section" id="fpSection" style="display:none">
-      <div class="section-title">🎟️ Free Pass Requests</div>
-      <div class="section-sub">Members who lost a survivor pick and are requesting a free pass to stay alive.</div>
-      <div id="fpList"><div class="spinner"></div></div>
-      <div class="msg" id="fpMsg"></div>
+
+
+  <!-- ── Registration toggle ── -->
+  <div class="reg-toggle-card" id="regToggleCard">
+    <div class="reg-toggle-info">
+      <div class="reg-toggle-icon" id="regToggleIcon">🔒</div>
+      <div>
+        <div class="reg-toggle-title" id="regToggleTitle">Registration Closed</div>
+        <div class="reg-toggle-sub" id="regToggleSub">New users cannot sign up</div>
+      </div>
     </div>
+    <label class="toggle-switch" title="Toggle registration open/closed">
+      <input type="checkbox" id="regToggleInput" />
+      <span class="toggle-slider"></span>
+    </label>
   </div>
 
-  <!-- ── Settings panel ── -->
-  <div class="panel" id="panel-settings">
-    <div class="section">
-      <div class="section-title">Season Settings</div>
-      <div class="section-sub">Configure the NFL season start. These values drive week detection across the app.</div>
-      <div class="inline-fields">
-        <div class="field">
-          <label for="settingSeasonStart">Season Start Date (Week 1 kickoff)</label>
-          <input type="date" id="settingSeasonStart" />
+  <!-- ── Add member manually ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Add Member Manually</span>
+    </div>
+    <div class="add-member-card">
+      <div style="font-size:13px;color:var(--ink-faint)">Create an account for a member directly — they can sign in with the PIN you set and change it via "Forgot PIN?" if needed.</div>
+      <div class="add-member-grid">
+        <div class="add-field">
+          <label>Display Name</label>
+          <input type="text" id="addName" placeholder="e.g. Jane Smith" />
         </div>
-        <div class="field">
-          <label for="settingSeasonWeek">Start at Week #</label>
-          <input type="number" id="settingSeasonWeek" min="1" max="18" value="1" />
+        <div class="add-field">
+          <label>Email</label>
+          <input type="email" id="addEmail" placeholder="jane@example.com" />
         </div>
-        <div class="field">
-          <label for="settingSurvivorWeek">Survivor Starts Week #</label>
-          <input type="number" id="settingSurvivorWeek" min="1" max="18" value="1" />
+        <div class="add-field">
+          <label>PIN (6–8 digits)</label>
+          <input type="text" id="addPin" placeholder="e.g. 123456" maxlength="8" inputmode="numeric" />
         </div>
+        <button class="btn-add-member" id="addMemberBtn">Add Member</button>
       </div>
-      <div class="btn-row">
-        <button class="btn-primary" onclick="saveSettings()">Save Season Settings</button>
-      </div>
-      <div class="msg" id="settingsMsg"></div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Registration</div>
-      <div class="toggle-row">
-        <div class="toggle-text">
-          <strong>Open Registration</strong>
-          <span>When on, new users can create accounts. Turn off to lock out new sign-ups.</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="regToggle" onchange="saveToggle('registrationOpen', this.checked)" />
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
+      <div class="add-member-msg" id="addMemberMsg"></div>
     </div>
   </div>
 
-  <!-- ── Survivor panel ── -->
-  <div class="panel" id="panel-survivor">
-    <div class="section">
-      <div class="section-title">Survivor Status</div>
-      <div class="section-sub">Current survivor status for all members this season.</div>
-      <div id="survivorAdminList"><div class="spinner"></div></div>
+  <!-- ── All members ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">All Members</span>
     </div>
-
-    <div class="section">
-      <div class="section-title">Reset Survivor Season</div>
-      <div class="section-sub">Clears all survivor data for the 2026 season. Use with caution — this cannot be undone.</div>
-      <div class="btn-row">
-        <button class="btn-danger" onclick="resetSurvivor()">🗑️ Reset Survivor Season</button>
-      </div>
-      <div class="msg" id="survivorResetMsg"></div>
+    <div class="card" id="membersList">
+      <div class="state-box"><div class="spinner"></div></div>
     </div>
   </div>
 
-  <!-- ── Tools panel ── -->
-  <div class="panel" id="panel-tools">
-    <div class="section">
-      <div class="section-title">Data Viewer</div>
-      <div class="section-sub">Quick stats for the selected week.</div>
-      <div class="field">
-        <label for="toolWeek">Week</label>
-        <select id="toolWeek">
-          <option value="">Select week…</option>
-        </select>
-      </div>
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="loadDataViewer()">Load Week Data</button>
-      </div>
-      <div id="dataViewerOutput" style="margin-top:16px"></div>
+  <!-- ── League Settings ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">League Settings</span>
     </div>
+    <div class="settings-card">
 
-    <div class="section">
-      <div class="section-title">Refresh ESPN Games</div>
-      <div class="section-sub">Force-fetch game data from ESPN for the selected week and write it to Firebase.</div>
-      <div class="field">
-        <label for="espnWeek">Week</label>
-        <select id="espnWeek">
-          <option value="">Select week…</option>
-        </select>
+      <!-- Monthly standings start day -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Monthly Standings — Start From Day</div>
+          <div class="settings-row-sub">Only count picks from this day of the month onward. Useful when new members join mid-month. Set to 1 to count the full month.</div>
+        </div>
+        <div class="settings-row-control">
+          <input type="number" class="day-input" id="monthlyStartDay" min="1" max="31" value="1" />
+          <button class="btn-save-setting" id="saveMonthlyStartBtn">Save</button>
+          <span class="setting-saved" id="monthlyStartSaved">✓ Saved</span>
+        </div>
       </div>
-      <div class="btn-row">
-        <button class="btn-primary" onclick="refreshESPN()">Refresh Games from ESPN</button>
+
+      <!-- Season standings start date -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Season Standings — Start From Date</div>
+          <div class="settings-row-sub">Only count picks from this date onward for the season leaderboard.</div>
+        </div>
+        <div class="settings-row-control">
+          <input type="date" class="data-input" id="seasonStartDate" style="border-radius:var(--radius-sm)" />
+          <button class="btn-save-setting" id="saveSeasonStartBtn">Save</button>
+          <span class="setting-saved" id="seasonStartSaved">✓ Saved</span>
+        </div>
       </div>
-      <div class="msg" id="espnMsg"></div>
+
+      <!-- Reset monthly standings -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Reset Monthly Standings</div>
+          <div class="settings-row-sub">Only resets the standings start day to today — pick records are kept. Use this when new members join mid-month.</div>
+        </div>
+        <div class="settings-row-control">
+          <button class="btn-danger" id="resetMonthlyBtn">⚠️ Reset Standings</button>
+        </div>
+      </div>
+
+      <!-- Reset survivor -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Reset Survivor</div>
+          <div class="settings-row-sub">Clears all survivor picks and status for this month. Everyone becomes alive again with all 30 teams available. Also sets the survivor start day to today.</div>
+        </div>
+        <div class="settings-row-control">
+          <button class="btn-danger" id="resetSurvivorBtnTop">💀 Reset Survivor</button>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  <!-- ── Data viewer ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Data Viewer</span>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="picks">Picks</button>
+      <button class="tab-btn" data-tab="games">Games</button>
+      <button class="tab-btn" data-tab="survivor">Survivor</button>
+    </div>
+
+    <!-- Picks tab -->
+    <div id="tab-picks">
+      <div class="data-controls">
+        <input type="date" class="data-input" id="picksDate" />
+        <button class="btn-load" id="loadPicksBtn">Load</button>
+        <button class="btn-load" id="autoPickBtn" style="background:var(--accent);color:var(--ink)" title="Auto-pick away team for locked games only">🤖 Auto-pick Started</button>
+        <button class="btn-load" id="autoPickAllBtn" style="background:var(--navy);color:var(--white)" title="Auto-pick away team for ALL games today including future ones">🤖 Auto-pick All Today</button>
+      </div>
+      <div class="msg" id="autoPickMsg" style="margin-bottom:10px"></div>
+      <div id="picksDataContainer">
+        <div class="state-box"><p>Select a date and click Load.</p></div>
+      </div>
+    </div>
+
+    <!-- Games tab -->
+    <div id="tab-games" style="display:none">
+      <div class="data-controls">
+        <input type="date" class="data-input" id="gamesDate" />
+        <button class="btn-load" id="loadGamesBtn">Load</button>
+      </div>
+      <div id="gamesDataContainer">
+        <div class="state-box"><p>Select a date and click Load.</p></div>
+      </div>
+    </div>
+
+    <!-- Survivor tab -->
+    <div id="tab-survivor" style="display:none">
+      <div class="survivor-controls">
+        <span style="font-size:13px;color:var(--ink-faint)">Current month: <strong id="survivorMonth">—</strong></span>
+        <button class="btn-danger" id="resetSurvivorBtn">⚠️ Reset This Month</button>
+      </div>
+      <div id="survivorDataContainer">
+        <div class="state-box"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script type="module">
-  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, signOut }
-    from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
-  import { getDatabase, ref, get, set, update, remove, query, orderByKey }
-    from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
-  function initNav({activePage, isAdmin, userName}) {
-    const links = [
-      {href:'picks.html',    label:'Picks',     icon:'📋'},
-      {href:'results.html',  label:'Results',   icon:'📊'},
-      {href:'standings.html',label:'Standings', icon:'🏆'},
-      {href:'survivor.html', label:'Survivor',  icon:'💀'},
-      {href:'profile.html',  label:'Profile',   icon:'👤'},
-    ];
-    if (isAdmin) links.push({href:'admin.html', label:'Admin', icon:'⚙️'});
-    document.getElementById('mainNav').innerHTML = `
-      <div class="nav-inner">
-        <a class="nav-logo" href="index.html">🏈 NFL Pick Em</a>
-        <div class="nav-links">
-          ${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}
-        </div>
-        <div class="nav-right">
-          <span class="nav-user">${userName}</span>
-          <button class="btn-signout" id="signOutBtn">Sign Out</button>
-          <button class="hamburger" id="hamburgerBtn" aria-expanded="false" aria-label="Menu">
-            <span></span><span></span><span></span>
-          </button>
-        </div>
-      </div>`;
-    document.getElementById('drawerUser').textContent = userName;
-    document.getElementById('drawerNav').innerHTML =
-      links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
-    const hamburger=document.getElementById('hamburgerBtn'),drawer=document.getElementById('mobileDrawer'),overlay=document.getElementById('drawerOverlay'),closeBtn=document.getElementById('drawerClose');
-    if(hamburger){
-      const open=()=>{drawer.classList.add('open');overlay.classList.add('show');hamburger.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';};
-      const close=()=>{drawer.classList.remove('open');overlay.classList.remove('show');hamburger.setAttribute('aria-expanded','false');document.body.style.overflow='';};
-      hamburger.addEventListener('click',open);closeBtn?.addEventListener('click',close);overlay?.addEventListener('click',close);
+  import { initializeApp }                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+function initNav({ activePage, isAdmin = false, userName = '' }) {
+  const nav = document.getElementById('mainNav');
+  if (!nav) return;
+
+  const pages = [
+    { href: 'picks.html',     label: 'My Picks',  icon: '🎯' },
+    { href: 'results.html',   label: 'Results',   icon: '📋' },
+    { href: 'standings.html', label: 'Standings', icon: '🏆' },
+    { href: 'survivor.html',  label: 'Survivor',  icon: '💀' },
+    { href: 'profile.html',   label: 'Profile',   icon: '🔐' },
+  ];
+
+  if (isAdmin) {
+    pages.push({ href: 'admin.html', label: 'Admin', icon: '⚙️' });
+  }
+
+  nav.innerHTML = `
+    <div class="nav-inner">
+<a href="index.html" class="nav-logo">⚾ Pick'em</a>
+
+      <div class="nav-links" id="navLinks">
+        ${pages.map(p => `
+          <a href="${p.href}" class="nav-link${p.href === activePage ? ' active' : ''}" ${p.href === 'admin.html' ? 'id="adminLink"' : ''}>
+            ${p.label}
+          </a>
+        `).join('')}
+      </div>
+
+      <div class="nav-right">
+        <span class="nav-user" id="navUser">${userName}</span>
+        <button class="btn-signout" id="signOutBtn">Sign out</button>
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+      <div class="drawer-header">
+        <span class="drawer-title">⚾ Pick'em</span>
+        <button class="drawer-close" id="drawerClose" aria-label="Close menu">✕</button>
+      </div>
+      ${userName ? `<div class="drawer-user">${userName}</div>` : ''}
+      <nav class="drawer-nav">
+        ${pages.map(p => `
+          <a href="${p.href}" class="drawer-link${p.href === activePage ? ' active' : ''}" ${p.href === 'admin.html' ? 'id="drawerAdminLink"' : ''}>
+            <span class="drawer-icon">${p.icon}</span>
+            ${p.label}
+          </a>
+        `).join('')}
+      </nav>
+      <button class="drawer-signout" id="drawerSignOutBtn">Sign out</button>
+    </div>
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+  `;
+
+  // Wire hamburger
+  const hamburger = document.getElementById('hamburgerBtn');
+  const drawer    = document.getElementById('mobileDrawer');
+  const overlay   = document.getElementById('drawerOverlay');
+  const closeBtn  = document.getElementById('drawerClose');
+
+  function openDrawer() {
+    drawer.classList.add('open');
+    overlay.classList.add('show');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    overlay.classList.remove('show');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.addEventListener('click', openDrawer);
+  closeBtn.addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', closeDrawer);
+
+  // Close on nav
+  drawer.querySelectorAll('.drawer-link').forEach(link => {
+    link.addEventListener('click', closeDrawer);
+  });
+
+  return {
+    setUser(name) {
+      const el = document.getElementById('navUser');
+      if (el) el.textContent = name;
+      const du = drawer.querySelector('.drawer-user');
+      if (du) du.textContent = name;
     }
+  };
+}
+
+const NAV_STYLES = `
+  /* ── Nav base ─────────────────────────────── */
+  #mainNav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--white);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    z-index: 200;
+    height: 58px;
+  }
+
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .nav-link {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+
+  .nav-link:hover  { background: var(--cream); color: var(--ink); }
+  .nav-link.active { background: var(--navy); color: var(--white); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .nav-user {
+    font-size: 13px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .btn-signout {
+    padding: 6px 12px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 6px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-light);
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+  }
+
+  .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── Hamburger ────────────────────────────── */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--ink);
+    border-radius: 2px;
+    transition: all .2s ease;
+  }
+
+  .hamburger[aria-expanded="true"] span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .hamburger[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger[aria-expanded="true"] span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* ── Mobile drawer ────────────────────────── */
+  .mobile-drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: 280px;
+    height: 100dvh;
+    background: var(--white);
+    z-index: 300;
+    transform: translateX(100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 24px rgba(0,0,0,.12);
+  }
+
+  .mobile-drawer.open { transform: translateX(0); }
+
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 299;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .28s ease;
+  }
+
+  .drawer-overlay.show { opacity: 1; pointer-events: all; }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 58px;
+    border-bottom: 1px solid var(--cream-dark);
+    flex-shrink: 0;
+  }
+
+  .drawer-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+  }
+
+  .drawer-close {
+    width: 32px; height: 32px;
+    border: none;
+    background: var(--cream);
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--ink-light);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+
+  .drawer-close:hover { background: var(--cream-dark); }
+
+  .drawer-user {
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--cream-dark);
+    background: var(--cream);
+  }
+
+  .drawer-nav {
+    flex: 1;
+    padding: 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  .drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    transition: background .15s;
+  }
+
+  .drawer-link:hover  { background: var(--cream); }
+  .drawer-link.active { background: var(--navy); color: var(--white); }
+
+  .drawer-icon { font-size: 20px; width: 28px; text-align: center; }
+
+  .drawer-signout {
+    margin: 12px;
+    padding: 13px;
+    background: transparent;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--red);
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    flex-shrink: 0;
+  }
+
+  .drawer-signout:hover { background: #FDF0EF; border-color: var(--red); }
+
+  /* ── Responsive breakpoint ────────────────── */
+  @media (max-width: 720px) {
+    .nav-links  { display: none; }
+    .nav-user   { display: none; }
+    .btn-signout { display: none; }
+    .hamburger  { display: flex; }
+  }
+`;
+
+
+  // ── Check pending free pass requests and badge Admin nav ─────────────
+  async function checkPendingFPRequests() {
+    try {
+      const ym   = yearMonthStr();
+      const snap = await get(ref(db, `survivor/${ym}`));
+      if (!snap.exists()) return;
+      let count = 0;
+      snap.forEach(child => {
+        const s = child.val();
+        if (s.freePassRequested && !s.freePassUsed) count++;
+      });
+      // Update both desktop and mobile admin links
+      ['adminLink', 'drawerAdminLink'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        // Remove existing badge
+        el.querySelectorAll('.nav-badge,.drawer-badge').forEach(b => b.remove());
+        if (count > 0) {
+          const isDrawer = id === 'drawerAdminLink';
+          const badge = document.createElement('span');
+          badge.className = isDrawer ? 'drawer-badge' : 'nav-badge';
+          badge.textContent = count;
+          el.appendChild(badge);
+        }
+      });
+    } catch(e) { /* silent */ }
   }
 
   const firebaseConfig = {
-  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
-  authDomain: "nflpickem1728.firebaseapp.com",
-  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com",
-  projectId: "nflpickem1728",
-  storageBucket: "nflpickem1728.firebasestorage.app",
-  messagingSenderId: "752271833942",
-  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
-};
+    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:         "mlbpickem-5bc9c",
+    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId: "699113861941",
+    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+  };
 
-  const app = initializeApp(firebaseConfig);
+  const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getDatabase(app);
 
-  let currentUser = null;
   let allMembers  = [];
-  let allSurvivor = {};
-  let settings    = {};
+  let allGamesMap = {};
+  let currentUser = null;
 
-  function normalizeAbbrev(abbrev) {
-    if (!abbrev) return '';
-    const map = { 'WSH':'WAS','JAC':'JAX','LAR':'LA','SD':'LAC','OAK':'LV','STL':'LA','BLT':'BAL','CLV':'CLE','HST':'HOU','ARZ':'ARI' };
-    return map[abbrev.toUpperCase()] || abbrev.toUpperCase();
+  // ── Toast ─────────────────────────────────────────────────────────────
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className   = `toast ${type} show`;
+    setTimeout(() => el.classList.remove('show'), 3000);
   }
 
-  function showMsg(id, text, type) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = text;
-    el.className   = `msg ${type} show`;
-    setTimeout(() => el.classList.remove('show'), 5000);
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
-  // ── Tab switching ────────────────────────────────────────────────────
-  document.querySelectorAll('.atab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.atab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`panel-${btn.dataset.panel}`).classList.add('active');
-    });
-  });
+  function yearMonthStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
 
-  // ── Load members ─────────────────────────────────────────────────────
+  function initials(name) {
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  function formatJoined(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ── Load all members ──────────────────────────────────────────────────
   async function loadMembers() {
-    const snap = await get(query(ref(db, 'adminConfig/members'), orderByKey()));
-    allMembers  = [];
-    if (snap.exists()) snap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
-    allMembers.sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
-    renderMembersList(); return;
+    const snap = await get(ref(db, 'adminConfig/members'));
+    allMembers = [];
 
-  }
-
-  function renderMembersList() {
-    const wrap = document.getElementById('membersTableWrap');
-    if (!allMembers.length) { wrap.innerHTML = '<div class="empty-state">No members yet.</div>'; return; }
-
-    wrap.innerHTML = `
-      <table class="members-table">
-        <thead>
-          <tr><th>Name / Email</th><th>Joined</th><th>Donated</th><th>Auth</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="membersTbody"></tbody>
-      </table>`;
-    const tbody = document.getElementById('membersTbody');
-    for (const m of allMembers) {
-      const tr = document.createElement('tr');
-      const joined = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
-      const donatedBadge = m.donated
-        ? '<span class="badge badge-green">✓ Donated</span>'
-        : '<span class="badge badge-grey">No</span>';
-      const provider = m.authProvider === 'google' ? '🔵 Google' : '📧 PIN';
-      // Build row safely using DOM methods to avoid quote/character issues
-      tr.innerHTML = `
-        <td><strong>${m.displayName || '—'}</strong><span class="member-email">${m.email || ''}</span></td>
-        <td style="color:var(--ink-faint);font-size:12px">${joined}</td>
-        <td>${donatedBadge}</td>
-        <td style="font-size:12px">${provider}</td>
-        <td><div class="action-btns" id="actions-${m.uid}"></div></td>`;
-
-      const actionsDiv = tr.querySelector(`#actions-${m.uid}`);
-
-      const donateBtn = document.createElement('button');
-      donateBtn.className = `mini-btn ${m.donated ? 'red' : 'green'}`;
-      donateBtn.textContent = m.donated ? 'Mark unpaid' : '✓ Mark paid';
-      donateBtn.addEventListener('click', () => toggleDonation(m.uid, !m.donated));
-      actionsDiv.appendChild(donateBtn);
-
-      const renameBtn = document.createElement('button');
-      renameBtn.className = 'mini-btn';
-      renameBtn.textContent = 'Rename';
-      renameBtn.addEventListener('click', () => renameMember(m.uid, m.displayName));
-      actionsDiv.appendChild(renameBtn);
-
-      if (m.uid !== currentUser.uid) {
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'mini-btn red';
-        removeBtn.textContent = 'Remove';
-        removeBtn.addEventListener('click', () => removeMember(m.uid, m.displayName));
-        actionsDiv.appendChild(removeBtn);
-      }
-
-      tbody.appendChild(tr);
+    if (snap.exists()) {
+      snap.forEach(child => allMembers.push({ uid: child.key, ...child.val() }));
     }
+
+    renderMembers();
   }
 
-  }
+  // ── Render all members ────────────────────────────────────────────────
+  function renderMembers() {
+    const list     = document.getElementById('membersList');
+    const approved = allMembers.filter(m => m.approved);
 
-  // ── Load free pass queue ──────────────────────────────────────────────
-  async function loadFreePassQueue() {
-    const snap = await get(ref(db, 'survivor/2026'));
-    allSurvivor = {};
-    if (snap.exists()) snap.forEach(c => { allSurvivor[c.key] = c.val(); });
+    if (approved.length === 0) {
+      list.innerHTML = `<div class="state-box"><p>No approved members yet.</p></div>`;
+      return;
+    }
 
-    const pending = Object.entries(allSurvivor).filter(([, v]) => v?.freePassRequested && !v?.freePassUsed);
-    const section = document.getElementById('fpSection');
-    const list    = document.getElementById('fpList');
+    approved.sort((a, b) => {
+      if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
+      return (a.displayName || '').localeCompare(b.displayName || '');
+    });
 
-    if (!pending.length) { section.style.display = 'none'; return; }
-    section.style.display = '';
-    list.innerHTML = pending.map(([uid, v]) => {
-      const m = allMembers.find(x => x.uid === uid);
-      return `<div class="fp-row">
-        <div>
-          <div class="fp-name">${m?.displayName || uid}</div>
-          <div class="fp-week">Requested for Week ${v.freePassWeek || '?'}</div>
-        </div>
-        <div class="action-btns">
-          <button class="mini-btn green" onclick="approveFreePass('${uid}', ${v.freePassWeek || 0})">✓ Approve</button>
-          <button class="mini-btn red" onclick="denyFreePass('${uid}')">Deny</button>
-        </div>
-      </div>`;
+    list.innerHTML = approved.map(m => {
+      const safeName = (m.displayName || '').replace(/"/g, '&quot;').replace(/'/g, "\'");
+      return `
+        <div class="member-row" id="member-${m.uid}">
+          <div class="member-avatar" style="${m.isAdmin ? 'background:var(--accent);color:var(--ink)' : ''}">${initials(m.displayName || m.email)}</div>
+          <div class="member-info">
+            <div class="member-name" id="name-display-${m.uid}">${m.displayName || '—'}${m.pickReminderOptIn ? ' <span title="Pick reminders on">🔔</span>' : ''}</div>
+            <div class="inline-edit" id="name-edit-${m.uid}" style="display:none">
+              <input type="text" id="name-input-${m.uid}" value="${safeName}" />
+              <button class="btn-save-name" onclick="saveDisplayName('${m.uid}')">Save</button>
+              <button class="btn-cancel-name" onclick="cancelEditName('${m.uid}')">Cancel</button>
+            </div>
+            <div class="member-email">${m.email}</div>
+          </div>
+          <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
+          <span class="status-pill ${m.isAdmin ? 'pill-admin' : 'pill-approved'}">${m.isAdmin ? 'Admin' : 'Member'}</span>
+          <div class="row-actions">
+            <button class="donated-btn ${m.donated ? 'donated-yes' : 'donated-no'}"
+              onclick="toggleDonated('${m.uid}', this)"
+              title="${m.donated ? 'Click to mark as not donated' : 'Click to mark as donated'}">
+              ${m.donated ? '✅ Donated' : '❌ Donated'}
+            </button>
+            <button class="btn-edit" onclick="startEditName('${m.uid}')">Rename</button>
+            ${m.uid !== currentUser.uid && !m.isAdmin
+              ? `<button class="btn-revoke" onclick="revokeMember('${m.uid}', '${safeName}')">Remove</button>`
+              : ''}
+          </div>
+        </div>`;
     }).join('');
   }
 
-  // ── Toggle donation ───────────────────────────────────────────────────
-  window.renameMember = async (uid, currentName) => {
-    const newName = prompt(`Enter new display name for ${currentName}:`, currentName);
-    if (!newName || newName.trim() === currentName) return;
+
+
+
+  // ── Edit display name ─────────────────────────────────────────────────
+  window.startEditName = function(uid) {
+    document.getElementById(`name-display-${uid}`).style.display = 'none';
+    document.getElementById(`name-edit-${uid}`).style.display = 'flex';
+    document.getElementById(`name-input-${uid}`).focus();
+  };
+
+  window.cancelEditName = function(uid) {
+    document.getElementById(`name-display-${uid}`).style.display = '';
+    document.getElementById(`name-edit-${uid}`).style.display = 'none';
+  };
+
+  window.saveDisplayName = async function(uid) {
+    const input = document.getElementById(`name-input-${uid}`);
+    const name  = input.value.trim();
+    if (!name) { toast('Name cannot be empty.', 'error'); return; }
     try {
-      await update(ref(db, `adminConfig/members/${uid}`), { displayName: newName.trim() });
-      showMsg('membersMsg', `✓ Display name updated to "${newName.trim()}".`, 'info');
-      loadMembers();
-    } catch(err) {
-      showMsg('membersMsg', 'Could not update name. Please try again.', 'error');
+      await update(ref(db, `adminConfig/members/${uid}`), { displayName: name });
+      const m = allMembers.find(m => m.uid === uid);
+      if (m) m.displayName = name;
+      document.getElementById(`name-display-${uid}`).textContent = name;
+      cancelEditName(uid);
+      toast(`✅ Name updated to "${name}"`);
+    } catch (e) {
+      toast('Failed to update name.', 'error');
     }
   };
 
-  window.toggleDonation = async (uid, val) => {
-    await update(ref(db, `adminConfig/members/${uid}`), { donated: val });
-    loadMembers();
+  // ── Toggle donated ───────────────────────────────────────────────────
+  window.toggleDonated = async function(uid, btn) {
+    const m = allMembers.find(m => m.uid === uid);
+    if (!m) return;
+    const newVal = !m.donated;
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { donated: newVal });
+      m.donated = newVal;
+      btn.className = `donated-btn ${newVal ? 'donated-yes' : 'donated-no'}`;
+      btn.innerHTML = newVal ? '✅ Donated' : '❌ Donated';
+      btn.title = newVal ? 'Click to mark as not donated' : 'Click to mark as donated';
+      toast(newVal ? `✅ ${m.displayName} marked as donated` : `${m.displayName} marked as not donated`);
+    } catch (e) {
+      toast('Failed to update donation status.', 'error');
+    }
   };
 
-  // ── Remove member ─────────────────────────────────────────────────────
-  window.removeMember = async (uid, name) => {
-    if (!confirm(`Remove ${name} from the league? This will delete their member record.`)) return;
-    await remove(ref(db, `adminConfig/members/${uid}`));
-    showMsg('membersMsg', `${name} removed.`, 'info');
-    loadMembers();
+  // ── Remove member — delete all data ─────────────────────────────────
+  window.revokeMember = async function(uid, name) {
+    if (!confirm(`Remove ${name} completely?\n\nThis will delete their account, all picks, and all survivor data. This cannot be undone.`)) return;
+    try {
+      const ym = yearMonthStr();
+      // Delete all data in parallel
+      await Promise.all([
+        remove(ref(db, `adminConfig/members/${uid}`)),
+        remove(ref(db, `picks/${uid}`)),
+        remove(ref(db, `survivor/${ym}/${uid}`)),
+        remove(ref(db, `standings/${uid}`)),
+      ]);
+      allMembers = allMembers.filter(m => m.uid !== uid);
+      toast(`${name} removed and all data deleted.`);
+      renderMembers();
+    } catch (e) {
+      console.error(e);
+      toast('Failed to remove member: ' + e.message, 'error');
+    }
   };
 
-  // ── Approve free pass ─────────────────────────────────────────────────
-  window.approveFreePass = async (uid, week) => {
-    await update(ref(db, `survivor/2026/${uid}`), {
-      freePassRequested: false, freePassUsed: true, freePassWeek: week, alive: true, eliminatedWeek: null,
+
+
+  // ── League settings ───────────────────────────────────────────────────
+  async function loadLeagueSettings() {
+    const snap = await get(ref(db, 'adminConfig/settings'));
+    const settings = snap.exists() ? snap.val() : {};
+
+    const monthlyStart = settings.monthlyStartDay || 1;
+    const seasonStart  = settings.seasonStartDate || '';
+
+    document.getElementById('monthlyStartDay').value = monthlyStart;
+    document.getElementById('seasonStartDate').value = seasonStart;
+  }
+
+  function flashSaved(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 2000);
+  }
+
+  document.getElementById('saveMonthlyStartBtn').addEventListener('click', async () => {
+    const day = parseInt(document.getElementById('monthlyStartDay').value);
+    if (isNaN(day) || day < 1 || day > 31) { toast('Enter a valid day (1–31).', 'error'); return; }
+    try {
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      flashSaved('monthlyStartSaved');
+      toast(`✅ Monthly standings now start from day ${day}`);
+    } catch (e) { toast('Failed to save setting.', 'error'); }
+  });
+
+  document.getElementById('saveSeasonStartBtn').addEventListener('click', async () => {
+    const date = document.getElementById('seasonStartDate').value;
+    if (!date) { toast('Pick a start date.', 'error'); return; }
+    try {
+      await update(ref(db, 'adminConfig/settings'), { seasonStartDate: date });
+      flashSaved('seasonStartSaved');
+      toast(`✅ Season standings now start from ${date}`);
+    } catch (e) { toast('Failed to save setting.', 'error'); }
+  });
+
+  document.getElementById('resetMonthlyBtn').addEventListener('click', async () => {
+    const today = todayStr();
+    const day   = new Date().getDate();
+    if (!confirm(`Reset monthly standings to start from today (day ${day})? Picks before today won't count toward this month's standings.`)) return;
+    try {
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      document.getElementById('monthlyStartDay').value = day;
+      toast(`✅ Monthly standings reset — now starting from day ${day}`);
+    } catch (e) { toast('Failed to reset standings.', 'error'); }
+  });
+
+  // ── Registration toggle ───────────────────────────────────────────────
+  async function loadRegistrationState() {
+    const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
+    const isOpen = snap.exists() ? snap.val() : false;
+    setRegToggleUI(isOpen);
+    document.getElementById('regToggleInput').checked = isOpen;
+  }
+
+  function setRegToggleUI(isOpen) {
+    const card  = document.getElementById('regToggleCard');
+    const icon  = document.getElementById('regToggleIcon');
+    const title = document.getElementById('regToggleTitle');
+    const sub   = document.getElementById('regToggleSub');
+    card.className  = `reg-toggle-card ${isOpen ? 'open' : 'closed'}`;
+    icon.textContent  = isOpen ? '🟢' : '🔒';
+    title.textContent = isOpen ? 'Registration Open' : 'Registration Closed';
+    sub.textContent   = isOpen ? 'New users can sign up and request access' : 'New users cannot sign up';
+  }
+
+  document.getElementById('regToggleInput').addEventListener('change', async (e) => {
+    const isOpen = e.target.checked;
+    try {
+      await set(ref(db, 'adminConfig/settings/registrationOpen'), isOpen);
+      setRegToggleUI(isOpen);
+      toast(isOpen ? '✅ Registration opened' : '🔒 Registration closed');
+    } catch (err) {
+      toast('Failed to update registration setting.', 'error');
+      e.target.checked = !isOpen; // revert
+    }
+  });
+
+  // ── Add member manually ───────────────────────────────────────────────
+  document.getElementById('addMemberBtn').addEventListener('click', async () => {
+    const name  = document.getElementById('addName').value.trim();
+    const email = document.getElementById('addEmail').value.trim();
+    const pin   = document.getElementById('addPin').value.trim();
+    const msg   = document.getElementById('addMemberMsg');
+
+    const showMsg = (text, type) => {
+      msg.textContent = text;
+      msg.className = `add-member-msg ${type} show`;
+    };
+
+    if (!name)  { showMsg('Display name is required.', 'error'); return; }
+    if (!email) { showMsg('Email is required.', 'error'); return; }
+    if (!/^\d{6,8}$/.test(pin)) { showMsg('PIN must be 6–8 digits.', 'error'); return; }
+
+    const btn = document.getElementById('addMemberBtn');
+    btn.disabled = true; btn.textContent = 'Adding…';
+
+    try {
+      // Create Firebase Auth account
+      const cred = await createUserWithEmailAndPassword(auth, email, pin);
+      const uid  = cred.user.uid;
+
+      // Write member profile — auto-approved since admin is adding them
+      await set(ref(db, `adminConfig/members/${uid}`), {
+        email,
+        displayName: name,
+        approved: true,
+        joinedAt: new Date().toISOString(),
+        addedByAdmin: true,
+      });
+
+      showMsg(`✅ ${name} added and approved! They can sign in with their email and the PIN you set.`, 'info');
+      document.getElementById('addName').value  = '';
+      document.getElementById('addEmail').value = '';
+      document.getElementById('addPin').value   = '';
+      loadMembers();
+    } catch (err) {
+      const msgs = {
+        'auth/email-already-in-use': 'That email already has an account.',
+        'auth/invalid-email':        'Invalid email address.',
+        'auth/weak-password':        'PIN too short (min 6 digits).',
+      };
+      showMsg(msgs[err.code] || `Error: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Add Member';
+    }
+  });
+
+
+
+  // ── Tab switching ─────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['picks','games','survivor'].forEach(t => {
+        document.getElementById(`tab-${t}`).style.display = t === btn.dataset.tab ? '' : 'none';
+      });
+      if (btn.dataset.tab === 'survivor') loadSurvivorData();
     });
-    showMsg('fpMsg', '✓ Free pass approved — member restored to alive.', 'info');
-    loadFreePassQueue();
-  };
+  });
 
-  // ── Deny free pass ────────────────────────────────────────────────────
-  window.denyFreePass = async (uid) => {
-    await update(ref(db, `survivor/2026/${uid}`), { freePassRequested: false });
-    showMsg('fpMsg', 'Free pass denied.', 'warn');
-    loadFreePassQueue();
-  };
+  // ── Picks data viewer ─────────────────────────────────────────────────
+  document.getElementById('picksDate').value = todayStr();
 
-  // ── Save settings ─────────────────────────────────────────────────────
-  window.saveSettings = async () => {
-    const startDate   = document.getElementById('settingSeasonStart').value;
-    const startWeek   = parseInt(document.getElementById('settingSeasonWeek').value) || 1;
-    const survivorWk  = parseInt(document.getElementById('settingSurvivorWeek').value) || 1;
-    await update(ref(db, 'adminConfig/settings'), {
-      seasonStartDate: startDate, seasonStartWeek: startWeek, survivorStartWeek: survivorWk,
-    });
-    showMsg('settingsMsg', '✓ Settings saved.', 'info');
-  };
+  // ── Shared ESPN fetch for admin data viewer ──────────────────────────
+  async function adminFetchGames(date) {
+    // Always fetch live from ESPN, update cache
+    try {
+      const espnDate = date.replace(/-/g, '');
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`);
+      const data = await res.json();
+      const games = {};
+      for (const event of (data?.events || [])) {
+        const comp = event.competitions?.[0];
+        if (!comp) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        if (!home || !away) continue;
+        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+        let winnerId = null;
+        if (statusName === 'STATUS_FINAL') {
+          if (home.winner) winnerId = String(home.team.id);
+          else if (away.winner) winnerId = String(away.team.id);
+          else if (home.score != null && away.score != null)
+            winnerId = parseInt(home.score) > parseInt(away.score) ? String(home.team.id) : String(away.team.id);
+        }
+        games[event.id] = {
+          id: event.id,
+          startTime:   event.date,
+          statusName,
+          statusShort: event.status?.type?.shortDetail || '',
+          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
+          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
+          homeScore: home.score ?? null,
+          awayScore: away.score ?? null,
+          winnerId,
+        };
+      }
+      // Update Firebase cache
+      if (Object.keys(games).length > 0) {
+        await set(ref(db, `games/${date}`), games).catch(() => {});
+      }
+      return games;
+    } catch (e) {
+      // Fall back to Firebase cache
+      const snap = await get(ref(db, `games/${date}`));
+      return snap.exists() ? snap.val() : {};
+    }
+  }
 
-  window.saveToggle = async (key, val) => {
-    await update(ref(db, 'adminConfig/settings'), { [key]: val });
-  };
+  document.getElementById('loadPicksBtn').addEventListener('click', async () => {
+    const date      = document.getElementById('picksDate').value;
+    const container = document.getElementById('picksDataContainer');
+    if (!date) { container.innerHTML = `<div class="state-box"><p>Please select a date.</p></div>`; return; }
 
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
 
+    // Fetch fresh games from ESPN
+    const games   = await adminFetchGames(date);
+    const approved = allMembers.filter(m => m.approved);
+    const rows = [];
 
-  // ── Survivor admin list ───────────────────────────────────────────────
-  async function loadSurvivorAdmin() {
-    const snap = await get(ref(db, 'survivor/2026'));
-    allSurvivor = {};
-    if (snap.exists()) snap.forEach(c => { allSurvivor[c.key] = c.val(); });
+    await Promise.all(approved.map(async m => {
+      const snap  = await get(ref(db, `picks/${m.uid}/${date}`));
+      const picks = snap.exists() ? snap.val() : {};
 
-    const list = document.getElementById('survivorAdminList');
-    list.innerHTML = allMembers.map(m => {
-      const s    = allSurvivor[m.uid] || {};
-      const alive = s.alive !== false;
-      const weeks = Object.keys(s.usedTeams || {}).length;
-      const fp    = s.freePassUsed ? ` 🎟️ FP W${s.freePassWeek}` : s.freePassRequested ? ' ⏳ FP Req' : '';
-      return `<div class="data-row">
-        <span class="data-label">${m.displayName}</span>
-        <span>
-          <span class="badge ${alive ? 'badge-green' : 'badge-red'}">${alive ? '✅ Alive' : `💀 Out W${s.eliminatedWeek||'?'}`}</span>
-          <span style="font-size:12px;color:var(--ink-faint);margin-left:6px">${weeks} wk${weeks!==1?'s':''}${fp}</span>
-        </span>
+      for (const [gameId, game] of Object.entries(games)) {
+        const pick     = picks[gameId];
+        const isFinal  = game.statusName === 'STATUS_FINAL';
+        const pickAbbrev = pick?.teamId
+          ? (String(pick.teamId) === String(game.homeTeam?.id) ? game.homeTeam.abbrev : game.awayTeam?.abbrev)
+          : '—';
+        const winnerAbbrev = game.winnerId
+          ? (String(game.winnerId) === String(game.homeTeam?.id) ? game.homeTeam?.abbrev : game.awayTeam?.abbrev)
+          : (isFinal ? '?' : '—');
+        const correct = !pick?.teamId ? 'none'
+          : !isFinal ? 'pending'
+          : String(pick.teamId) === String(game.winnerId) ? 'correct' : 'wrong';
+
+        rows.push({
+          member:  m.displayName || m.email,
+          game:    `${game.awayTeam?.abbrev || '?'} @ ${game.homeTeam?.abbrev || '?'}`,
+          time:    game.startTime ? new Date(game.startTime).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '—',
+          status:  game.statusShort || game.statusName?.replace('STATUS_','') || '—',
+          picked:  pickAbbrev,
+          winner:  winnerAbbrev,
+          correct,
+        });
+      }
+    }));
+
+    // Sort by game time then member name
+    rows.sort((a,b) => a.time.localeCompare(b.time) || a.member.localeCompare(b.member));
+
+    if (rows.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">📭</div><p>No picks data for this date.</p></div>`;
+      return;
+    }
+
+    const resultLabel = { correct:'✅ Correct', wrong:'❌ Wrong', pending:'⏳ Pending', none:'— No pick' };
+    const resultClass = { correct:'pick-correct', wrong:'pick-wrong', pending:'pick-pending', none:'' };
+
+    container.innerHTML = `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Game</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Picked</th>
+              <th>Winner</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>${r.member}</td>
+                <td>${r.game}</td>
+                <td>${r.time}</td>
+                <td>${r.status}</td>
+                <td>${r.picked}</td>
+                <td>${r.winner}</td>
+                <td class="${resultClass[r.correct]}">${resultLabel[r.correct]}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>`;
-    }).join('') || '<div class="empty-state">No survivor data.</div>';
+  });
+
+
+  // ── Admin auto-pick ───────────────────────────────────────────────────
+
+  // ── Pick the worse team (worse win % = pick them; tied = pick away) ────
+  function pickWorseTeam(game) {
+    function parseWinPct(rec) {
+      if (!rec) return null;
+      // Record format: "3-5" or "3-5-1" (wins-losses-ties)
+      const parts = rec.split('-').map(Number);
+      if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+      const total = parts[0] + parts[1];
+      return total === 0 ? 0.5 : parts[0] / total;
+    }
+
+    const homePct = parseWinPct(game.homeTeam?.record);
+    const awayPct = parseWinPct(game.awayTeam?.record);
+
+    console.log(`[AutoPick] ${game.awayTeam?.abbrev}(${game.awayTeam?.record}=${awayPct?.toFixed(3)}) @ ${game.homeTeam?.abbrev}(${game.homeTeam?.record}=${homePct?.toFixed(3)})`);
+
+    if (homePct !== null && awayPct !== null) {
+      if (homePct < awayPct) { console.log(`  → ${game.homeTeam.abbrev} (home worse)`); return game.homeTeam.id; }
+      if (awayPct < homePct) { console.log(`  → ${game.awayTeam.abbrev} (away worse)`); return game.awayTeam.id; }
+    }
+    // Tied or no records — pick away team
+    console.log(`  → ${game.awayTeam.abbrev} (tied/default away)`);
+    return game.awayTeam.id;
+  }
+
+  document.getElementById('autoPickBtn').addEventListener('click', async () => {
+    const date = document.getElementById('picksDate').value;
+    const msg  = document.getElementById('autoPickMsg');
+
+    if (!date) {
+      msg.textContent = 'Select a date first.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    const now = new Date();
+    const d   = new Date(date + 'T12:00:00');
+    if (d > now) {
+      msg.textContent = 'Cannot auto-pick a future date.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    if (!confirm(`Auto-pick the worse record team (or away team if tied) for all members who haven't picked on ${date}? This cannot be undone.`)) return;
+
+    msg.textContent = 'Running auto-pick…';
+    msg.className = 'msg info show';
+
+    try {
+      // Fetch games for the date
+      const games = await adminFetchGames(date);
+      const gameList = Object.values(games);
+
+      if (gameList.length === 0) {
+        msg.textContent = 'No games found for this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      // Only auto-pick games that have started
+      const lockedGames = gameList.filter(g => new Date(g.startTime) <= now);
+      if (lockedGames.length === 0) {
+        msg.textContent = 'No games have started yet on this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      const approved = allMembers.filter(m => m.approved);
+      let pickedCount = 0;
+
+      await Promise.all(approved.map(async m => {
+        const picksSnap = await get(ref(db, `picks/${m.uid}/${date}`));
+        const existing  = picksSnap.exists() ? picksSnap.val() : {};
+        const updates   = {};
+
+        for (const game of lockedGames) {
+          if (existing[game.id]?.teamId) continue; // already has a pick
+          updates[`picks/${m.uid}/${date}/${game.id}`] = {
+            teamId:   pickWorseTeam(game),
+            lockedIn: true,
+            correct:  null,
+            auto:     true,
+          };
+          pickedCount++;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }));
+
+      msg.textContent = `✅ Done! Auto-picked worse record team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.className = 'msg info show';
+
+      // Reload the picks view
+      document.getElementById('loadPicksBtn').click();
+
+    } catch (e) {
+      console.error(e);
+      msg.textContent = 'Auto-pick failed: ' + e.message;
+      msg.className = 'msg error show';
+    }
+  });
+
+
+  document.getElementById('autoPickAllBtn').addEventListener('click', async () => {
+    const date = document.getElementById('picksDate').value;
+    const msg  = document.getElementById('autoPickMsg');
+
+    if (!date) {
+      msg.textContent = 'Select a date first.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    if (!confirm(`Auto-pick the worse record team (or away team if tied) for ALL games on ${date} for members who haven't picked? Users can still change picks before their game starts.`)) return;
+
+    msg.textContent = 'Running auto-pick for all games…';
+    msg.className = 'msg info show';
+
+    try {
+      const games = await adminFetchGames(date);
+      const gameList = Object.values(games);
+
+      if (gameList.length === 0) {
+        msg.textContent = 'No games found for this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      const approved = allMembers.filter(m => m.approved);
+      let pickedCount = 0;
+
+      await Promise.all(approved.map(async m => {
+        const picksSnap = await get(ref(db, `picks/${m.uid}/${date}`));
+        const existing  = picksSnap.exists() ? picksSnap.val() : {};
+        const updates   = {};
+
+        for (const game of gameList) {
+          if (existing[game.id]?.teamId) continue; // already has a pick
+          updates[`picks/${m.uid}/${date}/${game.id}`] = {
+            teamId:   pickWorseTeam(game),
+            lockedIn: true,
+            correct:  null,
+            auto:     true,
+          };
+          pickedCount++;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }));
+
+      msg.textContent = `✅ Done! Auto-picked worse record team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.className = 'msg info show';
+
+      document.getElementById('loadPicksBtn').click();
+
+    } catch (e) {
+      console.error(e);
+      msg.textContent = 'Auto-pick failed: ' + e.message;
+      msg.className = 'msg error show';
+    }
+  });
+
+  // ── Games data viewer ─────────────────────────────────────────────────
+  document.getElementById('gamesDate').value = todayStr();
+
+  document.getElementById('loadGamesBtn').addEventListener('click', async () => {
+    const date      = document.getElementById('gamesDate').value;
+    const container = document.getElementById('gamesDataContainer');
+    if (!date) return;
+
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+
+    const games = Object.values(await adminFetchGames(date))
+      .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+
+    if (games.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><p>No games found for this date.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Matchup</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Winner</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${games.map(g => {
+              const matchup = `${g.awayTeam?.abbrev || '?'} @ ${g.homeTeam?.abbrev || '?'}`;
+              const time    = g.startTime ? new Date(g.startTime).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) : '—';
+              const status  = g.statusShort || g.statusName?.replace('STATUS_','') || '—';
+              const score   = (g.awayScore != null && g.homeScore != null) ? `${g.awayScore} – ${g.homeScore}` : '—';
+              const winner  = g.winnerId
+                ? (String(g.winnerId) === String(g.homeTeam?.id) ? g.homeTeam?.abbrev : g.awayTeam?.abbrev)
+                : '—';
+              return `
+                <tr>
+                  <td>${matchup}</td>
+                  <td>${time}</td>
+                  <td>${status}</td>
+                  <td style="font-weight:700">${score}</td>
+                  <td style="font-weight:700">${winner}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  });
+
+
+
+  // ── Survivor data viewer ──────────────────────────────────────────────
+
+  function normalizeAbbrev(a) {
+    const s = (a||'').toUpperCase();
+    if (s==='CHW') return 'CWS';
+    if (s==='KCR') return 'KC';
+    if (s==='SDP') return 'SD';
+    if (s==='SFG') return 'SF';
+    if (s==='TBR') return 'TB';
+    if (s==='WSN') return 'WSH';
+    if (s==='OAK') return 'ATH';
+    return s;
+  }
+
+  function computeSurvivorStatus(usedTeams, freePassUsed, freePassDay, monthGames, startDay, today) {
+    const now  = new Date();
+    const ym   = today.substring(0, 7);
+    const year = parseInt(ym.split('-')[0]);
+    const mon  = parseInt(ym.split('-')[1]) - 1;
+    const daysInMonth = new Date(year, mon + 1, 0).getDate();
+    let alive = true, eliminatedDay = null, eliminatedReason = null;
+
+    // Effective start: if user has picks, start from their first pick day
+    // (handles post-reset joins). If no picks, start from survivorStartDay.
+    // New users who joined late will be eliminated for missed days.
+    const pickDays = Object.keys(usedTeams||{}).map(ds=>parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
+    const effectiveStart = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
+
+    for (let d = effectiveStart; d <= daysInMonth; d++) {
+      const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
+      if (dateStr > today) break;
+      const dayData = monthGames[dateStr];
+      if (!dayData || !dayData.games?.length) continue; // no games this day
+      // Deadline = last game start time for this day
+      if (now < dayData.lastStartTime) continue;
+      const pick = (usedTeams || {})[dateStr];
+      if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
+      const normPick = normalizeAbbrev(pick);
+      const game = dayData.games.find(g =>
+        normalizeAbbrev(g.homeTeam?.abbrev) === normPick ||
+        normalizeAbbrev(g.awayTeam?.abbrev) === normPick
+      );
+      if (!game || game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
+      const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
+      const won = homeWon
+        ? normalizeAbbrev(game.homeTeam.abbrev) === normPick
+        : normalizeAbbrev(game.awayTeam.abbrev) === normPick;
+      if (!won) {
+        const fpSaves = freePassUsed && freePassDay === d;
+        if (!fpSaves) { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
+      }
+    }
+    return { alive, eliminatedDay, eliminatedReason };
+  }
+
+
+  async function loadSurvivorData() {
+    const ym      = yearMonthStr();
+    const today   = todayStr();
+    const now     = new Date();
+    const container = document.getElementById('survivorDataContainer');
+    document.getElementById('survivorMonth').textContent = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+
+    // Load raw survivor data from Firebase
+    const snap = await get(ref(db, `survivor/${ym}`));
+    const data = snap.exists() ? snap.val() : {};
+
+    // Load settings
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const ss_val = settingsSnap.exists() ? settingsSnap.val() : {};
+    const startDay = ss_val.survivorStartDay || ss_val.monthlyStartDay || 1;
+
+    // Load all month games for computation
+    const monthGames = await adminFetchMonthGames(ym);
+
+    const approved = allMembers.filter(m => m.approved);
+    if (approved.length === 0) {
+      container.innerHTML = `<div class="state-box"><p>No approved members.</p></div>`;
+      return;
+    }
+
+    let rows;
+    try {
+    rows = await Promise.all(approved.map(async m => {
+      const raw      = data[m.uid] || { freePassUsed: false, freePassDay: null, usedTeams: {} };
+      const computed = computeSurvivorStatus(
+        raw.usedTeams, raw.freePassUsed, raw.freePassDay, monthGames, startDay, today
+      );
+
+
+
+      const pickCount = Object.keys(raw.usedTeams || {}).length;
+      const todayPick = (raw.usedTeams || {})[today];
+      const lastPick  = Object.entries(raw.usedTeams || {}).sort((a,b) => b[0].localeCompare(a[0]))[0];
+
+      // Get today's pick result
+      let todayResult = '—';
+      if (todayPick && monthGames[today]) {
+        const game = monthGames[today].games.find(g =>
+          g.homeTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase() ||
+          g.awayTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase()
+        );
+        if (game?.statusName === 'STATUS_FINAL' && game.winnerId) {
+          const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
+          const won = homeWon
+            ? game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+            : game.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+          todayResult = won ? `✅ ${todayPick} won` : `❌ ${todayPick} lost`;
+        } else if (game) {
+          todayResult = `⏳ ${todayPick}`;
+        } else {
+          todayResult = todayPick;
+        }
+      } else if (todayPick) {
+        todayResult = todayPick;
+      }
+
+      return { ...m, computed, raw, pickCount, todayResult, lastPick };
+    }));
+    } catch(err) {
+      console.error('loadSurvivorData error:', err);
+      container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><p>Failed to load: ${err.message}</p></div>`;
+      return;
+    }
+
+    rows.sort((a, b) => {
+      if (a.computed.alive !== b.computed.alive) return a.computed.alive ? -1 : 1;
+      return b.pickCount - a.pickCount;
+    });
+
+    // Show pending requests first
+    const pendingRequests = rows.filter(r => r.raw.freePassRequested && !r.raw.freePassUsed);
+    const pendingHTML = pendingRequests.length > 0 ? `
+      <div style="margin-bottom:16px;padding:14px 16px;background:#FEF9EE;border:1.5px solid #F5DFA0;border-radius:var(--radius);font-size:14px">
+        <strong style="color:#7A5A10">⏳ Pending Free Pass Requests (${pendingRequests.length})</strong>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+          ${pendingRequests.map(r => `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span><strong>${r.displayName || r.email}</strong> — lost on day ${r.raw.freePassDay || '?'} (pick: ${(r.raw.usedTeams || {})[ym + '-' + String(r.raw.freePassDay).padStart(2,'0')] || '?'})</span>
+              <button class="btn-load" onclick="approveFreePass('${r.uid}')" style="padding:6px 14px;font-size:13px;background:var(--green);color:white;border:none">✅ Approve</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : '';
+
+    container.innerHTML = pendingHTML + `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Status</th>
+              <th>Picks</th>
+              <th>Free Pass</th>
+              <th>Today</th>
+              <th>Last Pick</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => {
+              const c = r.computed;
+              let statusText = c.alive ? '✅ Alive' : '💀 Eliminated';
+              if (!c.alive && c.eliminatedReason === 'missed') statusText = '💀 Missed pick';
+              let fpText = '<span style="color:var(--green);font-weight:600">Available</span>';
+              if (r.raw.freePassUsed)       fpText = `🎟️ Used (day ${r.raw.freePassDay || '?'})`;
+              else if (r.raw.freePassRequested) fpText = `<span style="color:#7A5A10">⏳ Requested (day ${r.raw.freePassDay || '?'})</span>`;
+              return `
+                <tr>
+                  <td style="font-weight:600">${r.displayName || r.email}</td>
+                  <td>${statusText}</td>
+                  <td>${r.pickCount}</td>
+                  <td>${fpText}</td>
+                  <td>${r.todayResult}</td>
+                  <td style="color:var(--ink-faint)">${r.lastPick ? `${r.lastPick[1]} (${r.lastPick[0]})` : '—'}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // Fetch all games for a month from ESPN/cache
+  async function adminFetchMonthGames(ym) {
+    const monthGames = {};
+    const today = todayStr();
+
+    try {
+      // Load cached games for the whole month
+      const snap = await get(ref(db, 'games'));
+      if (snap.exists()) {
+        snap.forEach(dateChild => {
+          if (!dateChild.key.startsWith(ym)) return;
+          const games = Object.values(dateChild.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (!games.length) return;
+          monthGames[dateChild.key] = {
+            lastStartTime: new Date(games[games.length-1].startTime),
+            games,
+            allFinal: games.every(g => g.statusName === 'STATUS_FINAL' && g.winnerId),
+          };
+        });
+      }
+
+      // Re-fetch today + any past date that isn't fully final + last 3 days in case missing
+      const toRefresh = new Set([today]);
+      for (const [date, d] of Object.entries(monthGames)) {
+        if (!d.allFinal && date <= today) toRefresh.add(date);
+      }
+      for (let i = 1; i <= 3; i++) {
+        const d2 = new Date(); d2.setDate(d2.getDate() - i);
+        const dk = `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+        if (dk >= `${ym}-01`) toRefresh.add(dk);
+      }
+
+      await Promise.all([...toRefresh].map(async dateStr => {
+        try {
+          const freshGames = await adminFetchGames(dateStr);
+          const freshArr   = Object.values(freshGames).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (freshArr.length) {
+            monthGames[dateStr] = {
+              lastStartTime: new Date(freshArr[freshArr.length-1].startTime),
+              games: freshArr,
+              allFinal: freshArr.every(g => g.statusName === 'STATUS_FINAL' && g.winnerId),
+            };
+          }
+        } catch(e) {}
+      }));
+
+    } catch (e) { console.warn('adminFetchMonthGames failed:', e); }
+    return monthGames;
   }
 
   // ── Reset survivor ────────────────────────────────────────────────────
-  window.resetSurvivor = async () => {
-    if (!confirm('Reset the entire 2026 survivor season? All picks and statuses will be deleted. This cannot be undone.')) return;
-    if (!confirm('Are you absolutely sure? Type OK in your mind and click again.')) return;
-    await remove(ref(db, 'survivor/2026'));
-    showMsg('survivorResetMsg', '✓ Survivor season reset.', 'info');
-    loadSurvivorAdmin();
-    loadFreePassQueue();
-  };
+  // ── Survivor reset (top-level settings) ──────────────────────────────
 
-  // ── Data viewer ───────────────────────────────────────────────────────
-  window.loadDataViewer = async () => {
-    const week = document.getElementById('toolWeek').value;
-    if (!week) return;
-    const wk  = `week-${week}`;
-    const out = document.getElementById('dataViewerOutput');
-    out.innerHTML = '<div class="spinner"></div>';
-
-    const gSnap = await get(ref(db, `games/${wk}`));
-    const games = gSnap.exists() ? gSnap.val() : {};
-    const gameCount = Object.keys(games).length;
-    const finalCount = Object.values(games).filter(g => g.statusName === 'STATUS_FINAL').length;
-
-    let picksCount = 0;
-    for (const m of allMembers) {
-      const ps = await get(ref(db, `picks/${m.uid}/${wk}`));
-      if (ps.exists()) {
-        const v = ps.val();
-        picksCount += Object.keys(v).filter(k => k !== 'mnfTiebreaker').length;
-      }
-    }
-
-    out.innerHTML = `
-      <div class="data-row"><span class="data-label">Games scheduled</span><span class="data-val">${gameCount}</span></div>
-      <div class="data-row"><span class="data-label">Games final</span><span class="data-val">${finalCount}</span></div>
-      <div class="data-row"><span class="data-label">Total picks submitted</span><span class="data-val">${picksCount}</span></div>
-      <div class="data-row"><span class="data-label">Members with picks</span><span class="data-val">${allMembers.length}</span></div>`;
-  };
-
-  // ── Refresh ESPN ──────────────────────────────────────────────────────
-  window.refreshESPN = async () => {
-    const week = document.getElementById('espnWeek').value;
-    if (!week) { showMsg('espnMsg','Select a week first.','error'); return; }
-    const btn = document.querySelector('#panel-tools .btn-primary');
-    btn.disabled = true; btn.textContent = 'Fetching…';
+  // ── Approve free pass ─────────────────────────────────────────────────
+  window.approveFreePass = async function(uid) {
+    const ym  = yearMonthStr();
+    const snap = await get(ref(db, `survivor/${ym}/${uid}`));
+    const state = snap.exists() ? snap.val() : {};
+    const day = state.freePassDay;
+    if (!day) { toast('No free pass day found.', 'error'); return; }
     try {
-      const seasonStart = document.getElementById('settingSeasonStart')?.value || '';
-      const year = seasonStart ? seasonStart.slice(0,4) : new Date().getFullYear();
-      const url  = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`;
-      const res  = await fetch(url);
-      const data = await res.json();
-      const events = data.events || [];
-      const games = {};
-      for (const ev of events) {
-        const comp   = ev.competitions?.[0];
-        if (!comp) continue;
-        const home   = comp.competitors?.find(c => c.homeAway === 'home');
-        const away   = comp.competitors?.find(c => c.homeAway === 'away');
-        const status = comp.status;
-        const isFinal = status?.type?.completed === true;
-        let winnerId = null;
-        if (isFinal) {
-          const hs = parseInt(home?.score || '0');
-          const as = parseInt(away?.score || '0');
-          if (hs > as) winnerId = home?.team?.id;
-          else if (as > hs) winnerId = away?.team?.id;
-        }
-        games[ev.id] = {
-          id: ev.id,
-          homeTeam: { id: home?.team?.id, abbrev: normalizeAbbrev(home?.team?.abbreviation), name: home?.team?.displayName },
-          awayTeam: { id: away?.team?.id, abbrev: normalizeAbbrev(away?.team?.abbreviation), name: away?.team?.displayName },
-          startTime: comp.date, statusName: status?.type?.name, statusShort: status?.type?.shortDetail,
-          homeScore: home?.score ?? null, awayScore: away?.score ?? null, winnerId,
-          isMNF: new Date(comp.date).getDay() === 1,
-        };
-      }
-      // Mark last Monday game as MNF tiebreaker
-      const mondays = Object.values(games).filter(g => g.isMNF).sort((a,b) => new Date(b.startTime) - new Date(a.startTime));
-      if (mondays.length) { Object.values(games).forEach(g => g.isMNF = false); games[mondays[0].id].isMNF = true; }
-      await set(ref(db, `games/week-${week}`), games);
-      showMsg('espnMsg', `✓ Week ${week}: ${Object.keys(games).length} games written to Firebase.`, 'info');
+      await update(ref(db), {
+        [`survivor/${ym}/${uid}/freePassUsed`]:      true,
+        [`survivor/${ym}/${uid}/freePassRequested`]: false,
+        [`survivor/${ym}/${uid}/freePassDay`]:       day,
+      });
+      toast(`✅ Free pass approved for day ${day}!`, 'success');
+      loadSurvivorData();
     } catch(e) {
-      showMsg('espnMsg', `Error: ${e.message}`, 'error');
+      console.error(e);
+      toast('Failed to approve free pass: ' + e.message, 'error');
     }
-    btn.disabled = false; btn.textContent = 'Refresh Games from ESPN';
   };
 
-  // ── Populate week dropdowns ───────────────────────────────────────────
-  function populateWeekSelects(maxWeek) {
-    const startDate = document.getElementById('settingSeasonStart')?.value || '';
-    let currentWeek = 1;
-    if (startDate) {
-      const diff = Math.floor((new Date() - new Date(startDate + 'T00:00:00')) / 86400000);
-      currentWeek = diff < 0 ? 1 : Math.min(18, Math.max(1, Math.floor(diff / 7) + 1));
+  // ── Shared survivor reset logic ──────────────────────────────────────
+  async function doSurvivorReset(showToast) {
+    const ym  = yearMonthStr();
+    const day = new Date().getDate();
+
+    // Delete each member's survivor record individually (admin can write $uid paths)
+    const membersSnap = await get(ref(db, 'adminConfig/members'));
+    const updates = {};
+    if (membersSnap.exists()) {
+      membersSnap.forEach(child => {
+        if (child.val().approved) {
+          updates[`survivor/${ym}/${child.key}`] = null;
+        }
+      });
     }
-    for (const id of ['toolWeek','espnWeek']) {
-      const el = document.getElementById(id);
-      for (let w = 1; w <= maxWeek; w++) {
-        const o = document.createElement('option');
-        o.value = w; o.textContent = `Week ${w}`;
-        el.appendChild(o);
-      }
-      el.value = currentWeek;
+
+    if (Object.keys(updates).length > 0) {
+      await update(ref(db), updates);
     }
+
+    // Write survivorStartDay only — never touch monthlyStartDay (standings are separate)
+    await update(ref(db, 'adminConfig/settings'), { survivorStartDay: day });
+    if (showToast) toast('💀 Survivor reset — everyone is alive again from today!', 'success');
   }
 
-  // ── Auth ──────────────────────────────────────────────────────────────
-  onAuthStateChanged(auth, async user => {
+  document.getElementById('resetSurvivorBtnTop').addEventListener('click', async () => {
+    const day = new Date().getDate();
+    if (!confirm(`💀 Reset ALL survivor data?\n\nEveryone will be alive again, all picks cleared, and the start day set to today (day ${day}).\n\nThis cannot be undone.`)) return;
+    try {
+      await doSurvivorReset(true);
+    } catch (e) {
+      console.error(e);
+      toast('Failed to reset survivor: ' + e.message, 'error');
+    }
+  });
+
+  document.getElementById('resetSurvivorBtn').addEventListener('click', async () => {
+    const day = new Date().getDate();
+    if (!confirm(`⚠️ Reset ALL survivor data? Everyone will be marked alive again, all picks cleared, and the start day set to today (day ${day}). This cannot be undone.`)) return;
+    try {
+      await doSurvivorReset(false);
+      toast('Survivor reset. Everyone is alive again from today.', 'success');
+      loadSurvivorData();
+    } catch (e) {
+      console.error(e);
+      toast('Failed to reset survivor: ' + e.message, 'error');
+    }
+  });
+
+
+
+  // ── Auth gate (admin only) ────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
     currentUser = user;
+
     const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
-    if (!adminSnap.exists() || adminSnap.val() !== true) { window.location.href = 'index.html'; return; }
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
 
-    const snap   = await get(ref(db, `adminConfig/members/${user.uid}`));
-    const member = snap.exists() ? snap.val() : null;
-    initNav({ activePage: 'admin.html', isAdmin: true, userName: member?.displayName || user.email });
-    const _so = () => signOut(auth).then(() => window.location.href = 'index.html');
-    document.getElementById('signOutBtn')?.addEventListener('click', _so);
-    document.getElementById('drawerSignOutBtn')?.addEventListener('click', _so);
+    if (!isAdmin) { window.location.href = 'index.html'; return; }
 
-    // Load settings
-    const ss = await get(ref(db, 'adminConfig/settings'));
-    settings  = ss.exists() ? ss.val() : {};
-    document.getElementById('settingSeasonStart').value  = settings.seasonStartDate  || '';
-    document.getElementById('settingSeasonWeek').value   = settings.seasonStartWeek  || 1;
-    document.getElementById('settingSurvivorWeek').value = settings.survivorStartWeek || 1;
-    document.getElementById('regToggle').checked         = settings.registrationOpen !== false;
+    // Mark each member as admin or not
+    const adminListSnap = await get(ref(db, 'adminConfig/admins'));
+    const adminUids = new Set();
+    if (adminListSnap.exists()) adminListSnap.forEach(c => adminUids.add(c.key));
 
-    populateWeekSelects(18);
+    initNav({ activePage: 'admin.html', isAdmin: true, userName: user.email });
+    const _signOut = () => signOut(auth).then(() => window.location.href = 'index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click', _signOut);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click', _signOut);
 
-    // Read members inline inside onAuthStateChanged (avoids SDK cache issue)
-    const membersSnap = await get(query(ref(db, 'adminConfig/members'), orderByKey()));
+    // Load members then tag admins
+    const snap = await get(ref(db, 'adminConfig/members'));
     allMembers = [];
-    if (membersSnap.exists()) {
-      membersSnap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
+    if (snap.exists()) {
+      snap.forEach(child => {
+        allMembers.push({ uid: child.key, isAdmin: adminUids.has(child.key), ...child.val() });
+      });
     }
-    allMembers.sort((a,b) => (a.displayName||'').localeCompare(b.displayName||''));
-    renderMembersList();
-    loadFreePassQueue();
-    loadSurvivorAdmin();
+
+    renderMembers();
+    loadRegistrationState();
+    loadLeagueSettings();
+
+    // Set default dates
+    document.getElementById('picksDate').value = todayStr();
+    document.getElementById('gamesDate').value = todayStr();
   });
 </script>
+
 </body>
 </html>
