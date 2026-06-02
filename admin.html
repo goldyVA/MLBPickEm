@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Picks · MLB Pick'em</title>
+  <title>Admin · MLB Pick'em</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,7 +26,6 @@
       --white:       #FFFFFF;
       --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
       --shadow-md:   0 4px 16px rgba(0,0,0,.10);
-      --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
       --radius:      12px;
       --radius-sm:   8px;
     }
@@ -58,26 +57,20 @@
 
     /* ── Page body ───────────────────────────── */
     .page-body {
-      max-width: 860px;
+      max-width: 960px;
       margin: 0 auto;
       padding: 82px 24px 48px;
     }
 
     /* ── Page header ─────────────────────────── */
     .page-header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
       margin-bottom: 28px;
-      flex-wrap: wrap;
     }
 
     .page-header h1 {
       font-family: 'DM Serif Display', serif;
       font-size: 32px;
       color: var(--navy);
-      line-height: 1.1;
     }
 
     .page-header p {
@@ -86,597 +79,622 @@
       margin-top: 4px;
     }
 
-    /* ── Date selector ───────────────────────── */
-    .date-nav {
+
+
+    /* ── Section ─────────────────────────────── */
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-
-    .date-btn {
-      width: 34px; height: 34px;
-      border: 1.5px solid var(--cream-dark);
-      border-radius: 8px;
-      background: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      font-size: 16px;
-      color: var(--ink-light);
-      transition: border-color .15s, color .15s;
-    }
-    .date-btn:hover { border-color: var(--navy); color: var(--navy); }
-
-    .date-display {
-      padding: 7px 16px;
-      background: var(--white);
-      border: 1.5px solid var(--cream-dark);
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ink);
-      min-width: 140px;
-      text-align: center;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .date-display input[type="date"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    /* ── Summary bar ─────────────────────────── */
-    .summary-bar {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 24px;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
       flex-wrap: wrap;
     }
 
-    .summary-chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--white);
-      border: 1.5px solid var(--cream-dark);
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--ink);
+    }
+
+    .section-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
       border-radius: 100px;
-      padding: 6px 16px;
-      font-size: 13px;
-      color: var(--ink-light);
+      background: var(--red);
+      color: var(--white);
     }
 
-    .summary-chip strong { color: var(--ink); }
-
-    /* ── Game cards ──────────────────────────── */
-    .games-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    .section-badge.zero {
+      background: var(--cream-dark);
+      color: var(--ink-faint);
     }
 
-    .game-card {
+    /* ── Cards ───────────────────────────────── */
+    .card {
       background: var(--white);
       border: 1.5px solid var(--cream-dark);
       border-radius: var(--radius);
-      overflow: hidden;
       box-shadow: var(--shadow-sm);
-      transition: box-shadow .2s;
+      overflow: hidden;
     }
 
-    .game-card:hover { box-shadow: var(--shadow-md); }
-
-    /* locked / final states */
-    .game-card.locked  { border-color: #D4CAB8; }
-    .game-card.correct { border-color: #A8D5B5; background: #F4FBF6; }
-    .game-card.wrong   { border-color: #F0C4C0; background: #FDF5F4; }
-
-    .card-header {
+    /* ── Member rows ─────────────────────────── */
+    .member-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
+      gap: 14px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--cream-dark);
-      background: var(--cream);
-    }
-
-    .game-time { font-size: 12px; font-weight: 600; color: var(--ink-light); text-transform: uppercase; letter-spacing: .04em; }
-
-    .game-status-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 100px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-
-    .badge-upcoming { background: #EEF2F8; color: var(--navy); }
-    .badge-live     { background: #FDECEA; color: var(--red); }
-    .badge-final    { background: var(--cream-dark); color: var(--ink-faint); }
-
-    .card-body {
-      padding: 16px;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 12px;
-      align-items: center;
-    }
-
-    /* Team side */
-    .team-side {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      text-align: center;
-    }
-
-    .team-logo {
-      width: 56px; height: 56px;
-      object-fit: contain;
-    }
-
-    .team-logo-placeholder {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: var(--cream-dark);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-    }
-
-    .team-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--ink);
-      line-height: 1.2;
-    }
-
-    .team-record {
-      font-size: 12px;
-      color: var(--ink-faint);
-    }
-
-    .pitcher-stat {
-      font-size: 11px;
-      color: var(--ink-faint);
-      font-weight: 400;
-    }
-
-    .team-pitcher {
-      font-size: 11.5px;
-      color: var(--ink-light);
-      margin-top: 2px;
-      line-height: 1.5;
-    }
-
-    /* Middle VS / score */
-    .card-mid {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .vs-text {
-      font-family: 'DM Serif Display', serif;
-      font-size: 20px;
-      color: var(--ink-faint);
-    }
-
-    .score-display {
-      font-family: 'DM Serif Display', serif;
-      font-size: 26px;
-      color: var(--ink);
-      letter-spacing: .04em;
-    }
-
-    .at-label {
-      font-size: 11px;
-      color: var(--ink-faint);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    /* Pick section */
-    .card-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--cream-dark);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
       flex-wrap: wrap;
     }
 
-    .pick-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--ink-light);
+    .member-row:last-child { border-bottom: none; }
+
+    .member-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .member-info { flex: 1; min-width: 0; }
+
+    .member-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-email {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-meta {
+      font-size: 12px;
+      color: var(--ink-faint);
       white-space: nowrap;
     }
 
-    .pick-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
 
-    .pick-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
+
+    .pill-approved { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+    .pill-admin    { background: #EEF2F8; color: var(--navy); border: 1px solid #C0CEDF; }
+
+    /* Action buttons */
+    .row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .btn-approve {
+      padding: 7px 14px;
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-approve:hover { background: #1E8A4A; }
+
+    .btn-deny {
+      padding: 7px 14px;
+      background: transparent;
+      color: var(--red);
+      border: 1.5px solid #F0C4C0;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-deny:hover { background: var(--red); color: var(--white); border-color: var(--red); }
+
+    .btn-revoke {
+      padding: 7px 14px;
+      background: transparent;
+      color: var(--ink-faint);
       border: 1.5px solid var(--cream-dark);
-      border-radius: 8px;
-      background: var(--white);
+      border-radius: var(--radius-sm);
       font-family: inherit;
       font-size: 13px;
       font-weight: 500;
-      color: var(--ink-light);
       cursor: pointer;
       transition: all .15s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      user-select: none;
-      -webkit-user-select: none;
     }
+    .btn-revoke:hover { border-color: var(--red); color: var(--red); }
 
-    .pick-btn img {
-      width: 20px; height: 20px;
-      object-fit: contain;
-    }
-
-    /* Hover only on devices that support it (not touch), skip already-selected */
-    @media (hover: hover) {
-      .pick-btn:hover:not(:disabled):not(.selected) {
-        border-color: var(--navy);
-        color: var(--navy);
-        background: #EEF2F8;
-      }
-    }
-
-    /* Active state works on all devices including touch */
-    .pick-btn:active:not(:disabled):not(.selected) {
-      border-color: var(--navy);
-      color: var(--navy);
-      background: #EEF2F8;
-      transform: scale(.97);
-    }
-
-    .pick-btn.selected {
-      border-color: var(--navy);
-      background: var(--navy) !important;
-      color: var(--white) !important;
-    }
-
-    .pick-btn.selected:active {
-      background: #152e4a !important;
-      transform: scale(.97);
-    }
-
-    .pick-btn:disabled {
-      cursor: not-allowed;
-      opacity: .6;
-    }
-
-    /* Result indicators */
-    .result-indicator {
+    /* ── Data viewer ─────────────────────────── */
+    .tab-bar {
       display: flex;
+      gap: 4px;
+      background: var(--cream-dark);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-faint);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .tab-btn.active {
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Date filter for data viewer */
+    .data-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 6px;
+    }
+
+    .data-input {
+      padding: 8px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .data-input:focus { border-color: var(--navy); }
+
+    .btn-load {
+      padding: 8px 18px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
       font-size: 13px;
       font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-load:hover { background: #152e4a; }
+
+    /* Data table */
+    .data-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--cream-dark);
     }
 
-    .result-indicator.correct { color: var(--green); }
-    .result-indicator.wrong   { color: var(--red); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
 
-    .lock-msg {
-      font-size: 12px;
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      background: var(--cream);
+      border-bottom: 1.5px solid var(--cream-dark);
+      font-size: 11px;
+      font-weight: 700;
       color: var(--ink-faint);
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
     }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--cream-dark);
+      color: var(--ink);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #FAFAF8; }
+
+    .pick-correct { color: var(--green); font-weight: 700; }
+    .pick-wrong   { color: var(--red);   font-weight: 700; }
+    .pick-pending { color: var(--ink-faint); }
+
+    /* ── Survivor admin ──────────────────────── */
+    .survivor-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .btn-danger {
+      padding: 8px 18px;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-danger:hover { background: #A93226; }
+
+    /* ── Toasts ──────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .25s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
 
     /* ── States ──────────────────────────────── */
     .state-box {
       text-align: center;
-      padding: 64px 24px;
+      padding: 40px 24px;
       color: var(--ink-faint);
     }
 
-    .state-box .icon { font-size: 48px; margin-bottom: 16px; }
-    .state-box h3    { font-size: 18px; color: var(--ink-light); margin-bottom: 8px; }
-    .state-box p     { font-size: 14px; line-height: 1.5; }
+    .state-box .icon { font-size: 40px; margin-bottom: 12px; }
+    .state-box p     { font-size: 14px; }
 
     .spinner {
-      width: 36px; height: 36px;
+      width: 32px; height: 32px;
       border: 3px solid var(--cream-dark);
       border-top-color: var(--navy);
       border-radius: 50%;
       animation: spin .7s linear infinite;
-      margin: 0 auto 16px;
+      margin: 0 auto 12px;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
 
-    /* Auto-pick indicator */
-    .auto-pick-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--ink-faint);
-      background: var(--cream-dark);
-      border-radius: 100px;
-      padding: 2px 8px;
-      margin-left: 6px;
-    }
-
-    /* ── Mobile ──────────────────────────────── */
-    @media (max-width: 600px) {
-  
-      .page-header { flex-direction: column; align-items: flex-start; }
-      .card-body {
-        grid-template-columns: 1fr auto 1fr;
-        gap: 8px;
-      }
-      .team-logo { width: 44px; height: 44px; }
-      .team-name { font-size: 13px; }
-      .pick-btn  { padding: 7px 10px; font-size: 12px; }
-    }
-
-    /* ── Survivor section ────────────────────── */
-    .survivor-section {
-      margin-top: 40px;
-      padding-top: 32px;
-      border-top: 2px solid var(--cream-dark);
-    }
-
-    .survivor-section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .survivor-section-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: 26px;
-      color: var(--navy);
-    }
-
-    .survivor-section-sub {
-      font-size: 13px;
-      color: var(--ink-faint);
-      margin-top: 3px;
-    }
-
-    .survivor-status-card {
+    /* ── Registration toggle ─────────────────── */
+    .reg-toggle-card {
       background: var(--white);
       border: 1.5px solid var(--cream-dark);
       border-radius: var(--radius);
-      padding: 20px 22px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .survivor-status-card.s-alive  { border-color: #A8D5B5; background: linear-gradient(135deg,#F0FBF4 0%,var(--white) 50%); }
-    .survivor-status-card.s-dead   { border-color: #F0C4C0; background: linear-gradient(135deg,#FDF0EF 0%,var(--white) 50%); }
-    .survivor-status-card.s-freepass { border-color: #F5DFA0; background: linear-gradient(135deg,#FEF9EE 0%,var(--white) 50%); }
-
-    .s-top {
+      padding: 18px 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .s-top-left { display: flex; align-items: center; gap: 14px; }
-    .s-icon { font-size: 36px; line-height: 1; }
-
-    .s-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--ink);
-    }
-
-    .s-sub {
-      font-size: 12px;
-      color: var(--ink-faint);
-      margin-top: 2px;
-    }
-
-    .s-pick-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .s-pick-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--ink-light);
-    }
-
-    .s-current-pick {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--cream);
-      border: 1.5px solid transparent;
-      border-radius: var(--radius-sm);
-      padding: 8px 14px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ink);
-      transition: background .2s, border-color .2s;
-    }
-
-    .s-current-pick.pick-win {
-      background: #EFF6F2;
-      border-color: #A8D5B5;
-      color: #1D6A3E;
-    }
-
-    .s-current-pick.pick-loss {
-      background: #FDF0EF;
-      border-color: #F0C4C0;
-      color: var(--red);
-    }
-
-    .s-current-pick.pick-pending {
-      background: var(--cream);
-      border-color: var(--cream-dark);
-    }
-
-    .s-current-pick img { width: 26px; height: 26px; object-fit: contain; }
-
-    .s-result-win     { color: var(--green); font-size: 13px; font-weight: 700; }
-    .s-result-loss    { color: var(--red);   font-size: 13px; font-weight: 700; }
-    .s-result-pending { color: var(--ink-faint); font-size: 13px; }
-
-    .s-team-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .s-team-tile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      padding: 10px 6px;
-      border: 1.5px solid var(--cream-dark);
-      border-radius: var(--radius-sm);
-      background: var(--white);
-      cursor: pointer;
-      transition: all .15s;
-      position: relative;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--ink);
-    }
-
-    .s-team-tile img { width: 30px; height: 30px; object-fit: contain; }
-
-    .s-team-tile:hover:not(.s-used):not(.s-selected) {
-      border-color: var(--navy);
       box-shadow: var(--shadow-sm);
-    }
-
-    .s-team-tile.s-selected {
-      border-color: var(--navy);
-      background: var(--navy);
-      color: var(--white);
-    }
-
-    .s-team-tile.s-used {
-      opacity: .38;
-      cursor: not-allowed;
-      background: var(--cream);
-    }
-
-    .s-used-dot {
-      position: absolute;
-      top: 3px; right: 3px;
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--ink-faint);
-    }
-
-    .s-confirm-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 14px;
+      margin-bottom: 28px;
       flex-wrap: wrap;
     }
 
-    .s-selected-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--navy);
-      flex: 1;
+    .reg-toggle-card.open  { border-color: #A8D5B5; background: #F4FBF6; }
+    .reg-toggle-card.closed { border-color: #F0C4C0; background: #FDF5F4; }
+
+    .reg-toggle-info { display: flex; align-items: center; gap: 14px; }
+    .reg-toggle-icon { font-size: 28px; }
+    .reg-toggle-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .reg-toggle-sub   { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+    .toggle-switch {
+      position: relative;
+      width: 52px; height: 28px;
+      flex-shrink: 0;
     }
 
-    .s-confirm-btn {
-      padding: 9px 20px;
-      background: var(--navy);
-      color: var(--white);
-      border: 1.5px solid var(--navy);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 600;
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--cream-dark);
+      border-radius: 100px;
       cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      transition: background .2s;
     }
-    @media (hover: hover) { .s-confirm-btn:hover { background: #152e4a; border-color: #152e4a; } }
-    .s-confirm-btn:active { background: #152e4a; }
-    .s-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-    .s-cancel-btn {
-      padding: 9px 20px;
-      background: transparent;
-      color: var(--ink-light);
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 4px; top: 4px;
+      background: var(--white);
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+
+    input:checked + .toggle-slider { background: var(--green); }
+    input:checked + .toggle-slider::before { transform: translateX(24px); }
+
+    /* ── Add member form ─────────────────────── */
+    .add-member-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+
+    .add-member-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 14px;
+    }
+
+    .add-field { display: flex; flex-direction: column; gap: 5px; }
+
+    .add-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .add-field input {
+      padding: 9px 12px;
       border: 1.5px solid var(--cream-dark);
       border-radius: var(--radius-sm);
       font-family: inherit;
       font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      color: var(--ink);
+      background: var(--cream);
+      outline: none;
+      transition: border-color .15s;
     }
-    @media (hover: hover) { .s-cancel-btn:hover { border-color: var(--red); color: var(--red); } }
-    .s-cancel-btn:active { border-color: var(--red); color: var(--red); }
 
-    .s-freepass-btn {
-      padding: 8px 16px;
-      border: 1.5px solid var(--accent);
+    .add-field input:focus { border-color: var(--navy); background: var(--white); }
+
+    .btn-add-member {
+      padding: 9px 20px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
       border-radius: var(--radius-sm);
-      background: #FEF9EE;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 600;
-      color: #7A5A10;
       cursor: pointer;
-      transition: all .15s;
+      transition: background .15s;
+      white-space: nowrap;
+      height: 40px;
     }
-    .s-freepass-btn:hover { background: var(--accent); color: var(--white); }
-    .s-freepass-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-    .s-msg {
+    .btn-add-member:hover    { background: #152e4a; }
+    .btn-add-member:disabled { opacity: .5; cursor: not-allowed; }
+
+    .add-member-msg {
       margin-top: 10px;
       padding: 9px 13px;
       border-radius: var(--radius-sm);
       font-size: 13px;
       display: none;
     }
-    .s-msg.show  { display: block; }
-    .s-msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
-    .s-msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
+    .add-member-msg.show  { display: block; }
+    .add-member-msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
+    .add-member-msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
 
-    .view-survivor-link {
-      font-size: 13px;
-      color: var(--navy);
-      text-decoration: none;
+
+    /* ── Settings card ───────────────────────── */
+    .settings-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--cream-dark);
+      flex-wrap: wrap;
+    }
+
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-row-info { flex: 1; }
+    .settings-row-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .settings-row-sub   { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+
+    .settings-row-control { display: flex; align-items: center; gap: 10px; }
+
+    .day-input {
+      width: 70px;
+      padding: 8px 10px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
       font-weight: 600;
+      color: var(--ink);
+      text-align: center;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .day-input:focus { border-color: var(--navy); }
+
+    .btn-save-setting {
+      padding: 7px 16px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-save-setting:hover { background: #152e4a; }
+
+    .setting-saved {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 600;
+      display: none;
+    }
+
+
+    /* ── Donated toggle ─────────────────────── */
+    .donated-btn {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: all .15s;
+      white-space: nowrap;
     }
-    .view-survivor-link:hover { text-decoration: underline; }
+    .donated-yes {
+      background: #EFF6F2;
+      color: #1D6A3E;
+      border-color: #B8DFCA;
+    }
+    .donated-yes:hover {
+      background: #FDF0EF;
+      color: var(--red);
+      border-color: #F0C4C0;
+    }
+    .donated-no {
+      background: #FDF0EF;
+      color: var(--red);
+      border-color: #F0C4C0;
+    }
+    .donated-no:hover {
+      background: #EFF6F2;
+      color: #1D6A3E;
+      border-color: #B8DFCA;
+    }
 
+    /* ── Inline name edit ────────────────────── */
+    .btn-edit {
+      padding: 5px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-edit:hover { border-color: var(--navy); color: var(--navy); }
+
+    .inline-edit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .inline-edit input {
+      padding: 5px 10px;
+      border: 1.5px solid var(--navy);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      width: 180px;
+    }
+
+    .btn-save-name {
+      padding: 5px 12px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel-name {
+      padding: 5px 10px;
+      background: transparent;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-faint);
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .nav-links  { display: none; }
+      .member-row { flex-direction: column; align-items: flex-start; }
+      .row-actions { width: 100%; }
+    }
 
   /* ── Nav base ─────────────────────────────── */
   #mainNav {
@@ -917,6 +935,13 @@
   }
 
 
+    /* ── iOS touch fix ───────────────────────────── */
+    button, a, [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+
     .nav-badge {
       display: inline-flex;
       align-items: center;
@@ -946,66 +971,186 @@
 </head>
 <body>
 
-<!-- Nav -->
 <nav id="mainNav"></nav>
 
 <div class="page-body">
 
-  <!-- Header + date nav -->
   <div class="page-header">
-    <div>
-      <h1>My Picks</h1>
-      <p id="headerSubtitle">Pick a winner for each game before first pitch.</p>
-    </div>
-    <div class="date-nav">
-      <button class="date-btn" id="prevDay" title="Previous day">‹</button>
-      <div class="date-display" id="dateDisplay">
-        <span id="dateLabel">Today</span>
-        <input type="date" id="datePicker" />
-      </div>
-      <button class="date-btn" id="nextDay" title="Next day">›</button>
-    </div>
-  </div>
-
-  <!-- Summary bar -->
-  <div class="summary-bar" id="summaryBar" style="display:none">
-    <div class="summary-chip">Games: <strong id="sumGames">0</strong></div>
-    <div class="summary-chip">Picked: <strong id="sumPicked">0</strong></div>
-    <div class="summary-chip" id="sumCorrectChip" style="display:none">
-      Correct: <strong id="sumCorrect">0</strong>
-    </div>
-  </div>
-
-  <!-- Games container -->
-  <div id="gamesContainer">
-    <div class="state-box">
-      <div class="spinner"></div>
-      <p>Loading games…</p>
-    </div>
+    <h1>Admin Panel</h1>
+    <p>Manage members, review picks, and oversee survivor.</p>
   </div>
 
 
-  <!-- Survivor Section -->
-  <div class="survivor-section" id="survivorSection" style="display:none">
-    <div class="survivor-section-header">
+
+
+  <!-- ── Registration toggle ── -->
+  <div class="reg-toggle-card" id="regToggleCard">
+    <div class="reg-toggle-info">
+      <div class="reg-toggle-icon" id="regToggleIcon">🔒</div>
       <div>
-        <div class="survivor-section-title">💀 Survivor</div>
-        <div class="survivor-section-sub" id="survivorSub">Pick one team today to stay alive.</div>
+        <div class="reg-toggle-title" id="regToggleTitle">Registration Closed</div>
+        <div class="reg-toggle-sub" id="regToggleSub">New users cannot sign up</div>
       </div>
-      <a href="survivor.html" class="view-survivor-link">Full survivor page →</a>
     </div>
-    <div class="survivor-status-card" id="survivorCard">
+    <label class="toggle-switch" title="Toggle registration open/closed">
+      <input type="checkbox" id="regToggleInput" />
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <!-- ── Add member manually ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Add Member Manually</span>
+    </div>
+    <div class="add-member-card">
+      <div style="font-size:13px;color:var(--ink-faint)">Create an account for a member directly — they can sign in with the PIN you set and change it via "Forgot PIN?" if needed.</div>
+      <div class="add-member-grid">
+        <div class="add-field">
+          <label>Display Name</label>
+          <input type="text" id="addName" placeholder="e.g. Jane Smith" />
+        </div>
+        <div class="add-field">
+          <label>Email</label>
+          <input type="email" id="addEmail" placeholder="jane@example.com" />
+        </div>
+        <div class="add-field">
+          <label>PIN (6–8 digits)</label>
+          <input type="text" id="addPin" placeholder="e.g. 123456" maxlength="8" inputmode="numeric" />
+        </div>
+        <button class="btn-add-member" id="addMemberBtn">Add Member</button>
+      </div>
+      <div class="add-member-msg" id="addMemberMsg"></div>
+    </div>
+  </div>
+
+  <!-- ── All members ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">All Members</span>
+    </div>
+    <div class="card" id="membersList">
       <div class="state-box"><div class="spinner"></div></div>
     </div>
   </div>
 
+  <!-- ── League Settings ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">League Settings</span>
+    </div>
+    <div class="settings-card">
+
+      <!-- Monthly standings start day -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Monthly Standings — Start From Day</div>
+          <div class="settings-row-sub">Only count picks from this day of the month onward. Useful when new members join mid-month. Set to 1 to count the full month.</div>
+        </div>
+        <div class="settings-row-control">
+          <input type="number" class="day-input" id="monthlyStartDay" min="1" max="31" value="1" />
+          <button class="btn-save-setting" id="saveMonthlyStartBtn">Save</button>
+          <span class="setting-saved" id="monthlyStartSaved">✓ Saved</span>
+        </div>
+      </div>
+
+      <!-- Season standings start date -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Season Standings — Start From Date</div>
+          <div class="settings-row-sub">Only count picks from this date onward for the season leaderboard.</div>
+        </div>
+        <div class="settings-row-control">
+          <input type="date" class="data-input" id="seasonStartDate" style="border-radius:var(--radius-sm)" />
+          <button class="btn-save-setting" id="saveSeasonStartBtn">Save</button>
+          <span class="setting-saved" id="seasonStartSaved">✓ Saved</span>
+        </div>
+      </div>
+
+      <!-- Reset monthly standings -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Reset Monthly Standings</div>
+          <div class="settings-row-sub">Only resets the standings start day to today — pick records are kept. Use this when new members join mid-month.</div>
+        </div>
+        <div class="settings-row-control">
+          <button class="btn-danger" id="resetMonthlyBtn">⚠️ Reset Standings</button>
+        </div>
+      </div>
+
+      <!-- Reset survivor -->
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label">Reset Survivor</div>
+          <div class="settings-row-sub">Clears all survivor picks and status for this month. Everyone becomes alive again with all 30 teams available. Also sets the survivor start day to today.</div>
+        </div>
+        <div class="settings-row-control">
+          <button class="btn-danger" id="resetSurvivorBtnTop">💀 Reset Survivor</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Data viewer ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Data Viewer</span>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="picks">Picks</button>
+      <button class="tab-btn" data-tab="games">Games</button>
+      <button class="tab-btn" data-tab="survivor">Survivor</button>
+    </div>
+
+    <!-- Picks tab -->
+    <div id="tab-picks">
+      <div class="data-controls">
+        <input type="date" class="data-input" id="picksDate" />
+        <button class="btn-load" id="loadPicksBtn">Load</button>
+        <button class="btn-load" id="autoPickBtn" style="background:var(--accent);color:var(--ink)" title="Auto-pick away team for locked games only">🤖 Auto-pick Started</button>
+        <button class="btn-load" id="autoPickAllBtn" style="background:var(--navy);color:var(--white)" title="Auto-pick away team for ALL games today including future ones">🤖 Auto-pick All Today</button>
+      </div>
+      <div class="msg" id="autoPickMsg" style="margin-bottom:10px"></div>
+      <div id="picksDataContainer">
+        <div class="state-box"><p>Select a date and click Load.</p></div>
+      </div>
+    </div>
+
+    <!-- Games tab -->
+    <div id="tab-games" style="display:none">
+      <div class="data-controls">
+        <input type="date" class="data-input" id="gamesDate" />
+        <button class="btn-load" id="loadGamesBtn">Load</button>
+      </div>
+      <div id="gamesDataContainer">
+        <div class="state-box"><p>Select a date and click Load.</p></div>
+      </div>
+    </div>
+
+    <!-- Survivor tab -->
+    <div id="tab-survivor" style="display:none">
+      <div class="survivor-controls">
+        <span style="font-size:13px;color:var(--ink-faint)">Current month: <strong id="survivorMonth">—</strong></span>
+        <button class="btn-danger" id="resetSurvivorBtn">⚠️ Reset This Month</button>
+      </div>
+      <div id="survivorDataContainer">
+        <div class="state-box"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
-<!-- Firebase + App logic -->
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script type="module">
-  import { initializeApp }                         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-  import { getDatabase, ref, get, set, update, child } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { initializeApp }                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 function initNav({ activePage, isAdmin = false, userName = '' }) {
   const nav = document.getElementById('mainNav');
@@ -1386,514 +1531,22 @@ const NAV_STYLES = `
   const auth = getAuth(app);
   const db   = getDatabase(app);
 
-  // ── State ─────────────────────────────────────────────────────────────
-  let currentUser   = null;
-  let currentDate   = todayStr();       // 'YYYY-MM-DD'
-  let userPicks     = {};               // gameId → {teamId, lockedIn}
-  let gamesCache    = {};               // gameId → game object
-  let lockTimers    = {};               // gameId → setTimeout id
+  let allMembers  = [];
+  let allGamesMap = {};
+  let currentUser = null;
 
-  // ── Survivor state ────────────────────────────────────────────────────
-  const MLB_TEAMS = [
-    { abbrev:'LAA', name:'Angels' },    { abbrev:'HOU', name:'Astros' },
-    { abbrev:'ATH', name:'Athletics' }, { abbrev:'TOR', name:'Blue Jays' },
-    { abbrev:'ATL', name:'Braves' },    { abbrev:'MIL', name:'Brewers' },
-    { abbrev:'STL', name:'Cardinals' }, { abbrev:'DET', name:'Tigers' },
-    { abbrev:'CLE', name:'Guardians' }, { abbrev:'SF',  name:'Giants' },
-    { abbrev:'SD',  name:'Padres' },    { abbrev:'LAD', name:'Dodgers' },
-    { abbrev:'TB',  name:'Rays' },      { abbrev:'TEX', name:'Rangers' },
-    { abbrev:'MIN', name:'Twins' },     { abbrev:'NYY', name:'Yankees' },
-    { abbrev:'MIA', name:'Marlins' },   { abbrev:'NYM', name:'Mets' },
-    { abbrev:'PHI', name:'Phillies' },  { abbrev:'PIT', name:'Pirates' },
-    { abbrev:'ARI', name:'Diamondbacks'},{ abbrev:'COL', name:'Rockies' },
-    { abbrev:'KC',  name:'Royals' },    { abbrev:'BAL', name:'Orioles' },
-    { abbrev:'BOS', name:'Red Sox' },   { abbrev:'CIN', name:'Reds' },
-    { abbrev:'CHC', name:'Cubs' },      { abbrev:'CWS', name:'White Sox' },
-    { abbrev:'SEA', name:'Mariners' },  { abbrev:'WSH', name:'Nationals' },
-  ];
-
-  let survivorState    = null;
-  let survivorSelected = null;
-  let monthGamesCache  = {};   // all month games keyed by YYYY-MM-DD, for FP window check
-
-  // ── Winner resolution ────────────────────────────────────────────────
-  function didPickWin(userPick, game) {
-    if (!userPick || !game.winnerId) return false;
-    const winnerIsHome  = String(game.winnerId) === String(game.homeTeam.id);
-    const winningAbbrev = winnerIsHome ? game.homeTeam.abbrev : game.awayTeam.abbrev;
-    const pickedAbbrev  = String(userPick) === String(game.homeTeam.id)
-      ? game.homeTeam.abbrev : game.awayTeam.abbrev;
-    return pickedAbbrev === winningAbbrev;
+  // ── Toast ─────────────────────────────────────────────────────────────
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className   = `toast ${type} show`;
+    setTimeout(() => el.classList.remove('show'), 3000);
   }
 
-  function pickAbbrev(userPick, game) {
-    return String(userPick) === String(game.homeTeam.id)
-      ? game.homeTeam.abbrev : game.awayTeam.abbrev;
-  }
-
-  // ── Date helpers ──────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────
   function todayStr() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  function dateToESPN(dateStr) {
-    return dateStr.replace(/-/g, '');  // 'YYYYMMDD'
-  }
-
-  function formatDateLabel(dateStr) {
-    const today = todayStr();
-    const d = new Date(dateStr + 'T12:00:00');
-    if (dateStr === today) return 'Today';
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-    const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
-    if (dateStr === yStr) return 'Yesterday';
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-    const tStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
-    if (dateStr === tStr) return 'Tomorrow';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
-  }
-
-  function shiftDate(dateStr, days) {
-    const d = new Date(dateStr + 'T12:00:00');
-    d.setDate(d.getDate() + days);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  // ── ESPN helpers ──────────────────────────────────────────────────────
-  function espnLogoUrl(teamId) {
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${teamId}.png`;
-  }
-
-  function gameIsLocked(startTimeISO) {
-    return new Date() >= new Date(startTimeISO);
-  }
-
-  function formatGameTime(iso) {
-    return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-  }
-
-  // ── Parse ESPN scoreboard ─────────────────────────────────────────────
-  function parseESPN(data) {
-    const games = [];
-    const events = data?.events || [];
-
-    for (const event of events) {
-      const comp      = event.competitions?.[0];
-      if (!comp) continue;
-
-      const competitors = comp.competitors || [];
-      const home = competitors.find(c => c.homeAway === 'home');
-      const away = competitors.find(c => c.homeAway === 'away');
-      if (!home || !away) continue;
-
-      const status     = event.status?.type;
-      const statusName = status?.name || 'STATUS_SCHEDULED';
-      const startTime  = event.date;
-
-      // Probable pitchers — ESPN puts these on the competitor object, not comp.
-      const getPitcherInfo = (competitor) => {
-        const prob = competitor.probables?.[0];
-        if (!prob) return null;
-        const name = prob.athlete?.shortName
-          || prob.athlete?.displayName
-          || prob.displayName
-          || null;
-        if (!name) return null;
-        const stats = prob.statistics || [];
-        const wins   = stats.find(s => s.name === 'wins')?.displayValue ?? null;
-        const losses = stats.find(s => s.name === 'losses')?.displayValue ?? null;
-        const era    = stats.find(s => s.name === 'ERA' || s.abbreviation === 'ERA')?.displayValue ?? null;
-        const record = (wins != null && losses != null) ? `${wins}-${losses}` : null;
-        return { name, record: record ?? null, era };
-      };
-
-      // Score
-      const homeScore = home.score ?? null;
-      const awayScore = away.score ?? null;
-
-      // Winner
-      let winnerId = null;
-      if (statusName === 'STATUS_FINAL') {
-        if (home.winner) winnerId = String(home.team.id);
-        else if (away.winner) winnerId = String(away.team.id);
-        else if (home.score != null && away.score != null)
-          winnerId = parseInt(home.score) > parseInt(away.score) ? String(home.team.id) : String(away.team.id);
-      }
-
-      games.push({
-        id:          event.id,
-        startTime,
-        statusName,
-        statusShort: status?.shortDetail || '',
-        homeTeam:    { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
-        awayTeam:    { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
-        homePitcher: getPitcherInfo(home),
-        awayPitcher: getPitcherInfo(away),
-        homeScore,
-        awayScore,
-        winnerId,
-      });
-    }
-    return games;
-  }
-
-  // ── Load games ────────────────────────────────────────────────────────
-  let pollInterval = null; // polling timer for live games
-
-  // Normalize a game object read from Firebase cache.
-  // Old cache entries had pitcher as a plain string; new ones are {name, record, era}.
-  // This ensures both formats render correctly.
-  function normalizeCachedGame(g) {
-    const normPitcher = (p) => {
-      if (!p) return null;
-      if (typeof p === 'string') return { name: p, record: null, era: null };
-      return p;
-    };
-    return { ...g, homePitcher: normPitcher(g.homePitcher), awayPitcher: normPitcher(g.awayPitcher) };
-  }
-
-  async function fetchGamesFromESPN(dateStr) {
-    const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateToESPN(dateStr)}`);
-    const data = await res.json();
-    const games = parseESPN(data).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-    // Write to Firebase cache
-    if (games.length > 0) {
-      const cacheObj = {};
-      for (const g of games) cacheObj[g.id] = g;
-      await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
-    }
-    return games;
-  }
-
-  async function loadGames(dateStr) {
-    const container  = document.getElementById('gamesContainer');
-    const summaryBar = document.getElementById('summaryBar');
-    summaryBar.style.display = 'none';
-    container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading games…</p></div>`;
-
-    // Clear timers
-    Object.values(lockTimers).forEach(clearTimeout);
-    lockTimers = {};
-    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-
-    let games = [];
-    const isToday = dateStr === todayStr();
-
-    try {
-      if (isToday) {
-        // Always fetch live from ESPN for today, fall back to Firebase cache if ESPN fails
-        try {
-          games = await fetchGamesFromESPN(dateStr);
-        } catch (espnErr) {
-          console.warn('ESPN fetch failed for today, trying Firebase cache:', espnErr);
-          const dbSnap = await get(ref(db, `games/${dateStr}`));
-          if (dbSnap.exists()) {
-            games = Object.values(dbSnap.val())
-              .map(g => normalizeCachedGame(g))
-              .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-          } else {
-            throw espnErr; // no cache either, surface the error
-          }
-        }
-      } else {
-        // Past/future dates: use cache only if all games are final, otherwise re-fetch
-        const dbSnap = await get(ref(db, `games/${dateStr}`));
-        const allFinal = dbSnap.exists() &&
-          Object.values(dbSnap.val()).every(g => g.statusName === 'STATUS_FINAL');
-        if (allFinal) {
-          games = Object.values(dbSnap.val())
-            .map(g => normalizeCachedGame(g))
-            .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-        } else {
-          games = await fetchGamesFromESPN(dateStr);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load games:', err.message, err);
-      container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load games</h3><p>${err.message || 'Check your connection and try again.'}</p></div>`;
-      return;
-    }
-
-    gamesCache = {};
-    for (const g of games) gamesCache[g.id] = g;
-
-    if (games.length === 0) {
-      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><h3>No games scheduled</h3><p>Enjoy the off day!</p></div>`;
-      return;
-    }
-
-    // Load user picks
-    await loadUserPicks(dateStr);
-
-    renderGames(games, dateStr);
-    updateSummary(games);
-
-    // Survivor section
-    if (isToday) {
-      loadSurvivorSection(games);
-    } else {
-      document.getElementById('survivorSection').style.display = 'none';
-    }
-
-    // Poll every 5 minutes while any game is not final (today only)
-    if (isToday) {
-      const hasActive = games.some(g => g.statusName !== 'STATUS_FINAL');
-      if (hasActive) {
-        pollInterval = setInterval(async () => {
-          try {
-            const fresh = await fetchGamesFromESPN(dateStr);
-            if (!fresh.length) return;
-            for (const g of fresh) gamesCache[g.id] = g;
-            await loadUserPicks(dateStr);
-            renderGames(fresh, dateStr);
-            updateSummary(fresh);
-            loadSurvivorSection(fresh);
-            // Stop polling once all games are final
-            if (fresh.every(g => g.statusName === 'STATUS_FINAL')) {
-              clearInterval(pollInterval);
-              pollInterval = null;
-            }
-          } catch (e) { console.warn('Poll failed:', e); }
-        }, 3 * 60 * 1000); // every 3 minutes
-      }
-    }
-  }
-
-  // ── Load picks ────────────────────────────────────────────────────────
-  async function loadUserPicks(dateStr) {
-    if (!currentUser) return;
-    const snap = await get(ref(db, `picks/${currentUser.uid}/${dateStr}`));
-    userPicks = snap.exists() ? snap.val() : {};
-  }
-
-  // ── Save pick ─────────────────────────────────────────────────────────
-  async function savePick(dateStr, gameId, teamId) {
-    if (!currentUser) return;
-    const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${gameId}`);
-    await set(pickRef, { teamId, lockedIn: true, correct: null });
-    if (!userPicks[gameId]) userPicks[gameId] = {};
-    userPicks[gameId].teamId = teamId;
-    userPicks[gameId].lockedIn = true;
-  }
-
-  // ── Render ─────────────────────────────────────────────────────────────
-  function renderGames(games, dateStr) {
-    const container = document.getElementById('gamesContainer');
-    container.innerHTML = '';
-
-    const grid = document.createElement('div');
-    grid.className = 'games-grid';
-
-    for (const game of games) {
-      grid.appendChild(buildCard(game, dateStr));
-    }
-
-    container.appendChild(grid);
-  }
-
-  function buildCard(game, dateStr) {
-    const locked   = gameIsLocked(game.startTime);
-    const isFinal  = game.statusName === 'STATUS_FINAL';
-    const isLive   = game.statusName === 'STATUS_IN_PROGRESS';
-    const userPick = userPicks[game.id]?.teamId || null;
-
-    // Determine correct/wrong
-    let resultClass = '';
-    let correct = null;
-    if (isFinal && game.winnerId && userPick) {
-      correct = didPickWin(userPick, game);
-      resultClass = correct ? 'correct' : 'wrong';
-    }
-
-    const card = document.createElement('div');
-    card.className = `game-card ${locked ? 'locked' : ''} ${resultClass}`;
-    card.dataset.gameId = game.id;
-
-    // Status badge
-    let badgeClass = 'badge-upcoming';
-    let badgeText  = formatGameTime(game.startTime);
-    if (isFinal) { badgeClass = 'badge-final'; badgeText = 'Final'; }
-    else if (isLive) { badgeClass = 'badge-live'; badgeText = game.statusShort || 'Live'; }
-
-    // Score or VS
-    const midContent = (isFinal || isLive)
-      ? `<div class="score-display">${game.awayScore ?? '–'} – ${game.homeScore ?? '–'}</div>`
-      : `<div class="vs-text">vs</div>`;
-
-    // Team logo helper
-    const logoHtml = (team) => `
-      <img class="team-logo"
-           src="${espnLogoUrl(team.abbrev.toLowerCase())}"
-           alt="${team.name}"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-      <div class="team-logo-placeholder" style="display:none">⚾</div>`;
-
-    card.innerHTML = `
-      <div class="card-header">
-        <span class="game-time">${badgeText}</span>
-        <span class="game-status-badge ${badgeClass}">${isFinal ? 'Final' : isLive ? '🔴 Live' : 'Upcoming'}</span>
-      </div>
-
-      <div class="card-body">
-        <div class="team-side">
-          ${logoHtml(game.awayTeam)}
-          <div class="team-name">${game.awayTeam.name}</div>
-          <div class="team-record">${game.awayTeam.record}</div>
-          ${game.awayPitcher ? `<div class="team-pitcher">SP: ${typeof game.awayPitcher === 'object' ? game.awayPitcher.name : game.awayPitcher}${typeof game.awayPitcher === 'object' && (game.awayPitcher.record || game.awayPitcher.era) ? `<br><span class="pitcher-stat">${[game.awayPitcher.record, game.awayPitcher.era ? game.awayPitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
-        </div>
-
-        <div class="card-mid">
-          ${midContent}
-          <div class="at-label">@ ${game.homeTeam.abbrev}</div>
-        </div>
-
-        <div class="team-side">
-          ${logoHtml(game.homeTeam)}
-          <div class="team-name">${game.homeTeam.name}</div>
-          <div class="team-record">${game.homeTeam.record}</div>
-          ${game.homePitcher ? `<div class="team-pitcher">SP: ${typeof game.homePitcher === 'object' ? game.homePitcher.name : game.homePitcher}${typeof game.homePitcher === 'object' && (game.homePitcher.record || game.homePitcher.era) ? `<br><span class="pitcher-stat">${[game.homePitcher.record, game.homePitcher.era ? game.homePitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
-        </div>
-      </div>
-
-      <div class="card-footer" id="footer-${game.id}">
-        ${buildFooter(game, locked, isFinal, userPick, correct)}
-      </div>
-    `;
-
-    // Pick button listeners (only if not locked)
-    if (!locked) {
-      card.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
-      card.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
-
-      // Schedule lock at game start
-      const msUntilLock = new Date(game.startTime) - new Date();
-      if (msUntilLock > 0 && msUntilLock < 86400000) {
-        lockTimers[game.id] = setTimeout(() => {
-          const footer = document.getElementById(`footer-${game.id}`);
-          if (footer) footer.innerHTML = buildFooter(game, true, false, userPicks[game.id]?.teamId || null, null);
-          card.classList.add('locked');
-        }, msUntilLock);
-      }
-    }
-
-    return card;
-  }
-
-  function buildFooter(game, locked, isFinal, userPick, correct) {
-    const awaySelected = String(userPick) === String(game.awayTeam.id);
-    const homeSelected = String(userPick) === String(game.homeTeam.id);
-
-    if (isFinal) {
-      if (!userPick) {
-        return `<span class="lock-msg">🔒 No pick made</span>`;
-      }
-      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-      const isAuto   = userPicks[game.id]?.auto === true;
-      const autoBadge = isAuto ? '<span class="auto-pick-badge">🤖 auto</span>' : '';
-      if (correct) {
-        return `<span class="result-indicator correct">✅ Correct — ${teamName}${autoBadge}</span>`;
-      } else {
-        const winnerName = game.winnerId === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-        return `<span class="result-indicator wrong">❌ Wrong — picked ${teamName}, winner was ${winnerName}${autoBadge}</span>`;
-      }
-    }
-
-    if (locked) {
-      if (!userPick) {
-        return `<span class="lock-msg">🔒 Locked — no pick made</span>`;
-      }
-      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
-      const isAuto   = userPicks[game.id]?.auto === true;
-      return `<span class="lock-msg">🔒 Locked in: <strong>${teamName}</strong>${isAuto ? '<span class="auto-pick-badge">🤖 auto</span>' : ''}</span>`;
-    }
-
-    // Open for picks
-    return `
-      <span class="pick-label">Pick the winner:</span>
-      <div class="pick-controls">
-        <button class="pick-btn ${awaySelected ? 'selected' : ''}" id="pick-away-${game.id}">
-          <img src="${espnLogoUrl(game.awayTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
-          ${game.awayTeam.abbrev}
-        </button>
-        <button class="pick-btn ${homeSelected ? 'selected' : ''}" id="pick-home-${game.id}">
-          <img src="${espnLogoUrl(game.homeTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
-          ${game.homeTeam.abbrev}
-        </button>
-      </div>
-    `;
-  }
-
-  async function handlePick(game, teamId, dateStr) {
-    if (gameIsLocked(game.startTime)) return;
-
-    // Toggle off if same pick
-    const existing = userPicks[game.id]?.teamId;
-    const newTeamId = existing === teamId ? null : teamId;
-
-    userPicks[game.id] = newTeamId ? { teamId: newTeamId, lockedIn: true } : {};
-
-    // Update UI immediately
-    const footer = document.getElementById(`footer-${game.id}`);
-    if (footer) {
-      footer.innerHTML = buildFooter(game, false, false, newTeamId, null);
-      footer.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
-      footer.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
-    }
-
-    // Save to Firebase
-    if (newTeamId) {
-      await savePick(dateStr, game.id, newTeamId);
-    } else {
-      // Remove pick
-      const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`);
-      await set(pickRef, null).catch(() => {});
-    }
-
-    updateSummary(Object.values(gamesCache));
-  }
-
-  // ── Summary bar ────────────────────────────────────────────────────────
-  function updateSummary(games) {
-    const bar = document.getElementById('summaryBar');
-    bar.style.display = 'flex';
-
-    const total   = games.length;
-    const picked  = games.filter(g => userPicks[g.id]?.teamId).length;
-    const finals  = games.filter(g => g.statusName === 'STATUS_FINAL' && userPicks[g.id]?.teamId);
-    const correct = finals.filter(g => userPicks[g.id]?.teamId === g.winnerId).length;
-
-    document.getElementById('sumGames').textContent  = total;
-    document.getElementById('sumPicked').textContent = picked;
-
-    const correctChip = document.getElementById('sumCorrectChip');
-    if (finals.length > 0) {
-      correctChip.style.display = '';
-      document.getElementById('sumCorrect').textContent = `${correct} / ${finals.length}`;
-    } else {
-      correctChip.style.display = 'none';
-    }
-  }
-
-  // ── Date nav ──────────────────────────────────────────────────────────
-  function setDate(dateStr) {
-    currentDate = dateStr;
-    document.getElementById('dateLabel').textContent = formatDateLabel(dateStr);
-    document.getElementById('datePicker').value = dateStr;
-    loadGames(dateStr);
-  }
-
-  document.getElementById('prevDay').addEventListener('click', () => setDate(shiftDate(currentDate, -1)));
-  document.getElementById('nextDay').addEventListener('click', () => setDate(shiftDate(currentDate, +1)));
-  document.getElementById('datePicker').addEventListener('change', e => setDate(e.target.value));
-
-  // ── Auth gate ─────────────────────────────────────────────────────────
-
-  // ── Survivor helpers ──────────────────────────────────────────────────
-  function espnLogoSurv(abbrev) {
-    const a = abbrev.toUpperCase();
-    const slug = a === 'ATH' ? 'oak' : a === 'CHW' ? 'cws' : abbrev.toLowerCase();
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
   }
 
   function yearMonthStr() {
@@ -1901,51 +1554,658 @@ const NAV_STYLES = `
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   }
 
-  function teamsPlayingToday(games) {
-    const set = new Set();
-    for (const g of games) {
-      set.add(g.homeTeam.abbrev.toUpperCase());
-      set.add(g.awayTeam.abbrev.toUpperCase());
-    }
-    return set;
+  function initials(name) {
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  function getSurvivorPickResult(state, games) {
-    const today     = todayStr();
-    const todayPick = state.usedTeams?.[today];
-    if (!todayPick) return null;
-    for (const g of games) {
-      const homeAbbrev = normalizeAbbrev(g.homeTeam.abbrev);
-      const awayAbbrev = normalizeAbbrev(g.awayTeam.abbrev);
-      const pick       = normalizeAbbrev(todayPick);
-      const inGame     = homeAbbrev === pick || awayAbbrev === pick;
-      if (!inGame) continue;
-      if (g.statusName === 'STATUS_FINAL') {
-        if (!g.winnerId) return { abbrev: todayPick, result: 'pending' };
-        const homeWon = String(g.winnerId) === String(g.homeTeam.id);
-        const won     = homeWon ? normalizeAbbrev(g.homeTeam.abbrev) === pick : normalizeAbbrev(g.awayTeam.abbrev) === pick;
-        return { abbrev: todayPick, result: won ? 'win' : 'loss' };
+  function formatJoined(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ── Load all members ──────────────────────────────────────────────────
+  async function loadMembers() {
+    const snap = await get(ref(db, 'adminConfig/members'));
+    allMembers = [];
+
+    if (snap.exists()) {
+      snap.forEach(child => allMembers.push({ uid: child.key, ...child.val() }));
+    }
+
+    renderMembers();
+  }
+
+  // ── Render all members ────────────────────────────────────────────────
+  function renderMembers() {
+    const list     = document.getElementById('membersList');
+    const approved = allMembers.filter(m => m.approved);
+
+    if (approved.length === 0) {
+      list.innerHTML = `<div class="state-box"><p>No approved members yet.</p></div>`;
+      return;
+    }
+
+    approved.sort((a, b) => {
+      if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
+      return (a.displayName || '').localeCompare(b.displayName || '');
+    });
+
+    list.innerHTML = approved.map(m => {
+      const safeName = (m.displayName || '').replace(/"/g, '&quot;').replace(/'/g, "\'");
+      return `
+        <div class="member-row" id="member-${m.uid}">
+          <div class="member-avatar" style="${m.isAdmin ? 'background:var(--accent);color:var(--ink)' : ''}">${initials(m.displayName || m.email)}</div>
+          <div class="member-info">
+            <div class="member-name" id="name-display-${m.uid}">${m.displayName || '—'}${m.pickReminderOptIn ? ' <span title="Pick reminders on">🔔</span>' : ''}</div>
+            <div class="inline-edit" id="name-edit-${m.uid}" style="display:none">
+              <input type="text" id="name-input-${m.uid}" value="${safeName}" />
+              <button class="btn-save-name" onclick="saveDisplayName('${m.uid}')">Save</button>
+              <button class="btn-cancel-name" onclick="cancelEditName('${m.uid}')">Cancel</button>
+            </div>
+            <div class="member-email">${m.email}</div>
+          </div>
+          <div class="member-meta">Joined ${formatJoined(m.joinedAt)}</div>
+          <span class="status-pill ${m.isAdmin ? 'pill-admin' : 'pill-approved'}">${m.isAdmin ? 'Admin' : 'Member'}</span>
+          <div class="row-actions">
+            <button class="donated-btn ${m.donated ? 'donated-yes' : 'donated-no'}"
+              onclick="toggleDonated('${m.uid}', this)"
+              title="${m.donated ? 'Click to mark as not donated' : 'Click to mark as donated'}">
+              ${m.donated ? '✅ Donated' : '❌ Donated'}
+            </button>
+            <button class="btn-edit" onclick="startEditName('${m.uid}')">Rename</button>
+            ${m.uid !== currentUser.uid && !m.isAdmin
+              ? `<button class="btn-revoke" onclick="revokeMember('${m.uid}', '${safeName}')">Remove</button>`
+              : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+
+
+
+  // ── Edit display name ─────────────────────────────────────────────────
+  window.startEditName = function(uid) {
+    document.getElementById(`name-display-${uid}`).style.display = 'none';
+    document.getElementById(`name-edit-${uid}`).style.display = 'flex';
+    document.getElementById(`name-input-${uid}`).focus();
+  };
+
+  window.cancelEditName = function(uid) {
+    document.getElementById(`name-display-${uid}`).style.display = '';
+    document.getElementById(`name-edit-${uid}`).style.display = 'none';
+  };
+
+  window.saveDisplayName = async function(uid) {
+    const input = document.getElementById(`name-input-${uid}`);
+    const name  = input.value.trim();
+    if (!name) { toast('Name cannot be empty.', 'error'); return; }
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { displayName: name });
+      const m = allMembers.find(m => m.uid === uid);
+      if (m) m.displayName = name;
+      document.getElementById(`name-display-${uid}`).textContent = name;
+      cancelEditName(uid);
+      toast(`✅ Name updated to "${name}"`);
+    } catch (e) {
+      toast('Failed to update name.', 'error');
+    }
+  };
+
+  // ── Toggle donated ───────────────────────────────────────────────────
+  window.toggleDonated = async function(uid, btn) {
+    const m = allMembers.find(m => m.uid === uid);
+    if (!m) return;
+    const newVal = !m.donated;
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { donated: newVal });
+      m.donated = newVal;
+      btn.className = `donated-btn ${newVal ? 'donated-yes' : 'donated-no'}`;
+      btn.innerHTML = newVal ? '✅ Donated' : '❌ Donated';
+      btn.title = newVal ? 'Click to mark as not donated' : 'Click to mark as donated';
+      toast(newVal ? `✅ ${m.displayName} marked as donated` : `${m.displayName} marked as not donated`);
+    } catch (e) {
+      toast('Failed to update donation status.', 'error');
+    }
+  };
+
+  // ── Remove member — delete all data ─────────────────────────────────
+  window.revokeMember = async function(uid, name) {
+    if (!confirm(`Remove ${name} completely?\n\nThis will delete their account, all picks, and all survivor data. This cannot be undone.`)) return;
+    try {
+      const ym = yearMonthStr();
+      // Delete all data in parallel
+      await Promise.all([
+        remove(ref(db, `adminConfig/members/${uid}`)),
+        remove(ref(db, `picks/${uid}`)),
+        remove(ref(db, `survivor/${ym}/${uid}`)),
+        remove(ref(db, `standings/${uid}`)),
+      ]);
+      allMembers = allMembers.filter(m => m.uid !== uid);
+      toast(`${name} removed and all data deleted.`);
+      renderMembers();
+    } catch (e) {
+      console.error(e);
+      toast('Failed to remove member: ' + e.message, 'error');
+    }
+  };
+
+
+
+  // ── League settings ───────────────────────────────────────────────────
+  async function loadLeagueSettings() {
+    const snap = await get(ref(db, 'adminConfig/settings'));
+    const settings = snap.exists() ? snap.val() : {};
+
+    const monthlyStart = settings.monthlyStartDay || 1;
+    const seasonStart  = settings.seasonStartDate || '';
+
+    document.getElementById('monthlyStartDay').value = monthlyStart;
+    document.getElementById('seasonStartDate').value = seasonStart;
+  }
+
+  function flashSaved(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 2000);
+  }
+
+  document.getElementById('saveMonthlyStartBtn').addEventListener('click', async () => {
+    const day = parseInt(document.getElementById('monthlyStartDay').value);
+    if (isNaN(day) || day < 1 || day > 31) { toast('Enter a valid day (1–31).', 'error'); return; }
+    try {
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      flashSaved('monthlyStartSaved');
+      toast(`✅ Monthly standings now start from day ${day}`);
+    } catch (e) { toast('Failed to save setting.', 'error'); }
+  });
+
+  document.getElementById('saveSeasonStartBtn').addEventListener('click', async () => {
+    const date = document.getElementById('seasonStartDate').value;
+    if (!date) { toast('Pick a start date.', 'error'); return; }
+    try {
+      await update(ref(db, 'adminConfig/settings'), { seasonStartDate: date });
+      flashSaved('seasonStartSaved');
+      toast(`✅ Season standings now start from ${date}`);
+    } catch (e) { toast('Failed to save setting.', 'error'); }
+  });
+
+  document.getElementById('resetMonthlyBtn').addEventListener('click', async () => {
+    const today = todayStr();
+    const day   = new Date().getDate();
+    if (!confirm(`Reset monthly standings to start from today (day ${day})? Picks before today won't count toward this month's standings.`)) return;
+    try {
+      await update(ref(db, 'adminConfig/settings'), { monthlyStartDay: day });
+      document.getElementById('monthlyStartDay').value = day;
+      toast(`✅ Monthly standings reset — now starting from day ${day}`);
+    } catch (e) { toast('Failed to reset standings.', 'error'); }
+  });
+
+  // ── Registration toggle ───────────────────────────────────────────────
+  async function loadRegistrationState() {
+    const snap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
+    const isOpen = snap.exists() ? snap.val() : false;
+    setRegToggleUI(isOpen);
+    document.getElementById('regToggleInput').checked = isOpen;
+  }
+
+  function setRegToggleUI(isOpen) {
+    const card  = document.getElementById('regToggleCard');
+    const icon  = document.getElementById('regToggleIcon');
+    const title = document.getElementById('regToggleTitle');
+    const sub   = document.getElementById('regToggleSub');
+    card.className  = `reg-toggle-card ${isOpen ? 'open' : 'closed'}`;
+    icon.textContent  = isOpen ? '🟢' : '🔒';
+    title.textContent = isOpen ? 'Registration Open' : 'Registration Closed';
+    sub.textContent   = isOpen ? 'New users can sign up and request access' : 'New users cannot sign up';
+  }
+
+  document.getElementById('regToggleInput').addEventListener('change', async (e) => {
+    const isOpen = e.target.checked;
+    try {
+      await set(ref(db, 'adminConfig/settings/registrationOpen'), isOpen);
+      setRegToggleUI(isOpen);
+      toast(isOpen ? '✅ Registration opened' : '🔒 Registration closed');
+    } catch (err) {
+      toast('Failed to update registration setting.', 'error');
+      e.target.checked = !isOpen; // revert
+    }
+  });
+
+  // ── Add member manually ───────────────────────────────────────────────
+  document.getElementById('addMemberBtn').addEventListener('click', async () => {
+    const name  = document.getElementById('addName').value.trim();
+    const email = document.getElementById('addEmail').value.trim();
+    const pin   = document.getElementById('addPin').value.trim();
+    const msg   = document.getElementById('addMemberMsg');
+
+    const showMsg = (text, type) => {
+      msg.textContent = text;
+      msg.className = `add-member-msg ${type} show`;
+    };
+
+    if (!name)  { showMsg('Display name is required.', 'error'); return; }
+    if (!email) { showMsg('Email is required.', 'error'); return; }
+    if (!/^\d{6,8}$/.test(pin)) { showMsg('PIN must be 6–8 digits.', 'error'); return; }
+
+    const btn = document.getElementById('addMemberBtn');
+    btn.disabled = true; btn.textContent = 'Adding…';
+
+    try {
+      // Create Firebase Auth account
+      const cred = await createUserWithEmailAndPassword(auth, email, pin);
+      const uid  = cred.user.uid;
+
+      // Write member profile — auto-approved since admin is adding them
+      await set(ref(db, `adminConfig/members/${uid}`), {
+        email,
+        displayName: name,
+        approved: true,
+        joinedAt: new Date().toISOString(),
+        addedByAdmin: true,
+      });
+
+      showMsg(`✅ ${name} added and approved! They can sign in with their email and the PIN you set.`, 'info');
+      document.getElementById('addName').value  = '';
+      document.getElementById('addEmail').value = '';
+      document.getElementById('addPin').value   = '';
+      loadMembers();
+    } catch (err) {
+      const msgs = {
+        'auth/email-already-in-use': 'That email already has an account.',
+        'auth/invalid-email':        'Invalid email address.',
+        'auth/weak-password':        'PIN too short (min 6 digits).',
+      };
+      showMsg(msgs[err.code] || `Error: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Add Member';
+    }
+  });
+
+
+
+  // ── Tab switching ─────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['picks','games','survivor'].forEach(t => {
+        document.getElementById(`tab-${t}`).style.display = t === btn.dataset.tab ? '' : 'none';
+      });
+      if (btn.dataset.tab === 'survivor') loadSurvivorData();
+    });
+  });
+
+  // ── Picks data viewer ─────────────────────────────────────────────────
+  document.getElementById('picksDate').value = todayStr();
+
+  // ── Shared ESPN fetch for admin data viewer ──────────────────────────
+  async function adminFetchGames(date) {
+    // Always fetch live from ESPN, update cache
+    try {
+      const espnDate = date.replace(/-/g, '');
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${espnDate}`);
+      const data = await res.json();
+      const games = {};
+      for (const event of (data?.events || [])) {
+        const comp = event.competitions?.[0];
+        if (!comp) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        if (!home || !away) continue;
+        const statusName = event.status?.type?.name || 'STATUS_SCHEDULED';
+        let winnerId = null;
+        if (statusName === 'STATUS_FINAL') {
+          if (home.winner) winnerId = String(home.team.id);
+          else if (away.winner) winnerId = String(away.team.id);
+          else if (home.score != null && away.score != null)
+            winnerId = parseInt(home.score) > parseInt(away.score) ? String(home.team.id) : String(away.team.id);
+        }
+        games[event.id] = {
+          id: event.id,
+          startTime:   event.date,
+          statusName,
+          statusShort: event.status?.type?.shortDetail || '',
+          homeTeam: { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
+          awayTeam: { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
+          homeScore: home.score ?? null,
+          awayScore: away.score ?? null,
+          winnerId,
+        };
       }
-      return { abbrev: todayPick, result: 'pending' };
+      // Update Firebase cache
+      if (Object.keys(games).length > 0) {
+        await set(ref(db, `games/${date}`), games).catch(() => {});
+      }
+      return games;
+    } catch (e) {
+      // Fall back to Firebase cache
+      const snap = await get(ref(db, `games/${date}`));
+      return snap.exists() ? snap.val() : {};
     }
-    return { abbrev: todayPick, result: 'pending' };
   }
 
+  document.getElementById('loadPicksBtn').addEventListener('click', async () => {
+    const date      = document.getElementById('picksDate').value;
+    const container = document.getElementById('picksDataContainer');
+    if (!date) { container.innerHTML = `<div class="state-box"><p>Please select a date.</p></div>`; return; }
 
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+
+    // Fetch fresh games from ESPN
+    const games   = await adminFetchGames(date);
+    const approved = allMembers.filter(m => m.approved);
+    const rows = [];
+
+    await Promise.all(approved.map(async m => {
+      const snap  = await get(ref(db, `picks/${m.uid}/${date}`));
+      const picks = snap.exists() ? snap.val() : {};
+
+      for (const [gameId, game] of Object.entries(games)) {
+        const pick     = picks[gameId];
+        const isFinal  = game.statusName === 'STATUS_FINAL';
+        const pickAbbrev = pick?.teamId
+          ? (String(pick.teamId) === String(game.homeTeam?.id) ? game.homeTeam.abbrev : game.awayTeam?.abbrev)
+          : '—';
+        const winnerAbbrev = game.winnerId
+          ? (String(game.winnerId) === String(game.homeTeam?.id) ? game.homeTeam?.abbrev : game.awayTeam?.abbrev)
+          : (isFinal ? '?' : '—');
+        const correct = !pick?.teamId ? 'none'
+          : !isFinal ? 'pending'
+          : String(pick.teamId) === String(game.winnerId) ? 'correct' : 'wrong';
+
+        rows.push({
+          member:  m.displayName || m.email,
+          game:    `${game.awayTeam?.abbrev || '?'} @ ${game.homeTeam?.abbrev || '?'}`,
+          time:    game.startTime ? new Date(game.startTime).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '—',
+          status:  game.statusShort || game.statusName?.replace('STATUS_','') || '—',
+          picked:  pickAbbrev,
+          winner:  winnerAbbrev,
+          correct,
+        });
+      }
+    }));
+
+    // Sort by game time then member name
+    rows.sort((a,b) => a.time.localeCompare(b.time) || a.member.localeCompare(b.member));
+
+    if (rows.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">📭</div><p>No picks data for this date.</p></div>`;
+      return;
+    }
+
+    const resultLabel = { correct:'✅ Correct', wrong:'❌ Wrong', pending:'⏳ Pending', none:'— No pick' };
+    const resultClass = { correct:'pick-correct', wrong:'pick-wrong', pending:'pick-pending', none:'' };
+
+    container.innerHTML = `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Game</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Picked</th>
+              <th>Winner</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>${r.member}</td>
+                <td>${r.game}</td>
+                <td>${r.time}</td>
+                <td>${r.status}</td>
+                <td>${r.picked}</td>
+                <td>${r.winner}</td>
+                <td class="${resultClass[r.correct]}">${resultLabel[r.correct]}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  });
+
+
+  // ── Admin auto-pick ───────────────────────────────────────────────────
+
+  // ── Pick the worse team (worse win % = pick them; tied = pick away) ────
+  function pickWorseTeam(game) {
+    function parseWinPct(rec) {
+      if (!rec) return null;
+      // Record format: "3-5" or "3-5-1" (wins-losses-ties)
+      const parts = rec.split('-').map(Number);
+      if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+      const total = parts[0] + parts[1];
+      return total === 0 ? 0.5 : parts[0] / total;
+    }
+
+    const homePct = parseWinPct(game.homeTeam?.record);
+    const awayPct = parseWinPct(game.awayTeam?.record);
+
+    console.log(`[AutoPick] ${game.awayTeam?.abbrev}(${game.awayTeam?.record}=${awayPct?.toFixed(3)}) @ ${game.homeTeam?.abbrev}(${game.homeTeam?.record}=${homePct?.toFixed(3)})`);
+
+    if (homePct !== null && awayPct !== null) {
+      if (homePct < awayPct) { console.log(`  → ${game.homeTeam.abbrev} (home worse)`); return game.homeTeam.id; }
+      if (awayPct < homePct) { console.log(`  → ${game.awayTeam.abbrev} (away worse)`); return game.awayTeam.id; }
+    }
+    // Tied or no records — pick away team
+    console.log(`  → ${game.awayTeam.abbrev} (tied/default away)`);
+    return game.awayTeam.id;
+  }
+
+  document.getElementById('autoPickBtn').addEventListener('click', async () => {
+    const date = document.getElementById('picksDate').value;
+    const msg  = document.getElementById('autoPickMsg');
+
+    if (!date) {
+      msg.textContent = 'Select a date first.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    const now = new Date();
+    const d   = new Date(date + 'T12:00:00');
+    if (d > now) {
+      msg.textContent = 'Cannot auto-pick a future date.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    if (!confirm(`Auto-pick the worse record team (or away team if tied) for all members who haven't picked on ${date}? This cannot be undone.`)) return;
+
+    msg.textContent = 'Running auto-pick…';
+    msg.className = 'msg info show';
+
+    try {
+      // Fetch games for the date
+      const games = await adminFetchGames(date);
+      const gameList = Object.values(games);
+
+      if (gameList.length === 0) {
+        msg.textContent = 'No games found for this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      // Only auto-pick games that have started
+      const lockedGames = gameList.filter(g => new Date(g.startTime) <= now);
+      if (lockedGames.length === 0) {
+        msg.textContent = 'No games have started yet on this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      const approved = allMembers.filter(m => m.approved);
+      let pickedCount = 0;
+
+      await Promise.all(approved.map(async m => {
+        const picksSnap = await get(ref(db, `picks/${m.uid}/${date}`));
+        const existing  = picksSnap.exists() ? picksSnap.val() : {};
+        const updates   = {};
+
+        for (const game of lockedGames) {
+          if (existing[game.id]?.teamId) continue; // already has a pick
+          updates[`picks/${m.uid}/${date}/${game.id}`] = {
+            teamId:   pickWorseTeam(game),
+            lockedIn: true,
+            correct:  null,
+            auto:     true,
+          };
+          pickedCount++;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }));
+
+      msg.textContent = `✅ Done! Auto-picked worse record team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.className = 'msg info show';
+
+      // Reload the picks view
+      document.getElementById('loadPicksBtn').click();
+
+    } catch (e) {
+      console.error(e);
+      msg.textContent = 'Auto-pick failed: ' + e.message;
+      msg.className = 'msg error show';
+    }
+  });
+
+
+  document.getElementById('autoPickAllBtn').addEventListener('click', async () => {
+    const date = document.getElementById('picksDate').value;
+    const msg  = document.getElementById('autoPickMsg');
+
+    if (!date) {
+      msg.textContent = 'Select a date first.';
+      msg.className = 'msg error show';
+      return;
+    }
+
+    if (!confirm(`Auto-pick the worse record team (or away team if tied) for ALL games on ${date} for members who haven't picked? Users can still change picks before their game starts.`)) return;
+
+    msg.textContent = 'Running auto-pick for all games…';
+    msg.className = 'msg info show';
+
+    try {
+      const games = await adminFetchGames(date);
+      const gameList = Object.values(games);
+
+      if (gameList.length === 0) {
+        msg.textContent = 'No games found for this date.';
+        msg.className = 'msg error show';
+        return;
+      }
+
+      const approved = allMembers.filter(m => m.approved);
+      let pickedCount = 0;
+
+      await Promise.all(approved.map(async m => {
+        const picksSnap = await get(ref(db, `picks/${m.uid}/${date}`));
+        const existing  = picksSnap.exists() ? picksSnap.val() : {};
+        const updates   = {};
+
+        for (const game of gameList) {
+          if (existing[game.id]?.teamId) continue; // already has a pick
+          updates[`picks/${m.uid}/${date}/${game.id}`] = {
+            teamId:   pickWorseTeam(game),
+            lockedIn: true,
+            correct:  null,
+            auto:     true,
+          };
+          pickedCount++;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }));
+
+      msg.textContent = `✅ Done! Auto-picked worse record team for ${pickedCount} missing pick${pickedCount !== 1 ? 's' : ''} across ${approved.length} members.`;
+      msg.className = 'msg info show';
+
+      document.getElementById('loadPicksBtn').click();
+
+    } catch (e) {
+      console.error(e);
+      msg.textContent = 'Auto-pick failed: ' + e.message;
+      msg.className = 'msg error show';
+    }
+  });
+
+  // ── Games data viewer ─────────────────────────────────────────────────
+  document.getElementById('gamesDate').value = todayStr();
+
+  document.getElementById('loadGamesBtn').addEventListener('click', async () => {
+    const date      = document.getElementById('gamesDate').value;
+    const container = document.getElementById('gamesDataContainer');
+    if (!date) return;
+
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+
+    const games = Object.values(await adminFetchGames(date))
+      .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+
+    if (games.length === 0) {
+      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><p>No games found for this date.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Matchup</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Winner</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${games.map(g => {
+              const matchup = `${g.awayTeam?.abbrev || '?'} @ ${g.homeTeam?.abbrev || '?'}`;
+              const time    = g.startTime ? new Date(g.startTime).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) : '—';
+              const status  = g.statusShort || g.statusName?.replace('STATUS_','') || '—';
+              const score   = (g.awayScore != null && g.homeScore != null) ? `${g.awayScore} – ${g.homeScore}` : '—';
+              const winner  = g.winnerId
+                ? (String(g.winnerId) === String(g.homeTeam?.id) ? g.homeTeam?.abbrev : g.awayTeam?.abbrev)
+                : '—';
+              return `
+                <tr>
+                  <td>${matchup}</td>
+                  <td>${time}</td>
+                  <td>${status}</td>
+                  <td style="font-weight:700">${score}</td>
+                  <td style="font-weight:700">${winner}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  });
+
+
+
+  // ── Survivor data viewer ──────────────────────────────────────────────
 
   function normalizeAbbrev(a) {
-    const abbrev = (a || '').toUpperCase();
-    if (abbrev === 'CHW') return 'CWS';
-    if (abbrev === 'KCR') return 'KC';
-    if (abbrev === 'SDP') return 'SD';
-    if (abbrev === 'SFG') return 'SF';
-    if (abbrev === 'TBR') return 'TB';
-    if (abbrev === 'WSN') return 'WSH';
-    return abbrev;
+    const s = (a||'').toUpperCase();
+    if (s==='CHW') return 'CWS';
+    if (s==='KCR') return 'KC';
+    if (s==='SDP') return 'SD';
+    if (s==='SFG') return 'SF';
+    if (s==='TBR') return 'TB';
+    if (s==='WSN') return 'WSH';
+    if (s==='OAK') return 'ATH';
+    return s;
   }
 
-  // ── Compute survivor status ──────────────────────────────────────────
-  // Free pass must be explicitly approved by admin — no auto-apply.
   function computeSurvivorStatus(usedTeams, freePassUsed, freePassDay, monthGames, startDay, today) {
     const now  = new Date();
     const ym   = today.substring(0, 7);
@@ -1965,14 +2225,10 @@ const NAV_STYLES = `
       if (dateStr > today) break;
       const dayData = monthGames[dateStr];
       if (!dayData || !dayData.games?.length) continue; // no games this day
-      // Deadline = last game start time
+      // Deadline = last game start time for this day
       if (now < dayData.lastStartTime) continue;
       const pick = (usedTeams || {})[dateStr];
-      if (!pick) {
-        // Don't eliminate for today if no picks at all (post-reset)
-        if (dateStr === today && pickDays.length === 0) break;
-        alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break;
-      }
+      if (!pick) { alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break; }
       const normPick = normalizeAbbrev(pick);
       const game = dayData.games.find(g =>
         normalizeAbbrev(g.homeTeam?.abbrev) === normPick ||
@@ -1992,398 +2248,295 @@ const NAV_STYLES = `
   }
 
 
-  async function loadSurvivorSection(games) {
-    const section = document.getElementById('survivorSection');
-    const day     = new Date().getDate();
+  async function loadSurvivorData() {
     const ym      = yearMonthStr();
     const today   = todayStr();
+    const now     = new Date();
+    const container = document.getElementById('survivorDataContainer');
+    document.getElementById('survivorMonth').textContent = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
 
-    if (day === 31) { section.style.display = 'none'; return; }
-    section.style.display = '';
+    // Load raw survivor data from Firebase
+    const snap = await get(ref(db, `survivor/${ym}`));
+    const data = snap.exists() ? snap.val() : {};
 
-    // Load fresh state
-    const snap = await get(ref(db, `survivor/${ym}/${currentUser.uid}`));
-    survivorState = snap.exists() ? snap.val() : {
-      alive: true, freePassUsed: false, freePassRequested: false,
-      freePassDay: null, usedTeams: {}
-    };
-
-    // Survivor always starts day 1 of current month unless reset mid-month
+    // Load settings
     const settingsSnap = await get(ref(db, 'adminConfig/settings'));
-    const settings = settingsSnap.exists() ? settingsSnap.val() : {};
-    const _storedSD = settings.survivorStartDay || 1;
-    const _storedSM = settings.survivorStartMonth || '';
-    const _curYM = yearMonthStr();
-    const startDay = (_storedSM === _curYM) ? _storedSD : 1;
+    const ss_val = settingsSnap.exists() ? settingsSnap.val() : {};
+    const _storedSD = ss_val.survivorStartDay || 1;
+    const _storedSM = ss_val.survivorStartMonth || '';
+    const startDay = (_storedSM === ym) ? _storedSD : 1;
 
+    // Load all month games for computation
+    const monthGames = await adminFetchMonthGames(ym);
 
-    // Build monthGames from today's games for compute
-    const todayData = {
-      lastStartTime: games.length ? new Date(games[games.length-1].startTime) : new Date(0),
-      games,
-    };
-    const monthGamesForCompute = { [today]: todayData };
+    const approved = allMembers.filter(m => m.approved);
+    if (approved.length === 0) {
+      container.innerHTML = `<div class="state-box"><p>No approved members.</p></div>`;
+      return;
+    }
 
-    // Load past month games too so compute works for past days
+    let rows;
     try {
-      const gSnap = await get(ref(db, 'games'));
-      if (gSnap.exists()) {
-        gSnap.forEach(dc => {
-          if (!dc.key.startsWith(ym) || dc.key === today) return;
-          const gs = Object.values(dc.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
-          if (!gs.length) return;
-          monthGamesForCompute[dc.key] = {
-            lastStartTime: new Date(gs[gs.length-1].startTime),
-            games: gs,
+    rows = await Promise.all(approved.map(async m => {
+      const raw      = data[m.uid] || { freePassUsed: false, freePassDay: null, usedTeams: {} };
+      const computed = computeSurvivorStatus(
+        raw.usedTeams, raw.freePassUsed, raw.freePassDay, monthGames, startDay, today
+      );
+
+
+
+      const pickCount = Object.keys(raw.usedTeams || {}).length;
+      const todayPick = (raw.usedTeams || {})[today];
+      const lastPick  = Object.entries(raw.usedTeams || {}).sort((a,b) => b[0].localeCompare(a[0]))[0];
+
+      // Get today's pick result
+      let todayResult = '—';
+      if (todayPick && monthGames[today]) {
+        const game = monthGames[today].games.find(g =>
+          g.homeTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase() ||
+          g.awayTeam?.abbrev?.toUpperCase() === todayPick.toUpperCase()
+        );
+        if (game?.statusName === 'STATUS_FINAL' && game.winnerId) {
+          const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
+          const won = homeWon
+            ? game.homeTeam.abbrev.toUpperCase() === todayPick.toUpperCase()
+            : game.awayTeam.abbrev.toUpperCase() === todayPick.toUpperCase();
+          todayResult = won ? `✅ ${todayPick} won` : `❌ ${todayPick} lost`;
+        } else if (game) {
+          todayResult = `⏳ ${todayPick}`;
+        } else {
+          todayResult = todayPick;
+        }
+      } else if (todayPick) {
+        todayResult = todayPick;
+      }
+
+      return { ...m, computed, raw, pickCount, todayResult, lastPick };
+    }));
+    } catch(err) {
+      console.error('loadSurvivorData error:', err);
+      container.innerHTML = `<div class="state-box"><div class="icon">⚠️</div><p>Failed to load: ${err.message}</p></div>`;
+      return;
+    }
+
+    rows.sort((a, b) => {
+      if (a.computed.alive !== b.computed.alive) return a.computed.alive ? -1 : 1;
+      return b.pickCount - a.pickCount;
+    });
+
+    // Show pending requests first
+    const pendingRequests = rows.filter(r => r.raw.freePassRequested && !r.raw.freePassUsed);
+    const pendingHTML = pendingRequests.length > 0 ? `
+      <div style="margin-bottom:16px;padding:14px 16px;background:#FEF9EE;border:1.5px solid #F5DFA0;border-radius:var(--radius);font-size:14px">
+        <strong style="color:#7A5A10">⏳ Pending Free Pass Requests (${pendingRequests.length})</strong>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+          ${pendingRequests.map(r => `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span><strong>${r.displayName || r.email}</strong> — lost on day ${r.raw.freePassDay || '?'} (pick: ${(r.raw.usedTeams || {})[ym + '-' + String(r.raw.freePassDay).padStart(2,'0')] || '?'})</span>
+              <button class="btn-load" onclick="approveFreePass('${r.uid}')" style="padding:6px 14px;font-size:13px;background:var(--green);color:white;border:none">✅ Approve</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : '';
+
+    container.innerHTML = pendingHTML + `
+      <div class="data-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Status</th>
+              <th>Picks</th>
+              <th>Free Pass</th>
+              <th>Today</th>
+              <th>Last Pick</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => {
+              const c = r.computed;
+              let statusText = c.alive ? '✅ Alive' : '💀 Eliminated';
+              if (!c.alive && c.eliminatedReason === 'missed') statusText = '💀 Missed pick';
+              let fpText = '<span style="color:var(--green);font-weight:600">Available</span>';
+              if (r.raw.freePassUsed)       fpText = `🎟️ Used (day ${r.raw.freePassDay || '?'})`;
+              else if (r.raw.freePassRequested) fpText = `<span style="color:#7A5A10">⏳ Requested (day ${r.raw.freePassDay || '?'})</span>`;
+              return `
+                <tr>
+                  <td style="font-weight:600">${r.displayName || r.email}</td>
+                  <td>${statusText}</td>
+                  <td>${r.pickCount}</td>
+                  <td>${fpText}</td>
+                  <td>${r.todayResult}</td>
+                  <td style="color:var(--ink-faint)">${r.lastPick ? `${r.lastPick[1]} (${r.lastPick[0]})` : '—'}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // Fetch all games for a month from ESPN/cache
+  async function adminFetchMonthGames(ym) {
+    const monthGames = {};
+    const today = todayStr();
+
+    try {
+      // Load cached games for the whole month
+      const snap = await get(ref(db, 'games'));
+      if (snap.exists()) {
+        snap.forEach(dateChild => {
+          if (!dateChild.key.startsWith(ym)) return;
+          const games = Object.values(dateChild.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (!games.length) return;
+          monthGames[dateChild.key] = {
+            lastStartTime: new Date(games[games.length-1].startTime),
+            games,
+            allFinal: games.every(g => g.statusName === 'STATUS_FINAL' && g.winnerId),
           };
         });
       }
-    } catch(e) {}
 
-    monthGamesCache = monthGamesForCompute;  // save for FP window check in renderSurvivorCard
-    const raw = survivorState;
-    const computed = computeSurvivorStatus(
-      raw.usedTeams, raw.freePassUsed, raw.freePassDay,
-      monthGamesForCompute, startDay, today
-    );
-    survivorState = { ...raw, ...computed };
+      // Re-fetch today + any past date that isn't fully final + last 3 days in case missing
+      const toRefresh = new Set([today]);
+      for (const [date, d] of Object.entries(monthGames)) {
+        if (!d.allFinal && date <= today) toRefresh.add(date);
+      }
+      for (let i = 1; i <= 3; i++) {
+        const d2 = new Date(); d2.setDate(d2.getDate() - i);
+        const dk = `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+        if (dk >= `${ym}-01`) toRefresh.add(dk);
+      }
 
-    renderSurvivorCard(games);
+      await Promise.all([...toRefresh].map(async dateStr => {
+        try {
+          const freshGames = await adminFetchGames(dateStr);
+          const freshArr   = Object.values(freshGames).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
+          if (freshArr.length) {
+            monthGames[dateStr] = {
+              lastStartTime: new Date(freshArr[freshArr.length-1].startTime),
+              games: freshArr,
+              allFinal: freshArr.every(g => g.statusName === 'STATUS_FINAL' && g.winnerId),
+            };
+          }
+        } catch(e) {}
+      }));
+
+    } catch (e) { console.warn('adminFetchMonthGames failed:', e); }
+    return monthGames;
   }
 
+  // ── Reset survivor ────────────────────────────────────────────────────
+  // ── Survivor reset (top-level settings) ──────────────────────────────
 
-  function renderSurvivorCard(games) {
-    const card      = document.getElementById('survivorCard');
-    const today     = todayStr();
-    const state     = survivorState;
-    const todayPick = state.usedTeams?.[today];
-    const day       = new Date().getDate();
-
-    // Determine pick result for today
-    const pickResult = getSurvivorPickResult(state, games);
-
-    // ── Determine exact status ────────────────────────────────────────
-    // alive: computed (from computeSurvivorStatus via loadSurvivorSection)
-    // lostToday: pick exists and game is final and they lost
-    // fpRequested: requested but not yet approved
-    // fpUsed: approved and used
-    // canPick: alive AND (no pick yet, OR pick's game hasn't started) AND no pending loss
-    const lostToday = pickResult?.result === 'loss';
-    const fpUsed    = state.freePassUsed;
-    const fpReq     = state.freePassRequested && !state.freePassUsed;
-
-    // A user can pick if:
-    // 1. They are alive (computed)
-    // 2. They haven't lost today (or if they lost, their free pass was approved)
-    // 3. Their current pick's game hasn't started yet (or they have no pick)
-    const pickGame = todayPick ? games.find(g =>
-      normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(todayPick) ||
-      normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(todayPick)
-    ) : null;
-    const pickGameStarted = pickGame ? new Date() >= new Date(pickGame.startTime) : false;
-    const anyGameStarted  = games.some(g => new Date() >= new Date(g.startTime));
-
-    // Blocking conditions
-    // Deadline = last game start time (picks lock when last game starts)
-    const lastGame = [...games].sort((a,b) => new Date(b.startTime)-new Date(a.startTime))[0];
-    const allGamesStarted = lastGame ? new Date() >= new Date(lastGame.startTime) : false;
-
-    // lostWithFPAvailable: lost on a past day (or today), FP not used/requested yet
-    // Free pass is ONLY available for a loss, NEVER for a missed day
-    const lostWithFPAvailable = !state.alive && state.eliminatedReason === 'loss'
-      && !fpUsed && !fpReq;
-
-    // blockedByLoss: lost and FP not yet approved (show FP request option)
-    const blockedByLoss = (lostToday || lostWithFPAvailable) && !fpUsed;
-
-    // blockedByElim: truly out with no recourse
-    // - missed a day (never gets FP)
-    // - lost and FP already used
-    // - lost and FP was requested/approved
-    const blockedByElim = !state.alive && !lostWithFPAvailable
-      && !(lostToday && !fpUsed && !fpReq); // don't block same-day loss before FP requested
-
-    const canPick = state.alive
-      && !blockedByLoss
-      && (() => {
-        if (todayPick) return !pickGameStarted;  // can change pick if game not started
-        return !allGamesStarted;                  // deadline = last game start
-      })();
-
-    // ── Card header ───────────────────────────────────────────────────
-    let cardClass = 's-alive', icon = '✅', title = 'Alive';
-    let sub = `Day ${day}`;
-
-    if (blockedByElim) {
-      cardClass = 's-dead'; icon = '💀'; title = 'Eliminated';
-      if (state.eliminatedReason === 'missed') {
-        sub = `Missed pick on day ${state.eliminatedDay} — no free pass for missed days`;
-      } else {
-        sub = `Lost on day ${state.eliminatedDay}${fpUsed ? ' — free pass already used' : ''}`;
-      }
-    } else if (fpUsed) {
-      cardClass = 's-freepass'; icon = '🎟️';
-      title = 'Alive — Free Pass Used';
-      sub = `Free pass used on day ${state.freePassDay}`;
-    } else if (blockedByLoss) {
-      cardClass = 's-dead'; icon = '❌';
-      title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
-      sub = fpReq
-        ? `Day ${state.eliminatedDay || day} · awaiting admin approval`
-        : `Lost on day ${state.eliminatedDay || day} · free pass available`;
-    }
-
-    card.className = `survivor-status-card ${cardClass}`;
-
-    // ── Pick display ──────────────────────────────────────────────────
-    let pickHTML = '';
-
-    if (blockedByElim) {
-      // Eliminated — show why, no grid
-      pickHTML = `
-        <div class="s-pick-row">
-          <span style="font-size:13px;color:var(--ink-faint)">
-            ${state.eliminatedReason === 'missed'
-              ? '⚠️ You missed a pick and have been eliminated. Missed days cannot be recovered with a free pass.'
-              : fpUsed
-                ? '⚠️ Your team lost. Your free pass was already used.'
-                : '⚠️ Your team lost and you have no free pass remaining.'}
-          </span>
-        </div>`;
-
-    } else if (blockedByLoss) {
-      // Lost on today or a past day — show pick result and FP request button, no grid
-      const showReqBtn = !fpReq;
-      const losingPick = lostWithFPAvailable
-        ? (state.usedTeams?.[`${today.substring(0,7)}-${String(state.eliminatedDay).padStart(2,'0')}`] || todayPick)
-        : todayPick;
-      pickHTML = `
-        <div class="s-pick-row">
-          <span class="s-pick-label">${lostWithFPAvailable ? `Day ${state.eliminatedDay} pick:` : "Today's pick:"}</span>
-          ${losingPick ? `
-          <div class="s-current-pick pick-loss">
-            <img src="${espnLogoSurv(losingPick)}" alt="${losingPick}" onerror="this.style.display='none'" />
-            ${normalizeAbbrev(losingPick)}
-          </div>
-          <span class="s-result-loss">❌ Team lost</span>` : ''}
-        </div>
-        ${showReqBtn ? `<button class="s-freepass-btn" id="requestFPBtn" style="margin-top:8px">🎟️ Request Free Pass</button>` : ''}
-        ${fpReq ? `<div class="s-msg show info" style="margin-top:8px">⏳ Free pass requested — awaiting admin approval. You cannot pick until approved.</div>` : ''}`;
-
-    } else if (todayPick) {
-      // Has a pick, not blocked — show it with change option if game not started
-      const chipClass = pickResult?.result === 'win' ? 'pick-win'
-                      : pickResult?.result === 'loss' ? 'pick-loss'
-                      : 'pick-pending';
-      const resultLabel = pickResult?.result === 'win' ? '✅ Survived!'
-        : pickGameStarted ? '⏳ Game in progress…'
-        : '🔓 Pick saved — game not started yet';
-      const resultClass = pickResult?.result === 'win' ? 's-result-win' : 's-result-pending';
-
-      pickHTML = `
-        <div class="s-pick-row">
-          <span class="s-pick-label">Today's survivor pick:${canPick ? ' <span style="font-size:12px;color:var(--ink-faint);font-weight:400">(tap team below to change)</span>' : ''}</span>
-          <div class="s-current-pick ${chipClass}">
-            <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-            ${normalizeAbbrev(todayPick)}
-          </div>
-          <span class="${resultClass}">${resultLabel}</span>
-        </div>`;
-
-    } else {
-      // No pick yet — show prompt or warning
-      if (anyGameStarted && !canPick) {
-        pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ All games have started — no pick made today.</span></div>`;
-      } else {
-        pickHTML = `<div class="s-pick-row"><span class="s-pick-label">Pick a team below to stay alive.</span></div>`;
-      }
-    }
-
-    // ── Team grid (only when canPick) ─────────────────────────────────
-    let gridHTML = '';
-    if (canPick) {
-      const usedSet = new Set(
-        Object.entries(state.usedTeams || {})
-          .filter(([date]) => date !== today) // exclude today so they can re-pick same team
-          .map(([, abbrev]) => abbrev)
-      );
-      // Build set of teams with doubleheaders today (appear in 2+ games)
-      const teamGameCount = {};
-      for (const g of games) {
-        const ha = normalizeAbbrev(g.homeTeam.abbrev);
-        const aa = normalizeAbbrev(g.awayTeam.abbrev);
-        teamGameCount[ha] = (teamGameCount[ha] || 0) + 1;
-        teamGameCount[aa] = (teamGameCount[aa] || 0) + 1;
-      }
-      const doubleheaderTeams = new Set(Object.keys(teamGameCount).filter(a => teamGameCount[a] > 1));
-
-      // Only show teams playing today
-      const playingTeams = [...new Set(games.flatMap(g => [
-        normalizeAbbrev(g.homeTeam.abbrev),
-        normalizeAbbrev(g.awayTeam.abbrev)
-      ]))].sort();
-
-      gridHTML = `
-        <div class="s-team-grid" id="sTeamGrid">
-          ${playingTeams.map(abbrev => {
-            const used        = usedSet.has(abbrev);
-            const isDoubleHdr = doubleheaderTeams.has(abbrev);
-            const started     = games.some(g =>
-              (normalizeAbbrev(g.homeTeam.abbrev) === abbrev ||
-               normalizeAbbrev(g.awayTeam.abbrev) === abbrev) &&
-              new Date() >= new Date(g.startTime)
-            );
-            const isCurrentPick = normalizeAbbrev(todayPick||'') === abbrev;
-            // Disabled if: already used this month, game started, or doubleheader
-            const disabled = used || started || isDoubleHdr;
-            let tileClass = 's-team-tile';
-            if (used) tileClass += ' s-used';
-            else if (isDoubleHdr) tileClass += ' s-used'; // gray out same style
-            else if (started) tileClass += ' s-started';
-            if (isCurrentPick) tileClass += ' s-selected';
-            const titleText = used ? 'Already used this month'
-              : isDoubleHdr ? 'Doubleheader — not eligible today'
-              : started ? 'Game already started'
-              : abbrev;
-            return `<button class="${tileClass}"
-              data-abbrev="${abbrev}" ${disabled ? 'disabled' : ''}
-              title="${titleText}">
-              <img src="${espnLogoSurv(abbrev)}" onerror="this.style.display='none'" />
-              <span>${abbrev}</span>
-              ${used ? '<span class="s-tile-badge">✓</span>' : ''}
-              ${isDoubleHdr && !used ? '<span class="s-tile-badge">2x</span>' : ''}
-              ${started && !used && !isDoubleHdr ? '<span class="s-tile-badge">🔒</span>' : ''}
-            </button>`;
-          }).join('')}
-        </div>
-        <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
-          <span id="sSelectedLabel" class="s-selected-label"></span>
-          <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
-          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.s-team-tile.s-selected').forEach(b=>{if(b.dataset.abbrev!=='${normalizeAbbrev(todayPick||'')}')b.classList.remove('s-selected')})">Cancel</button>
-        </div>
-        <div class="s-msg" id="sMsg"></div>`;
-    }
-
-    // ── FP note ───────────────────────────────────────────────────────
-    const fpNote = fpUsed
-      ? `<span class="s-fp-note">🎟️ Free pass used day ${state.freePassDay}</span>`
-      : fpReq
-        ? `<span class="s-fp-note" style="color:#7A5A10">⏳ Free pass pending</span>`
-        : state.alive
-          ? `<span class="s-fp-note" style="color:var(--green)">🎟️ Free pass available</span>`
-          : '';
-
-    card.innerHTML = `
-      <div class="s-status-header">
-        <div class="s-top-left">
-          <span class="s-icon">${icon}</span>
-          <div>
-            <div class="s-title">${title}</div>
-            <div class="s-sub">${sub}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${fpNote}
-          <button onclick="loadSurvivorSection(window._lastSurvivorGames||[])" style="background:none;border:none;font-size:12px;color:var(--ink-faint);cursor:pointer;padding:4px">↻</button>
-        </div>
-      </div>
-      ${pickHTML}
-      ${gridHTML}
-    `;
-
-    // Wire FP request button
-    document.getElementById('requestFPBtn')?.addEventListener('click', async () => {
-      const btn = document.getElementById('requestFPBtn');
-      btn.disabled = true; btn.textContent = 'Requesting…';
-      const ym2 = yearMonthStr();
-      const fpDay = state.eliminatedDay || day;
-      try {
-        await update(ref(db), {
-          [`survivor/${ym2}/${currentUser.uid}/freePassRequested`]: true,
-          [`survivor/${ym2}/${currentUser.uid}/freePassDay`]: fpDay,
-        });
-        survivorState.freePassRequested = true;
-        survivorState.freePassDay = fpDay;
-        renderSurvivorCard(games);
-      } catch(e) {
-        btn.disabled = false; btn.textContent = '🎟️ Request Free Pass';
-      }
-    });
-
-    // Wire team grid clicks
-    if (canPick) {
-      document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.s-team-tile').forEach(b => b.classList.remove('s-selected'));
-          btn.classList.add('s-selected');
-          survivorSelected = btn.dataset.abbrev;
-          const confirmRow = document.getElementById('sPickConfirmRow');
-          const label = document.getElementById('sSelectedLabel');
-          if (confirmRow) confirmRow.style.display = 'flex';
-          if (label) label.textContent = `Pick: ${survivorSelected}`;
-        });
-      });
-      document.getElementById('sConfirmBtn')?.addEventListener('click', confirmSurvivorPick);
-    }
-  }
-
-
-  async function confirmSurvivorPick() {
-    if (!survivorSelected) return;
-    const today = todayStr();
-    const ym    = yearMonthStr();
-    const btn   = document.getElementById('sConfirmBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
-
+  // ── Approve free pass ─────────────────────────────────────────────────
+  window.approveFreePass = async function(uid) {
+    const ym  = yearMonthStr();
+    const snap = await get(ref(db, `survivor/${ym}/${uid}`));
+    const state = snap.exists() ? snap.val() : {};
+    const day = state.freePassDay;
+    if (!day) { toast('No free pass day found.', 'error'); return; }
     try {
-      const updatedTeams = { ...(survivorState.usedTeams || {}), [today]: survivorSelected };
       await update(ref(db), {
-        [`survivor/${ym}/${currentUser.uid}/usedTeams`]:    updatedTeams,
-        [`survivor/${ym}/${currentUser.uid}/alive`]:        survivorState.alive,
-        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: survivorState.freePassUsed,
+        [`survivor/${ym}/${uid}/freePassUsed`]:      true,
+        [`survivor/${ym}/${uid}/freePassRequested`]: false,
+        [`survivor/${ym}/${uid}/freePassDay`]:       day,
       });
-      survivorState.usedTeams = updatedTeams;
-      survivorSelected = null;
-      renderSurvivorCard(Object.values(gamesCache));
-    } catch (err) {
-      const msg = document.getElementById('sMsg');
-      if (msg) { msg.textContent = 'Failed to save. Try again.'; msg.className = 's-msg error show'; }
-      btn.disabled = false; btn.textContent = 'Confirm Survivor Pick';
+      toast(`✅ Free pass approved for day ${day}!`, 'success');
+      loadSurvivorData();
+    } catch(e) {
+      console.error(e);
+      toast('Failed to approve free pass: ' + e.message, 'error');
     }
+  };
+
+  // ── Shared survivor reset logic ──────────────────────────────────────
+  async function doSurvivorReset(showToast) {
+    const ym  = yearMonthStr();
+    const day = new Date().getDate();
+
+    // Delete each member's survivor record individually (admin can write $uid paths)
+    const membersSnap = await get(ref(db, 'adminConfig/members'));
+    const updates = {};
+    if (membersSnap.exists()) {
+      membersSnap.forEach(child => {
+        if (child.val().approved) {
+          updates[`survivor/${ym}/${child.key}`] = null;
+        }
+      });
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await update(ref(db), updates);
+    }
+
+    // Write survivorStartDay + survivorStartMonth — never touch monthlyStartDay
+    await update(ref(db, 'adminConfig/settings'), { survivorStartDay: day, survivorStartMonth: ym });
+    if (showToast) toast('💀 Survivor reset — everyone is alive again from today!', 'success');
   }
 
+  document.getElementById('resetSurvivorBtnTop').addEventListener('click', async () => {
+    const day = new Date().getDate();
+    if (!confirm(`💀 Reset ALL survivor data?\n\nEveryone will be alive again, all picks cleared, and the start day set to today (day ${day}).\n\nThis cannot be undone.`)) return;
+    try {
+      await doSurvivorReset(true);
+    } catch (e) {
+      console.error(e);
+      toast('Failed to reset survivor: ' + e.message, 'error');
+    }
+  });
+
+  document.getElementById('resetSurvivorBtn').addEventListener('click', async () => {
+    const day = new Date().getDate();
+    if (!confirm(`⚠️ Reset ALL survivor data? Everyone will be marked alive again, all picks cleared, and the start day set to today (day ${day}). This cannot be undone.`)) return;
+    try {
+      await doSurvivorReset(false);
+      toast('Survivor reset. Everyone is alive again from today.', 'success');
+      loadSurvivorData();
+    } catch (e) {
+      console.error(e);
+      toast('Failed to reset survivor: ' + e.message, 'error');
+    }
+  });
 
 
+
+  // ── Auth gate (admin only) ────────────────────────────────────────────
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
-
     currentUser = user;
 
-    // Check approval
-    const snap = await get(child(ref(db), `adminConfig/members/${user.uid}`));
-    const member = snap.exists() ? snap.val() : null;
-    const adminSnap = await get(child(ref(db), `adminConfig/admins/${user.uid}`));
-    const isAdmin = adminSnap.exists() && adminSnap.val() === true;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
 
-    if (!member?.approved && !isAdmin) {
-      window.location.href = 'index.html'; return;
-    }
+    if (!isAdmin) { window.location.href = 'index.html'; return; }
 
-    // Nav
-    // Init shared nav
-    initNav({
-      activePage: 'picks.html',
-      isAdmin,
-      userName: member?.displayName || user.email,
-    });
-    // admin link handled by nav.js
+    // Mark each member as admin or not
+    const adminListSnap = await get(ref(db, 'adminConfig/admins'));
+    const adminUids = new Set();
+    if (adminListSnap.exists()) adminListSnap.forEach(c => adminUids.add(c.key));
+
+    initNav({ activePage: 'admin.html', isAdmin: true, userName: user.email });
     const _signOut = () => signOut(auth).then(() => window.location.href = 'index.html');
     document.getElementById('signOutBtn')?.addEventListener('click', _signOut);
     document.getElementById('drawerSignOutBtn')?.addEventListener('click', _signOut);
 
-    // Load today's games
-    setDate(todayStr());
+    // Load members then tag admins
+    const snap = await get(ref(db, 'adminConfig/members'));
+    allMembers = [];
+    if (snap.exists()) {
+      snap.forEach(child => {
+        allMembers.push({ uid: child.key, isAdmin: adminUids.has(child.key), ...child.val() });
+      });
+    }
 
+    renderMembers();
+    loadRegistrationState();
+    loadLeagueSettings();
+
+    // Set default dates
+    document.getElementById('picksDate').value = todayStr();
+    document.getElementById('gamesDate').value = todayStr();
   });
 </script>
 
