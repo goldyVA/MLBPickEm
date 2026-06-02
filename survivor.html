@@ -481,8 +481,7 @@
     const today = todayStr();
     const rows = allMembers.map(m => {
       const raw = allStates[m.uid] || {};
-      const hasPicks = raw.usedTeams && Object.keys(raw.usedTeams).length > 0;
-      const ut = hasPicks ? raw.usedTeams : {};
+      const ut = raw.usedTeams || {};
       const c  = computeStatus(ut, raw.freePassUsed, raw.freePassDay, monthGames, survivorStartDay, today);
       return { ...m, alive:c.alive, fpUsed:raw.freePassUsed, fpReq:raw.freePassRequested, picks:Object.keys(ut).length };
     });
@@ -541,8 +540,8 @@
     const tbody=t.createTBody();
     for (const m of members) {
       const raw = allStates[m.uid]||{};
-      const hasPicks = raw.usedTeams && Object.keys(raw.usedTeams).length>0;
-      const ut  = hasPicks ? (raw.usedTeams||{}) : {};
+      const ut  = raw.usedTeams||{};
+      const hasPicks = Object.keys(ut).length>0;
       const fpU = raw.freePassUsed||false;
       const fpD = raw.freePassDay||null;
       const fpR = raw.freePassRequested||false;
@@ -565,8 +564,9 @@
         if (isFuture) {
           cell=`<span class="gc-future">·</span>`;
         } else if (!pick) {
-          // No pick — missed if deadline passed and they were active
-          if (deadlinePassed && hasPicks) {
+          // No pick — missed if deadline passed and day is within survivor window
+          const dayNum = parseInt(ds.split('-')[2]);
+          if (deadlinePassed && dayNum >= survivorStartDay) {
             cell=`<span class="gc gc-loss" title="Missed pick">✗</span>`;
             losses++;
           } else {
@@ -605,7 +605,11 @@
       // Settings
       const ss = await get(ref(db,'adminConfig/settings'));
       const ss_val = ss.exists() ? ss.val() : {};
-      survivorStartDay = ss_val.survivorStartDay || ss_val.monthlyStartDay || 1;
+      // Survivor always starts from day 1 of the current month.
+      // The stored survivorStartDay is only used if it's for the current month.
+      const storedSD = ss_val.survivorStartDay || 1;
+      const storedSM = ss_val.survivorStartMonth || '';
+      survivorStartDay = (storedSM === ym) ? storedSD : 1;
 
       // Members
       const ms = await get(ref(db,'adminConfig/members'));
@@ -617,10 +621,9 @@
       allStates={};
       if (sv.exists()) sv.forEach(c=>{ const v=c.val(); if(v&&typeof v==='object') allStates[c.key]=v; });
 
-      // My state — treat as fresh if no picks
+      // My state — always compute from actual data
       const myRaw = allStates[currentUser.uid]||{};
-      const hasPicks = myRaw.usedTeams && Object.keys(myRaw.usedTeams).length>0;
-      const myBase = hasPicks ? myRaw : { alive:true, freePassUsed:false, freePassRequested:false, freePassDay:null, usedTeams:{} };
+      const myBase = { alive:true, freePassUsed:false, freePassRequested:false, freePassDay:null, usedTeams:{}, ...myRaw };
 
       // Games
       const todayGames = await fetchGames(today);
